@@ -913,6 +913,7 @@ async function renderHome(app){
         <a href="#/gallery" class="hero-nav-card"><span class="hero-nav-icon">🌌</span><span>천체사진 갤러리</span></a>
         <a href="#/logs" class="hero-nav-card"><span class="hero-nav-icon">📖</span><span>탐구 일지</span></a>
         <a href="#/activity" class="hero-nav-card"><span class="hero-nav-icon">📸</span><span>활동 기록</span></a>
+        <a href="#/equipment" class="hero-nav-card"><span class="hero-nav-icon">🔧</span><span>장비 자랑</span></a>
         <a href="#/alumni" class="hero-nav-card"><span class="hero-nav-icon">🎓</span><span>졸업생 게시판</span></a>
       </div>
     </section>
@@ -927,6 +928,10 @@ async function renderHome(app){
     <section class="home-section">
       <div class="home-section-head"><h2>최근 활동 기록</h2><a href="#/activity">더보기 →</a></div>
       <div id="homeActivity" class="post-list-preview">${loadingHtml()}</div>
+    </section>
+    <section class="home-section">
+      <div class="home-section-head"><h2>최근 장비 자랑</h2><a href="#/equipment">더보기 →</a></div>
+      <div id="homeEquipment" class="gallery-grid gallery-grid-preview">${loadingHtml()}</div>
     </section>
     <section class="home-section">
       <div class="home-section-head"><h2>최근 졸업생 게시판</h2><a href="#/alumni">더보기 →</a></div>
@@ -948,6 +953,11 @@ async function renderHome(app){
     const list = (act.list||[]).slice(0,3);
     document.getElementById('homeActivity').innerHTML = list.length ? list.map(p=>postPreviewHtml(p,'activity')).join('') : '<div class="empty-state">등록된 글이 없습니다.</div>';
   }catch(e){ document.getElementById('homeActivity').innerHTML = errorHtml(e.message); }
+  try{
+    const eqRes = await callApi('listEquipment', {});
+    const list = (eqRes.list||[]).slice(0,4);
+    document.getElementById('homeEquipment').innerHTML = list.length ? list.map(equipmentCardHtml).join('') : '<div class="empty-state">등록된 장비가 없습니다.</div>';
+  }catch(e){ document.getElementById('homeEquipment').innerHTML = errorHtml(e.message); }
   try{
     const a = await callApi('listPosts', {board:'alumni'});
     const list = (a.list||[]).slice(0,3);
