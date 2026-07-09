@@ -332,6 +332,7 @@ footer{position:relative;z-index:5;text-align:center;padding:26px;color:var(--te
     <a href="#/about" class="nav-link" data-route="about">소개</a>
     <a href="#/gallery" class="nav-link" data-route="gallery">갤러리</a>
     <a href="#/logs" class="nav-link" data-route="logs">탐구 일지</a>
+    <a href="#/activity" class="nav-link" data-route="activity">활동 기록</a>
     <a href="#/alumni" class="nav-link" data-route="alumni">졸업생 게시판</a>
   </nav>
   <div class="auth-box" id="authBox"></div>
@@ -605,7 +606,17 @@ function canCommentOrLike(){
   return !!(getUser() || isAdminMode());
 }
 function boardLabel(board){
-  return board==='alumni' ? '졸업생 게시판' : '탐구 일지';
+  if(board==='alumni') return '졸업생 게시판';
+  if(board==='activity') return '활동 기록';
+  return '탐구 일지';
+}
+function normalizeBoard(board){
+  return (board==='alumni' || board==='activity') ? board : 'research';
+}
+function boardPath(board){
+  if(board==='alumni') return 'alumni';
+  if(board==='activity') return 'activity';
+  return 'logs';
 }
 
 // ===== 토스트 =====
@@ -844,6 +855,7 @@ function router(){
   else if(path==='gallery') renderGallery(app);
   else if(path==='photo') renderPhotoDetail(app, segments[1]);
   else if(path==='logs') renderLogs(app, 'research');
+  else if(path==='activity') renderLogs(app, 'activity');
   else if(path==='alumni') renderLogs(app, 'alumni');
   else if(path==='post') renderPostDetail(app, segments[1], segments[2]);
   else if(path==='write') renderWrite(app, segments[1], segments[2]);
@@ -862,6 +874,7 @@ async function renderHome(app){
         <a href="#/about" class="hero-nav-card"><span class="hero-nav-icon">🔭</span><span>동아리 소개</span></a>
         <a href="#/gallery" class="hero-nav-card"><span class="hero-nav-icon">🌌</span><span>천체사진 갤러리</span></a>
         <a href="#/logs" class="hero-nav-card"><span class="hero-nav-icon">📖</span><span>탐구 일지</span></a>
+        <a href="#/activity" class="hero-nav-card"><span class="hero-nav-icon">📸</span><span>활동 기록</span></a>
         <a href="#/alumni" class="hero-nav-card"><span class="hero-nav-icon">🎓</span><span>졸업생 게시판</span></a>
       </div>
     </section>
@@ -872,6 +885,10 @@ async function renderHome(app){
     <section class="home-section">
       <div class="home-section-head"><h2>최근 탐구 일지</h2><a href="#/logs">더보기 →</a></div>
       <div id="homePosts" class="post-list-preview">${loadingHtml()}</div>
+    </section>
+    <section class="home-section">
+      <div class="home-section-head"><h2>최근 활동 기록</h2><a href="#/activity">더보기 →</a></div>
+      <div id="homeActivity" class="post-list-preview">${loadingHtml()}</div>
     </section>
     <section class="home-section">
       <div class="home-section-head"><h2>최근 졸업생 게시판</h2><a href="#/alumni">더보기 →</a></div>
@@ -888,6 +905,11 @@ async function renderHome(app){
     const list = (p.list||[]).slice(0,3);
     document.getElementById('homePosts').innerHTML = list.length ? list.map(p=>postPreviewHtml(p,'research')).join('') : '<div class="empty-state">등록된 글이 없습니다.</div>';
   }catch(e){ document.getElementById('homePosts').innerHTML = errorHtml(e.message); }
+  try{
+    const act = await callApi('listPosts', {board:'activity'});
+    const list = (act.list||[]).slice(0,3);
+    document.getElementById('homeActivity').innerHTML = list.length ? list.map(p=>postPreviewHtml(p,'activity')).join('') : '<div class="empty-state">등록된 글이 없습니다.</div>';
+  }catch(e){ document.getElementById('homeActivity').innerHTML = errorHtml(e.message); }
   try{
     const a = await callApi('listPosts', {board:'alumni'});
     const list = (a.list||[]).slice(0,3);
@@ -1138,7 +1160,7 @@ function postListItemHtml(p, board){
 }
 
 async function renderPostDetail(app, board, id){
-  board = board==='alumni' ? 'alumni' : 'research';
+  board = normalizeBoard(board);
   app.innerHTML = pageShell('post-page', loadingHtml());
   let post;
   try{ post = await callApi('getPost', {board, id}); }
@@ -1153,7 +1175,7 @@ async function renderPostDetail(app, board, id){
         <a href="#/write/${board}/${post.id}" class="btn btn-ghost">수정</a>
         <button type="button" class="btn btn-danger" id="deletePostBtn">삭제</button>
       </div>` : ''}
-      <a href="#/${board==='alumni'?'alumni':'logs'}" class="back-link">← 목록으로</a>
+      <a href="#/${boardPath(board)}" class="back-link">← 목록으로</a>
       <div id="commentsContainer"></div>
     </div>
   `);
@@ -1162,7 +1184,7 @@ async function renderPostDetail(app, board, id){
       if(!confirm('정말 삭제하시겠습니까?')) return;
       try{
         await callApi('deletePost', Object.assign({id:post.id, board}, getAuthParams()));
-        location.hash = board==='alumni' ? '#/alumni' : '#/logs';
+        location.hash = '#/'+boardPath(board);
       }catch(err){ showToast('삭제 실패: '+err.message, true); }
     });
   }
@@ -1170,7 +1192,7 @@ async function renderPostDetail(app, board, id){
 }
 
 async function renderWrite(app, board, id){
-  board = board==='alumni' ? 'alumni' : 'research';
+  board = normalizeBoard(board);
   if(!getUser() && !isAdminMode()){
     app.innerHTML = pageShell('write-page', requireLoginHtml('글을 작성하려면 로그인이 필요합니다.'));
     bindRequireLoginEvents(app);
@@ -1196,7 +1218,7 @@ async function renderWrite(app, board, id){
     <div id="editorMount"></div>
     <div class="editor-actions">
       <button type="button" class="btn btn-gold" id="savePostBtn">저장</button>
-      <a href="#/${board==='alumni'?'alumni':'logs'}" class="btn btn-ghost">취소</a>
+      <a href="#/${boardPath(board)}" class="btn btn-ghost">취소</a>
     </div>
   `);
   const editor = mountEditor(post.content);
@@ -1445,4 +1467,3 @@ router();
 </script>
 </body>
 </html>
-
