@@ -143,6 +143,8 @@ main,#app{position:relative;z-index:5;max-width:1180px;margin:0 auto;padding:32p
   width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);
   border-radius:8px;padding:8px 10px;color:var(--text);font-size:13.5px;
 }
+/* 브라우저 네이티브 드롭다운 팝업은 배경이 흰색으로 강제되는 경우가 많아 옵션 글자색을 따로 지정 */
+select option{color:#1a1a2e;background:#fff;}
 
 .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:20px;}
 .photo-card{
@@ -204,6 +206,11 @@ main,#app{position:relative;z-index:5;max-width:1180px;margin:0 auto;padding:32p
   border-radius:6px;padding:6px 11px;cursor:pointer;font-size:13px;font-family:inherit;
 }
 .editor-toolbar button:hover{color:var(--gold-soft);border-color:var(--gold);}
+.editor-toolbar select.editor-fontsize{
+  background:rgba(255,255,255,0.06);border:1px solid var(--card-border);color:var(--text-dim);
+  border-radius:6px;padding:6px 9px;cursor:pointer;font-size:13px;font-family:inherit;
+}
+.editor-toolbar select.editor-fontsize:hover{color:var(--gold-soft);border-color:var(--gold);}
 .editor-body{min-height:340px;padding:20px;line-height:1.8;font-size:15px;}
 .editor-body:focus{outline:none;}
 .editor-actions{display:flex;gap:10px;margin-top:18px;}
@@ -389,6 +396,16 @@ function sanitizeHtml(html){
         }
         [...child.attributes].forEach(attr=>{
           const name = attr.name.toLowerCase();
+          if(name==='style'){
+            const kept = [];
+            const fs = attr.value.match(/font-size\s*:\s*(\d+(?:\.\d+)?)(px|em|rem)/i);
+            if(fs) kept.push('font-size:'+fs[1]+fs[2]);
+            const ta = attr.value.match(/text-align\s*:\s*(left|center|right|justify)/i);
+            if(ta) kept.push('text-align:'+ta[1]);
+            if(kept.length) child.setAttribute('style', kept.join(';'));
+            else child.removeAttribute('style');
+            return;
+          }
           const ok = (child.tagName==='IMG' && (name==='src'||name==='alt')) ||
                      (child.tagName==='A' && (name==='href'||name==='target'));
           if(!ok) child.removeAttribute(attr.name);
@@ -495,7 +512,29 @@ function bindRequireLoginEvents(app){
 }
 
 // ===== 리치 에디터 (탐구일지 / 소개 공용) =====
+function applyFontSize(px){
+  const sel = window.getSelection();
+  if(!sel || !sel.rangeCount || sel.isCollapsed){
+    showToast('먼저 글자를 선택해주세요.', true);
+    return;
+  }
+  const range = sel.getRangeAt(0);
+  const span = document.createElement('span');
+  span.style.fontSize = px;
+  try{
+    range.surroundContents(span);
+  }catch(e){
+    const frag = range.extractContents();
+    span.appendChild(frag);
+    range.insertNode(span);
+  }
+  sel.removeAllRanges();
+  const newRange = document.createRange();
+  newRange.selectNodeContents(span);
+  sel.addRange(newRange);
+}
 function mountEditor(initialHtml){
+  document.execCommand('styleWithCSS', false, true);
   const wrap = document.createElement('div');
   wrap.className = 'editor-wrap';
   wrap.innerHTML = `
@@ -504,6 +543,16 @@ function mountEditor(initialHtml){
       <button type="button" data-cmd="italic"><i>I</i></button>
       <button type="button" data-cmd="formatBlock" data-value="h3">제목</button>
       <button type="button" data-cmd="formatBlock" data-value="p">본문</button>
+      <select class="editor-fontsize" title="글자 크기">
+        <option value="">글자 크기</option>
+        <option value="13px">작게</option>
+        <option value="16px">보통</option>
+        <option value="20px">크게</option>
+        <option value="26px">아주 크게</option>
+      </select>
+      <button type="button" data-cmd="justifyLeft">왼쪽</button>
+      <button type="button" data-cmd="justifyCenter">가운데</button>
+      <button type="button" data-cmd="justifyRight">오른쪽</button>
       <button type="button" data-cmd="insertUnorderedList">목록</button>
       <button type="button" data-cmd="insertHorizontalRule">구분선</button>
       <button type="button" class="editor-img-btn">사진 삽입</button>
@@ -516,6 +565,14 @@ function mountEditor(initialHtml){
       document.execCommand(btn.dataset.cmd, false, btn.dataset.value||null);
       wrap.querySelector('.editor-body').focus();
     });
+  });
+  const fontSizeSelect = wrap.querySelector('.editor-fontsize');
+  fontSizeSelect.addEventListener('change', ()=>{
+    const val = fontSizeSelect.value;
+    fontSizeSelect.value = '';
+    if(!val) return;
+    wrap.querySelector('.editor-body').focus();
+    applyFontSize(val);
   });
   const imgInput = wrap.querySelector('.editor-img-input');
   wrap.querySelector('.editor-img-btn').addEventListener('click', ()=>imgInput.click());
