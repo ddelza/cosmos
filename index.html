@@ -287,6 +287,41 @@ select option{color:#1a1a2e;background:#fff;}
   padding:2px 9px;font-size:11px;font-weight:700;margin-left:6px;
 }
 
+/* 장비 자랑 */
+.eq-form{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:24px;}
+.eq-form label{display:block;font-size:13px;color:var(--text-dim);margin-bottom:16px;}
+.eq-form label input,.eq-form label select{
+  display:block;width:100%;margin-top:6px;background:rgba(255,255,255,0.05);
+  border:1px solid var(--card-border);border-radius:8px;padding:9px 12px;
+  color:var(--text);font-family:inherit;font-size:14px;
+}
+.eq-form #eqDescMount{margin-bottom:16px;}
+.eq-photo-preview{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;}
+.eq-photo-thumb{position:relative;width:90px;height:90px;border-radius:8px;overflow:hidden;border:1px solid var(--card-border);}
+.eq-photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.eq-photo-remove{
+  position:absolute;top:2px;right:2px;background:rgba(4,5,16,0.75);color:#fff;border:none;
+  border-radius:50%;width:20px;height:20px;line-height:18px;cursor:pointer;font-size:13px;
+}
+.eq-no-photo{display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:13px;}
+.eq-no-photo-lg{
+  display:flex;align-items:center;justify-content:center;height:280px;color:var(--text-dim);
+  background:rgba(255,255,255,0.03);border:1px solid var(--card-border);border-radius:var(--radius);
+}
+.eq-carousel{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--card-border);}
+.eq-carousel-track{display:flex;transition:transform .3s ease;}
+.eq-carousel-slide{flex:0 0 100%;}
+.eq-carousel-slide img{width:100%;display:block;}
+.eq-carousel-btn{
+  position:absolute;top:50%;transform:translateY(-50%);background:rgba(4,5,16,0.55);color:#fff;
+  border:none;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;line-height:1;
+}
+.eq-carousel-prev{left:10px;}
+.eq-carousel-next{right:10px;}
+.eq-carousel-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:6px;}
+.eq-carousel-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.4);cursor:pointer;}
+.eq-carousel-dot.active{background:var(--gold);}
+
 .pending-list{display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;}
 .pending-item{
   display:flex;justify-content:space-between;align-items:center;gap:10px;
@@ -333,6 +368,7 @@ footer{position:relative;z-index:5;text-align:center;padding:26px;color:var(--te
     <a href="#/gallery" class="nav-link" data-route="gallery">갤러리</a>
     <a href="#/logs" class="nav-link" data-route="logs">탐구 일지</a>
     <a href="#/activity" class="nav-link" data-route="activity">활동 기록</a>
+    <a href="#/equipment" class="nav-link" data-route="equipment">장비 자랑</a>
     <a href="#/alumni" class="nav-link" data-route="alumni">졸업생 게시판</a>
   </nav>
   <div class="auth-box" id="authBox"></div>
@@ -859,6 +895,8 @@ function router(){
   else if(path==='alumni') renderLogs(app, 'alumni');
   else if(path==='post') renderPostDetail(app, segments[1], segments[2]);
   else if(path==='write') renderWrite(app, segments[1], segments[2]);
+  else if(path==='equipment') segments[1] ? renderEquipmentDetail(app, segments[1]) : renderEquipmentList(app);
+  else if(path==='equipment-write') renderEquipmentWrite(app, segments[1]);
   else renderHome(app);
   window.scrollTo(0,0);
 }
@@ -1237,6 +1275,286 @@ async function renderWrite(app, board, id){
   });
 }
 
+// ===== 장비 자랑 =====
+const EQUIPMENT_SUBKIND_OPTIONS = {
+  '굴절': ['갈릴레이식', '케플러식'],
+  '반사': ['그레고리안', '뉴토니안', '기타'],
+  '복합': ['슈미트 카세그레인(SCT)', '막스토프 카세그레인', '기타']
+};
+const EQUIPMENT_MOUNT_OPTIONS = ['경위대', '적도의', '돕소니안', '기타'];
+
+function equipmentCardHtml(eq){
+  const thumb = eq.images && eq.images[0] ? eq.images[0].thumb : '';
+  return `<a href="#/equipment/${eq.id}" class="photo-card">
+    ${thumb ? `<div class="photo-card-img" style="background-image:url('${thumb}')"></div>` : '<div class="photo-card-img eq-no-photo">📷 사진 없음</div>'}
+    <div class="photo-card-body">
+      <div class="photo-card-title">${esc(eq.title)}</div>
+      <div class="photo-card-meta">${esc(eq.model||eq.kind||'')} · ${esc(eq.author)}</div>
+    </div>
+  </a>`;
+}
+
+async function renderEquipmentList(app){
+  app.innerHTML = pageShell('equipment-page', `
+    <div class="logs-header">
+      <h1 class="page-title">장비 자랑</h1>
+      ${canPostBoard('equipment') ? '<a href="#/equipment-write" class="btn btn-gold">글쓰기 +</a>' : ''}
+    </div>
+    <div id="equipmentGrid" class="gallery-grid">${loadingHtml()}</div>
+  `);
+  try{
+    const res = await callApi('listEquipment', {});
+    const list = res.list || [];
+    document.getElementById('equipmentGrid').innerHTML = list.length ? list.map(equipmentCardHtml).join('') : '<div class="empty-state">등록된 장비가 없습니다.</div>';
+  }catch(err){ document.getElementById('equipmentGrid').innerHTML = errorHtml(err.message); }
+}
+
+function equipmentCarouselHtml(images){
+  return `
+    <div class="eq-carousel">
+      <div class="eq-carousel-track">
+        ${images.map(img=>`<div class="eq-carousel-slide"><img src="${img.full}"></div>`).join('')}
+      </div>
+      ${images.length>1 ? `
+        <button type="button" class="eq-carousel-btn eq-carousel-prev">‹</button>
+        <button type="button" class="eq-carousel-btn eq-carousel-next">›</button>
+        <div class="eq-carousel-dots">${images.map((_,i)=>`<span class="eq-carousel-dot${i===0?' active':''}" data-dot="${i}"></span>`).join('')}</div>
+      ` : ''}
+    </div>
+  `;
+}
+function bindEquipmentCarousel(container){
+  const carousel = container.querySelector('.eq-carousel');
+  if(!carousel) return;
+  const track = carousel.querySelector('.eq-carousel-track');
+  const slides = carousel.querySelectorAll('.eq-carousel-slide');
+  const dots = carousel.querySelectorAll('.eq-carousel-dot');
+  let idx = 0;
+  function goTo(i){
+    idx = (i+slides.length)%slides.length;
+    track.style.transform = 'translateX(-'+(idx*100)+'%)';
+    dots.forEach((d,j)=>d.classList.toggle('active', j===idx));
+  }
+  const prevBtn = carousel.querySelector('.eq-carousel-prev');
+  const nextBtn = carousel.querySelector('.eq-carousel-next');
+  if(prevBtn) prevBtn.addEventListener('click', ()=>goTo(idx-1));
+  if(nextBtn) nextBtn.addEventListener('click', ()=>goTo(idx+1));
+  dots.forEach(d=>d.addEventListener('click', ()=>goTo(Number(d.dataset.dot))));
+}
+
+async function renderEquipmentDetail(app, id){
+  app.innerHTML = pageShell('equipment-page', loadingHtml());
+  let eq;
+  try{ eq = await callApi('getEquipment', {id}); }
+  catch(err){ app.innerHTML = pageShell('equipment-page', errorHtml(err.message)); return; }
+  const canEdit = (getUser() && norm(getUser().name)===norm(eq.author)) || isFullAdmin();
+  const kindLine = eq.kind==='망원경이 아님' ? (eq.kindOther||'망원경이 아님') : eq.kind;
+  const subLine = eq.subKind==='기타' ? (eq.subKindOther||'기타') : eq.subKind;
+  const mountLine = eq.mount==='기타' ? (eq.mountOther||'기타') : eq.mount;
+  app.innerHTML = pageShell('equipment-page', `
+    <div class="photo-detail">
+      <div class="photo-detail-img">
+        ${eq.images.length ? equipmentCarouselHtml(eq.images) : '<div class="eq-no-photo-lg">📷 등록된 사진이 없습니다</div>'}
+      </div>
+      <div class="photo-detail-info">
+        <h1 class="page-title">${esc(eq.title)}</h1>
+        <dl class="meta-list">
+          <dt>모델명</dt><dd>${esc(eq.model||'-')}</dd>
+          <dt>종류</dt><dd>${esc(kindLine||'-')}</dd>
+          ${subLine ? `<dt>세부 분류</dt><dd>${esc(subLine)}</dd>` : ''}
+          ${mountLine ? `<dt>가대 종류</dt><dd>${esc(mountLine)}</dd>` : ''}
+          <dt>제작 회사</dt><dd>${esc(eq.maker||'-')}</dd>
+          <dt>작성자</dt><dd>${esc(eq.author)}</dd>
+          <dt>등록일</dt><dd>${esc(eq.createdAt)}</dd>
+        </dl>
+        <div class="post-body">${sanitizeHtml(eq.desc)}</div>
+        ${canEdit ? `<div class="post-actions">
+          <a href="#/equipment-write/${eq.id}" class="btn btn-ghost">수정</a>
+          <button type="button" class="btn btn-danger" id="deleteEqBtn">삭제</button>
+        </div>` : ''}
+        <a href="#/equipment" class="back-link">← 장비 자랑 목록으로</a>
+        <div id="commentsContainer"></div>
+      </div>
+    </div>
+  `);
+  bindEquipmentCarousel(app);
+  if(canEdit){
+    document.getElementById('deleteEqBtn').addEventListener('click', async ()=>{
+      if(!confirm('정말 삭제하시겠습니까?')) return;
+      try{
+        await callApi('deleteEquipment', Object.assign({id:eq.id}, getAuthParams()));
+        location.hash = '#/equipment';
+      }catch(err){ showToast('삭제 실패: '+err.message, true); }
+    });
+  }
+  mountComments(document.getElementById('commentsContainer'), 'equipment', eq.id);
+}
+
+async function renderEquipmentWrite(app, id){
+  if(!getUser() && !isAdminMode()){
+    app.innerHTML = pageShell('write-page', requireLoginHtml('글을 작성하려면 로그인이 필요합니다.'));
+    bindRequireLoginEvents(app);
+    return;
+  }
+  if(!id && !canPostBoard('equipment')){
+    app.innerHTML = pageShell('write-page', errorHtml('장비 자랑은 재학생·졸업생·관리자만 작성할 수 있습니다.'));
+    return;
+  }
+  let eq = {title:'', model:'', kind:'', kindOther:'', subKind:'', subKindOther:'', mount:'', mountOther:'', maker:'', desc:'', images:[], author:null};
+  if(id){
+    app.innerHTML = pageShell('write-page', loadingHtml());
+    try{ eq = await callApi('getEquipment', {id}); }
+    catch(err){ app.innerHTML = pageShell('write-page', errorHtml(err.message)); return; }
+    if(getUser() && norm(eq.author)!==norm(getUser().name) && !isFullAdmin()){
+      app.innerHTML = pageShell('write-page', errorHtml('본인 글만 수정할 수 있습니다.'));
+      return;
+    }
+  }
+  app.innerHTML = pageShell('write-page', `
+    <h1 class="page-title">${id ? '장비 자랑 수정' : '장비 자랑 작성'}</h1>
+    <div class="eq-form">
+      <label>제목<input type="text" id="eqTitle" class="text-input" value="${esc(eq.title)}"></label>
+      <label>망원경 모델명<input type="text" id="eqModel" class="text-input" value="${esc(eq.model)}"></label>
+      <label>망원경 종류(집광방식)
+        <select id="eqKind" class="select-input">
+          <option value="">선택 안 함</option>
+          <option value="굴절">굴절</option>
+          <option value="반사">반사</option>
+          <option value="복합">복합</option>
+          <option value="망원경이 아님">망원경이 아님</option>
+        </select>
+      </label>
+      <div id="eqKindOtherWrap" class="hidden">
+        <label>무엇인가요? (직접 작성)<input type="text" id="eqKindOther" class="text-input" value="${esc(eq.kindOther)}"></label>
+      </div>
+      <div id="eqSubKindWrap">
+        <label>망원경 세부 분류(집광방식)
+          <select id="eqSubKind" class="select-input"></select>
+        </label>
+        <div id="eqSubKindOtherWrap" class="hidden">
+          <label>세부 분류 직접 작성<input type="text" id="eqSubKindOther" class="text-input" value="${esc(eq.subKindOther)}"></label>
+        </div>
+      </div>
+      <div id="eqMountWrap">
+        <label>가대 종류
+          <select id="eqMount" class="select-input">
+            <option value="">선택 안 함</option>
+            ${EQUIPMENT_MOUNT_OPTIONS.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')}
+          </select>
+        </label>
+        <div id="eqMountOtherWrap" class="hidden">
+          <label>가대 종류 직접 작성<input type="text" id="eqMountOther" class="text-input" value="${esc(eq.mountOther)}"></label>
+        </div>
+      </div>
+      <label>제작 회사<input type="text" id="eqMaker" class="text-input" value="${esc(eq.maker)}"></label>
+      <label>장비 설명</label>
+      <div id="eqDescMount"></div>
+      <label>사진 첨부 (여러 장 가능)<input type="file" id="eqPhotos" accept="image/*" multiple></label>
+      <div id="eqPhotoPreview" class="eq-photo-preview"></div>
+    </div>
+    <div class="editor-actions">
+      <button type="button" class="btn btn-gold" id="eqSaveBtn">저장</button>
+      <a href="#/equipment" class="btn btn-ghost">취소</a>
+    </div>
+  `);
+
+  const descEditor = mountEditor(eq.desc);
+  document.getElementById('eqDescMount').appendChild(descEditor);
+
+  const kindSel = document.getElementById('eqKind');
+  const subSel = document.getElementById('eqSubKind');
+  function updateKindUI(){
+    const kind = kindSel.value;
+    document.getElementById('eqKindOtherWrap').classList.toggle('hidden', kind!=='망원경이 아님');
+    const isTelescope = kind==='굴절' || kind==='반사' || kind==='복합';
+    document.getElementById('eqSubKindWrap').classList.toggle('hidden', !isTelescope);
+    document.getElementById('eqMountWrap').classList.toggle('hidden', !isTelescope);
+    const options = EQUIPMENT_SUBKIND_OPTIONS[kind] || [];
+    subSel.innerHTML = '<option value="">선택 안 함</option>' + options.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
+    document.getElementById('eqSubKindOtherWrap').classList.add('hidden');
+  }
+  kindSel.value = eq.kind || '';
+  updateKindUI();
+  if(eq.subKind){ subSel.value = eq.subKind; document.getElementById('eqSubKindOtherWrap').classList.toggle('hidden', eq.subKind!=='기타'); }
+  kindSel.addEventListener('change', updateKindUI);
+  subSel.addEventListener('change', ()=>{
+    document.getElementById('eqSubKindOtherWrap').classList.toggle('hidden', subSel.value!=='기타');
+  });
+  const mountSel = document.getElementById('eqMount');
+  mountSel.value = eq.mount || '';
+  document.getElementById('eqMountOtherWrap').classList.toggle('hidden', eq.mount!=='기타');
+  mountSel.addEventListener('change', ()=>{
+    document.getElementById('eqMountOtherWrap').classList.toggle('hidden', mountSel.value!=='기타');
+  });
+
+  let eqNewFiles = [];
+  let eqKeptExisting = (eq.images||[]).map(img=>img.fileId);
+  function renderEqPhotoPreview(){
+    const box = document.getElementById('eqPhotoPreview');
+    const existingHtml = eqKeptExisting.map((fid,i)=>`
+      <div class="eq-photo-thumb">
+        <img src="https://drive.google.com/thumbnail?id=${fid}&sz=w200">
+        <button type="button" class="eq-photo-remove" data-existing-idx="${i}">×</button>
+      </div>`).join('');
+    const newHtml = eqNewFiles.map((f,i)=>`
+      <div class="eq-photo-thumb">
+        <img src="${URL.createObjectURL(f)}">
+        <button type="button" class="eq-photo-remove" data-new-idx="${i}">×</button>
+      </div>`).join('');
+    box.innerHTML = (existingHtml+newHtml) || '<div class="empty-state" style="padding:14px;">선택된 사진이 없습니다.</div>';
+    box.querySelectorAll('[data-existing-idx]').forEach(btn=>btn.addEventListener('click', ()=>{
+      eqKeptExisting.splice(Number(btn.dataset.existingIdx),1);
+      renderEqPhotoPreview();
+    }));
+    box.querySelectorAll('[data-new-idx]').forEach(btn=>btn.addEventListener('click', ()=>{
+      eqNewFiles.splice(Number(btn.dataset.newIdx),1);
+      renderEqPhotoPreview();
+    }));
+  }
+  renderEqPhotoPreview();
+  document.getElementById('eqPhotos').addEventListener('change', (e)=>{
+    eqNewFiles = eqNewFiles.concat(Array.from(e.target.files));
+    e.target.value = '';
+    renderEqPhotoPreview();
+  });
+
+  document.getElementById('eqSaveBtn').addEventListener('click', async ()=>{
+    const title = document.getElementById('eqTitle').value.trim();
+    if(!title){ showToast('제목을 입력해주세요.', true); return; }
+    const saveBtn = document.getElementById('eqSaveBtn');
+    saveBtn.disabled = true;
+    try{
+      const newFileIds = [];
+      for(const file of eqNewFiles){
+        showToast('사진 업로드 중... ('+(newFileIds.length+1)+'/'+eqNewFiles.length+')');
+        const dataUrl = await resizeImage(file, 1600, 0.85);
+        const res = await callApi('uploadImage', Object.assign({imageData:dataUrl, fileName:file.name}, getAuthParams()));
+        newFileIds.push(res.fileId);
+      }
+      const images = eqKeptExisting.concat(newFileIds);
+      const params = Object.assign({
+        title,
+        model: document.getElementById('eqModel').value.trim(),
+        kind: kindSel.value,
+        kindOther: document.getElementById('eqKindOther').value.trim(),
+        subKind: subSel.value,
+        subKindOther: document.getElementById('eqSubKindOther').value.trim(),
+        mount: mountSel.value,
+        mountOther: document.getElementById('eqMountOther').value.trim(),
+        maker: document.getElementById('eqMaker').value.trim(),
+        desc: descEditor.getContent(),
+        images: JSON.stringify(images)
+      }, getAuthParams());
+      if(id) params.id = id;
+      hideToast();
+      const res = await callApi('saveEquipment', params);
+      location.hash = '#/equipment/'+res.id;
+      renderEquipmentDetail(document.getElementById('app'), res.id);
+    }catch(err){ showToast('저장 실패: '+err.message, true); }
+    finally{ saveBtn.disabled = false; }
+  });
+}
+
 // ===== 헤더 =====
 async function refreshHeader(){
   const user = getUser();
@@ -1467,4 +1785,3 @@ router();
 </script>
 </body>
 </html>
-
