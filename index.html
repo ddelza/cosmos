@@ -244,6 +244,49 @@ select option{color:#1a1a2e;background:#fff;}
 .modal-hint{font-size:12.5px;color:var(--text-dim);margin-top:14px;}
 .modal-hint a{color:var(--gold-soft);}
 
+.location-field{position:relative;}
+.location-suggestions{
+  position:absolute;left:0;right:0;top:100%;margin-top:2px;
+  background:var(--bg-navy);border:1px solid var(--gold);border-radius:8px;
+  max-height:220px;overflow-y:auto;z-index:20;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+.location-suggestion-item{padding:9px 12px;font-size:13px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--card-border);}
+.location-suggestion-item:last-child{border-bottom:none;}
+.location-suggestion-item:hover{background:rgba(232,195,104,0.15);color:var(--gold-soft);}
+.location-hint{font-size:11.5px;color:var(--text-dim);margin-top:5px;font-weight:400;}
+
+.photo-map{margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--card-border);}
+.photo-map iframe{width:100%;height:220px;border:0;display:block;}
+
+.comments-section{margin-top:32px;padding-top:24px;border-top:1px solid var(--card-border);}
+.comments-title{font-size:17px;color:var(--gold-soft);margin:0 0 16px;}
+.comments-list{display:flex;flex-direction:column;gap:14px;margin-bottom:18px;}
+.comment-item{background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:12px 14px;}
+.comment-reply{margin-top:10px;background:rgba(255,255,255,0.03);}
+.comment-replies{margin-top:10px;padding-left:16px;border-left:2px solid var(--card-border);display:flex;flex-direction:column;gap:10px;}
+.comment-head{display:flex;gap:8px;align-items:baseline;font-size:12.5px;}
+.comment-author{font-weight:700;color:var(--gold-soft);}
+.comment-date{color:var(--text-dim);}
+.comment-content{margin:6px 0 8px;font-size:14px;line-height:1.6;white-space:pre-wrap;}
+.comment-actions{display:flex;gap:14px;}
+.comment-actions button{background:none;border:none;color:var(--text-dim);font-size:12.5px;cursor:pointer;padding:0;font-family:inherit;}
+.comment-actions button:hover{color:var(--gold-soft);}
+.comment-like-btn.liked{color:var(--gold);font-weight:700;}
+.comment-delete-btn:hover{color:var(--danger);}
+.comment-reply-form{margin-top:10px;}
+.comment-form,.comment-reply-form{display:flex;flex-direction:column;gap:8px;}
+.comment-input{
+  width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:8px;
+  padding:9px 12px;color:var(--text);font-family:inherit;font-size:13.5px;resize:vertical;
+}
+.comment-form .comment-submit-btn,.comment-reply-submit-btn{align-self:flex-end;}
+.comment-login-hint{color:var(--text-dim);font-size:13px;}
+.grade-tag{
+  background:rgba(232,195,104,0.15);color:var(--gold-soft);border-radius:12px;
+  padding:2px 9px;font-size:11px;font-weight:700;margin-left:6px;
+}
+
 .pending-list{display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;}
 .pending-item{
   display:flex;justify-content:space-between;align-items:center;gap:10px;
@@ -289,6 +332,7 @@ footer{position:relative;z-index:5;text-align:center;padding:26px;color:var(--te
     <a href="#/about" class="nav-link" data-route="about">소개</a>
     <a href="#/gallery" class="nav-link" data-route="gallery">갤러리</a>
     <a href="#/logs" class="nav-link" data-route="logs">탐구 일지</a>
+    <a href="#/alumni" class="nav-link" data-route="alumni">졸업생 게시판</a>
   </nav>
   <div class="auth-box" id="authBox"></div>
 </header>
@@ -319,6 +363,13 @@ footer{position:relative;z-index:5;text-align:center;padding:26px;color:var(--te
     <form id="signupForm">
       <label>이름<input type="text" id="signupName" required></label>
       <label>부서<input type="text" id="signupDept" placeholder="예: 관측팀" required></label>
+      <label>등급
+        <select id="signupGrade">
+          <option value="재학생">코스모스 회원 (재학생)</option>
+          <option value="졸업생">코스모스 회원 (졸업생)</option>
+          <option value="일반회원">일반 회원</option>
+        </select>
+      </label>
       <label>비밀번호<input type="password" id="signupPw" required></label>
       <label>비밀번호 확인<input type="password" id="signupPw2" required></label>
       <div class="modal-actions"><button type="submit" class="btn btn-gold">가입 신청</button></div>
@@ -358,7 +409,13 @@ footer{position:relative;z-index:5;text-align:center;padding:26px;color:var(--te
         </select>
       </label>
       <label>촬영 일시<input type="text" id="photoShotAt" placeholder="예: 2026-07-08 22:30"></label>
-      <label>촬영 장소<input type="text" id="photoLocation"></label>
+      <label class="location-field">촬영 장소
+        <input type="text" id="photoLocation" autocomplete="off" placeholder="장소명을 입력하면 지도에서 검색됩니다 (예: 설악산국립공원)">
+        <div id="locationSuggestions" class="location-suggestions hidden"></div>
+        <input type="hidden" id="photoLat">
+        <input type="hidden" id="photoLng">
+        <div id="locationCoordHint" class="location-hint hidden"></div>
+      </label>
       <label>장비<input type="text" id="photoEquipment"></label>
       <label>설명<textarea id="photoDesc" rows="4"></textarea></label>
       <label id="photoFileLabel">사진 파일<input type="file" id="photoFile" accept="image/*"></label>
@@ -444,6 +501,48 @@ function resizeImage(file, maxDim, quality){
   });
 }
 
+// ===== 촬영 장소 검색 (OpenStreetMap Nominatim, API 키 불필요) =====
+async function searchPlace(query){
+  const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=ko&q='+encodeURIComponent(query);
+  const res = await fetchWithTimeout(url, {}, 8000);
+  return res.json();
+}
+function initLocationSearch(input, suggestBox, latInput, lngInput, hintEl){
+  let debounceTimer;
+  input.addEventListener('input', ()=>{
+    latInput.value = '';
+    lngInput.value = '';
+    if(hintEl) hintEl.classList.add('hidden');
+    clearTimeout(debounceTimer);
+    const q = input.value.trim();
+    if(q.length<2){ suggestBox.classList.add('hidden'); return; }
+    debounceTimer = setTimeout(async ()=>{
+      try{
+        const results = await searchPlace(q);
+        if(!results || !results.length){ suggestBox.classList.add('hidden'); return; }
+        suggestBox.dataset.results = JSON.stringify(results);
+        suggestBox.innerHTML = results.map((r,i)=>`<div class="location-suggestion-item" data-idx="${i}">${esc(r.display_name)}</div>`).join('');
+        suggestBox.classList.remove('hidden');
+      }catch(e){ suggestBox.classList.add('hidden'); }
+    }, 600);
+  });
+  suggestBox.addEventListener('click', (e)=>{
+    const item = e.target.closest('.location-suggestion-item');
+    if(!item) return;
+    const results = JSON.parse(suggestBox.dataset.results||'[]');
+    const r = results[Number(item.dataset.idx)];
+    if(!r) return;
+    input.value = r.display_name;
+    latInput.value = r.lat;
+    lngInput.value = r.lon;
+    suggestBox.classList.add('hidden');
+    if(hintEl){ hintEl.textContent = '📍 지도 위치 저장됨 ('+Number(r.lat).toFixed(4)+', '+Number(r.lon).toFixed(4)+')'; hintEl.classList.remove('hidden'); }
+  });
+  document.addEventListener('click', (e)=>{
+    if(e.target!==input && !suggestBox.contains(e.target)) suggestBox.classList.add('hidden');
+  });
+}
+
 // ===== API (fetch POST, 커스텀 헤더 없이 simple request로 유지 → CORS preflight 회피) =====
 function fetchWithTimeout(url, opts, ms){
   const controller = new AbortController();
@@ -481,6 +580,24 @@ function getAuthParams(){
   const u = getUser();
   if(u) return {name:u.name, pw:u.pw};
   return {};
+}
+function userGrade(){
+  if(isAdminMode()) return 'admin';
+  const u = getUser();
+  return u ? u.grade : null;
+}
+// 서버 canPostBoard()와 동일한 규칙 — 버튼 노출용. 실제 권한은 서버가 다시 검증한다.
+function canPostBoard(board){
+  const g = userGrade();
+  if(g==='admin') return true;
+  if(board==='alumni') return g==='재학생' || g==='졸업생';
+  return g==='재학생';
+}
+function canCommentOrLike(){
+  return !!(getUser() || isAdminMode());
+}
+function boardLabel(board){
+  return board==='alumni' ? '졸업생 게시판' : '탐구 일지';
 }
 
 // ===== 토스트 =====
@@ -593,6 +710,111 @@ function mountEditor(initialHtml){
   return wrap;
 }
 
+// ===== 댓글 / 대댓글 / 좋아요 (갤러리 · 탐구일지 · 졸업생게시판 공용) =====
+async function mountComments(container, targetType, targetId){
+  container.innerHTML = `
+    <div class="comments-section">
+      <h3 class="comments-title">댓글</h3>
+      <div class="comments-list">${loadingHtml()}</div>
+      ${canCommentOrLike() ? `
+        <div class="comment-form">
+          <textarea class="comment-input" placeholder="댓글을 입력하세요" rows="2"></textarea>
+          <button type="button" class="btn btn-gold btn-sm comment-submit-btn">등록</button>
+        </div>
+      ` : `<div class="comment-login-hint">댓글을 작성하려면 로그인이 필요합니다.</div>`}
+    </div>
+  `;
+  const listEl = container.querySelector('.comments-list');
+  async function reload(){
+    listEl.innerHTML = loadingHtml();
+    try{
+      const res = await callApi('listComments', Object.assign({targetType, targetId}, getAuthParams()));
+      const list = res.list || [];
+      listEl.innerHTML = list.length ? list.map(c=>commentItemHtml(c)).join('') : '<div class="empty-state">첫 댓글을 남겨보세요.</div>';
+      bindCommentEvents(listEl, targetType, targetId, reload);
+    }catch(err){ listEl.innerHTML = errorHtml(err.message); }
+  }
+  const submitBtn = container.querySelector('.comment-submit-btn');
+  if(submitBtn){
+    submitBtn.addEventListener('click', async ()=>{
+      const ta = container.querySelector('.comment-form .comment-input');
+      const content = ta.value.trim();
+      if(!content){ showToast('댓글 내용을 입력해주세요.', true); return; }
+      submitBtn.disabled = true;
+      try{
+        await callApi('addComment', Object.assign({targetType, targetId, content}, getAuthParams()));
+        ta.value = '';
+        await reload();
+      }catch(err){ showToast('댓글 등록 실패: '+err.message, true); }
+      finally{ submitBtn.disabled = false; }
+    });
+  }
+  reload();
+}
+function commentItemHtml(c){
+  const canDelete = (getUser() && norm(getUser().name)===norm(c.author)) || isAdminMode();
+  const replies = (c.replies||[]).map(r=>commentItemHtml(r)).join('');
+  return `
+    <div class="comment-item" data-id="${c.id}">
+      <div class="comment-head">
+        <span class="comment-author">${esc(c.author)}</span>
+        <span class="comment-date">${esc(c.createdAt)}</span>
+      </div>
+      <div class="comment-content">${esc(c.content)}</div>
+      <div class="comment-actions">
+        <button type="button" class="comment-like-btn ${c.likedByMe?'liked':''}" data-comment-id="${c.id}">👍 좋아요${c.likeCount>0?' '+c.likeCount:''}</button>
+        ${(!c.parentId && canCommentOrLike()) ? `<button type="button" class="comment-reply-btn" data-comment-id="${c.id}">답글</button>` : ''}
+        ${canDelete ? `<button type="button" class="comment-delete-btn" data-comment-id="${c.id}">삭제</button>` : ''}
+      </div>
+      ${!c.parentId ? `<div class="comment-reply-form hidden" data-parent-id="${c.id}">
+        <textarea class="comment-input" placeholder="답글을 입력하세요" rows="2"></textarea>
+        <button type="button" class="btn btn-gold btn-sm comment-reply-submit-btn" data-parent-id="${c.id}">등록</button>
+      </div>` : ''}
+      ${replies ? `<div class="comment-replies">${replies}</div>` : ''}
+    </div>
+  `;
+}
+function bindCommentEvents(listEl, targetType, targetId, reload){
+  listEl.querySelectorAll('.comment-like-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!canCommentOrLike()){ showToast('좋아요는 로그인 후 가능합니다.', true); return; }
+      btn.disabled = true;
+      try{
+        await callApi('toggleLike', Object.assign({commentId: btn.dataset.commentId}, getAuthParams()));
+        await reload();
+      }catch(err){ showToast(err.message, true); btn.disabled = false; }
+    });
+  });
+  listEl.querySelectorAll('.comment-reply-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const form = listEl.querySelector(`.comment-reply-form[data-parent-id="${btn.dataset.commentId}"]`);
+      if(form) form.classList.toggle('hidden');
+    });
+  });
+  listEl.querySelectorAll('.comment-reply-submit-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const form = btn.closest('.comment-reply-form');
+      const ta = form.querySelector('.comment-input');
+      const content = ta.value.trim();
+      if(!content){ showToast('답글 내용을 입력해주세요.', true); return; }
+      btn.disabled = true;
+      try{
+        await callApi('addComment', Object.assign({targetType, targetId, parentId: btn.dataset.parentId, content}, getAuthParams()));
+        await reload();
+      }catch(err){ showToast('답글 등록 실패: '+err.message, true); btn.disabled = false; }
+    });
+  });
+  listEl.querySelectorAll('.comment-delete-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('댓글을 삭제하시겠습니까?')) return;
+      try{
+        await callApi('deleteComment', Object.assign({id: btn.dataset.commentId}, getAuthParams()));
+        await reload();
+      }catch(err){ showToast('삭제 실패: '+err.message, true); }
+    });
+  });
+}
+
 // ===== 라우터 =====
 function parseHash(){
   const raw = location.hash.slice(1);
@@ -613,9 +835,10 @@ function router(){
   else if(path==='about') renderAbout(app);
   else if(path==='gallery') renderGallery(app);
   else if(path==='photo') renderPhotoDetail(app, segments[1]);
-  else if(path==='logs') renderLogs(app);
-  else if(path==='post') renderPostDetail(app, segments[1]);
-  else if(path==='write') renderWrite(app, segments[1]);
+  else if(path==='logs') renderLogs(app, 'research');
+  else if(path==='alumni') renderLogs(app, 'alumni');
+  else if(path==='post') renderPostDetail(app, segments[1], segments[2]);
+  else if(path==='write') renderWrite(app, segments[1], segments[2]);
   else renderHome(app);
   window.scrollTo(0,0);
 }
@@ -648,13 +871,13 @@ async function renderHome(app){
     document.getElementById('homeGallery').innerHTML = list.length ? list.map(galleryCardHtml).join('') : '<div class="empty-state">등록된 사진이 없습니다.</div>';
   }catch(e){ document.getElementById('homeGallery').innerHTML = errorHtml(e.message); }
   try{
-    const p = await callApi('listPosts', {});
+    const p = await callApi('listPosts', {board:'research'});
     const list = (p.list||[]).slice(0,3);
     document.getElementById('homePosts').innerHTML = list.length ? list.map(postPreviewHtml).join('') : '<div class="empty-state">등록된 글이 없습니다.</div>';
   }catch(e){ document.getElementById('homePosts').innerHTML = errorHtml(e.message); }
 }
 function postPreviewHtml(p){
-  return `<a href="#/post/${p.id}" class="post-preview-item">
+  return `<a href="#/post/research/${p.id}" class="post-preview-item">
     <div class="post-preview-title">${esc(p.title)}</div>
     <div class="post-preview-meta">${esc(p.author)} · ${esc(p.createdAt)}</div>
   </a>`;
@@ -719,7 +942,7 @@ function galleryPageHtml(){
       <h1 class="page-title">천체사진 갤러리</h1>
       <div class="gallery-toolbar">
         <input type="text" id="gallerySearch" class="search-input" placeholder="천체, 날짜, 관측 장소 검색...">
-        ${(getUser()||isAdminMode()) ? '<button type="button" class="btn btn-gold" id="openUploadBtn">새 사진 업로드 +</button>' : ''}
+        ${canPostBoard('gallery') ? '<button type="button" class="btn btn-gold" id="openUploadBtn">새 사진 업로드 +</button>' : ''}
       </div>
     </div>
     <div class="gallery-layout">
@@ -824,12 +1047,14 @@ async function renderPhotoDetail(app, id){
           <dt>등록일</dt><dd>${esc(photo.createdAt)}</dd>
           <dt>조회수</dt><dd>${photo.views}</dd>
         </dl>
+        ${(photo.lat && photo.lng) ? `<div class="photo-map"><iframe src="https://www.google.com/maps?q=${encodeURIComponent(photo.lat+','+photo.lng)}&z=12&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>` : ''}
         <p class="photo-desc">${esc(photo.desc||'')}</p>
         ${canEdit ? `<div class="post-actions">
           <button type="button" class="btn btn-ghost" id="editPhotoBtn">수정</button>
           <button type="button" class="btn btn-danger" id="deletePhotoBtn">삭제</button>
         </div>` : ''}
         <a href="#/gallery" class="back-link">← 갤러리로</a>
+        <div id="commentsContainer"></div>
       </div>
     </div>
   `);
@@ -843,6 +1068,7 @@ async function renderPhotoDetail(app, id){
       }catch(err){ showToast('삭제 실패: '+err.message, true); }
     });
   }
+  mountComments(document.getElementById('commentsContainer'), 'gallery', photo.id);
 }
 
 let editingPhotoId = null;
@@ -853,6 +1079,16 @@ function openPhotoModal(photo){
   document.getElementById('photoCategory').value = photo ? photo.category : '딥스카이';
   document.getElementById('photoShotAt').value = photo ? photo.shotAt : '';
   document.getElementById('photoLocation').value = photo ? photo.location : '';
+  document.getElementById('photoLat').value = photo && photo.lat ? photo.lat : '';
+  document.getElementById('photoLng').value = photo && photo.lng ? photo.lng : '';
+  document.getElementById('locationSuggestions').classList.add('hidden');
+  const coordHint = document.getElementById('locationCoordHint');
+  if(photo && photo.lat && photo.lng){
+    coordHint.textContent = '📍 지도 위치 저장됨 ('+Number(photo.lat).toFixed(4)+', '+Number(photo.lng).toFixed(4)+')';
+    coordHint.classList.remove('hidden');
+  } else {
+    coordHint.classList.add('hidden');
+  }
   document.getElementById('photoEquipment').value = photo ? photo.equipment : '';
   document.getElementById('photoDesc').value = photo ? photo.desc : '';
   document.getElementById('photoFile').required = !photo;
@@ -860,32 +1096,33 @@ function openPhotoModal(photo){
   openModal('photoModal');
 }
 
-// ===== 탐구 일지 =====
-async function renderLogs(app){
+// ===== 탐구 일지 / 졸업생 게시판 (board: 'research' | 'alumni') =====
+async function renderLogs(app, board){
   app.innerHTML = pageShell('logs-page', `
     <div class="logs-header">
-      <h1 class="page-title">탐구 일지</h1>
-      ${(getUser()||isAdminMode()) ? '<a href="#/write" class="btn btn-gold">글쓰기 +</a>' : ''}
+      <h1 class="page-title">${boardLabel(board)}</h1>
+      ${canPostBoard(board) ? `<a href="#/write/${board}" class="btn btn-gold">글쓰기 +</a>` : ''}
     </div>
     <div id="logsList" class="post-list">${loadingHtml()}</div>
   `);
   try{
-    const res = await callApi('listPosts', {});
+    const res = await callApi('listPosts', {board});
     const list = res.list || [];
-    document.getElementById('logsList').innerHTML = list.length ? list.map(postListItemHtml).join('') : '<div class="empty-state">등록된 글이 없습니다.</div>';
+    document.getElementById('logsList').innerHTML = list.length ? list.map(p=>postListItemHtml(p, board)).join('') : '<div class="empty-state">등록된 글이 없습니다.</div>';
   }catch(err){ document.getElementById('logsList').innerHTML = errorHtml(err.message); }
 }
-function postListItemHtml(p){
-  return `<a href="#/post/${p.id}" class="post-list-item">
+function postListItemHtml(p, board){
+  return `<a href="#/post/${board}/${p.id}" class="post-list-item">
     <div class="post-list-title">${esc(p.title)}</div>
     <div class="post-list-meta">${esc(p.author)} · ${esc(p.createdAt)}</div>
   </a>`;
 }
 
-async function renderPostDetail(app, id){
+async function renderPostDetail(app, board, id){
+  board = board==='alumni' ? 'alumni' : 'research';
   app.innerHTML = pageShell('post-page', loadingHtml());
   let post;
-  try{ post = await callApi('getPost', {id}); }
+  try{ post = await callApi('getPost', {board, id}); }
   catch(err){ app.innerHTML = pageShell('post-page', errorHtml(err.message)); return; }
   const canEdit = (getUser() && norm(getUser().name)===norm(post.author)) || isAdminMode();
   app.innerHTML = pageShell('post-page', `
@@ -894,33 +1131,40 @@ async function renderPostDetail(app, id){
       <div class="post-meta">${esc(post.author)} · ${esc(post.createdAt)}${post.updatedAt!==post.createdAt ? ' (수정됨 '+esc(post.updatedAt)+')' : ''}</div>
       <div class="post-body">${sanitizeHtml(post.content)}</div>
       ${canEdit ? `<div class="post-actions">
-        <a href="#/write/${post.id}" class="btn btn-ghost">수정</a>
+        <a href="#/write/${board}/${post.id}" class="btn btn-ghost">수정</a>
         <button type="button" class="btn btn-danger" id="deletePostBtn">삭제</button>
       </div>` : ''}
-      <a href="#/logs" class="back-link">← 목록으로</a>
+      <a href="#/${board==='alumni'?'alumni':'logs'}" class="back-link">← 목록으로</a>
+      <div id="commentsContainer"></div>
     </div>
   `);
   if(canEdit){
     document.getElementById('deletePostBtn').addEventListener('click', async ()=>{
       if(!confirm('정말 삭제하시겠습니까?')) return;
       try{
-        await callApi('deletePost', Object.assign({id:post.id}, getAuthParams()));
-        location.hash = '#/logs';
+        await callApi('deletePost', Object.assign({id:post.id, board}, getAuthParams()));
+        location.hash = board==='alumni' ? '#/alumni' : '#/logs';
       }catch(err){ showToast('삭제 실패: '+err.message, true); }
     });
   }
+  mountComments(document.getElementById('commentsContainer'), board, post.id);
 }
 
-async function renderWrite(app, id){
+async function renderWrite(app, board, id){
+  board = board==='alumni' ? 'alumni' : 'research';
   if(!getUser() && !isAdminMode()){
     app.innerHTML = pageShell('write-page', requireLoginHtml('글을 작성하려면 로그인이 필요합니다.'));
     bindRequireLoginEvents(app);
     return;
   }
+  if(!id && !canPostBoard(board)){
+    app.innerHTML = pageShell('write-page', errorHtml(boardLabel(board)+'에 새 글을 작성할 권한이 없는 등급입니다.'));
+    return;
+  }
   let post = {title:'', content:'', author:null};
   if(id){
     app.innerHTML = pageShell('write-page', loadingHtml());
-    try{ post = await callApi('getPost', {id}); }
+    try{ post = await callApi('getPost', {board, id}); }
     catch(err){ app.innerHTML = pageShell('write-page', errorHtml(err.message)); return; }
     if(getUser() && norm(post.author)!==norm(getUser().name) && !isAdminMode()){
       app.innerHTML = pageShell('write-page', errorHtml('본인 글만 수정할 수 있습니다.'));
@@ -928,12 +1172,12 @@ async function renderWrite(app, id){
     }
   }
   app.innerHTML = pageShell('write-page', `
-    <h1 class="page-title">${id ? '탐구 일지 수정' : '탐구 일지 작성'}</h1>
+    <h1 class="page-title">${id ? (boardLabel(board)+' 수정') : (boardLabel(board)+' 작성')}</h1>
     <input type="text" id="postTitleInput" class="text-input title-input" placeholder="제목을 입력하세요" value="${esc(post.title)}">
     <div id="editorMount"></div>
     <div class="editor-actions">
       <button type="button" class="btn btn-gold" id="savePostBtn">저장</button>
-      <a href="#/logs" class="btn btn-ghost">취소</a>
+      <a href="#/${board==='alumni'?'alumni':'logs'}" class="btn btn-ghost">취소</a>
     </div>
   `);
   const editor = mountEditor(post.content);
@@ -943,11 +1187,11 @@ async function renderWrite(app, id){
     if(!title){ showToast('제목을 입력해주세요.', true); return; }
     const content = editor.getContent();
     try{
-      const params = Object.assign({title, content}, getAuthParams());
+      const params = Object.assign({title, content, board}, getAuthParams());
       if(id) params.id = id;
       const res = await callApi('savePost', params);
-      location.hash = '#/post/'+res.id;
-      renderPostDetail(document.getElementById('app'), res.id);
+      location.hash = '#/post/'+board+'/'+res.id;
+      renderPostDetail(document.getElementById('app'), board, res.id);
     }catch(err){ showToast('저장 실패: '+err.message, true); }
   });
 }
@@ -1002,7 +1246,7 @@ async function openPendingModal(){
     const list = res.list || [];
     box.innerHTML = list.length ? list.map(m=>`
       <div class="pending-item">
-        <div><strong>${esc(m.name)}</strong> · ${esc(m.dept)}<span class="pending-date">${esc(m.date)}</span></div>
+        <div><strong>${esc(m.name)}</strong> · ${esc(m.dept)}<span class="grade-tag">${esc(m.grade||'일반회원')}</span><span class="pending-date">${esc(m.date)}</span></div>
         <div class="pending-actions">
           <button type="button" class="btn btn-gold btn-sm" data-approve="${esc(m.name)}">승인</button>
           <button type="button" class="btn btn-danger btn-sm" data-reject="${esc(m.name)}">거절</button>
@@ -1063,13 +1307,21 @@ function initStars(){
 document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click', ()=>closeModal(btn.dataset.close)));
 document.querySelectorAll('.modal-overlay').forEach(overlay=>overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.classList.add('hidden'); }));
 
+initLocationSearch(
+  document.getElementById('photoLocation'),
+  document.getElementById('locationSuggestions'),
+  document.getElementById('photoLat'),
+  document.getElementById('photoLng'),
+  document.getElementById('locationCoordHint')
+);
+
 document.getElementById('loginForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const name = document.getElementById('loginName').value.trim();
   const pw = document.getElementById('loginPw').value;
   try{
     const res = await callApi('login', {name, pw});
-    setUser({name:res.name, dept:res.dept, pw});
+    setUser({name:res.name, dept:res.dept, grade:res.grade, pw});
     closeModal('loginModal');
     e.target.reset();
     refreshHeader();
@@ -1083,11 +1335,12 @@ document.getElementById('signupForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const name = document.getElementById('signupName').value.trim();
   const dept = document.getElementById('signupDept').value.trim();
+  const grade = document.getElementById('signupGrade').value;
   const pw = document.getElementById('signupPw').value;
   const pw2 = document.getElementById('signupPw2').value;
   if(pw!==pw2){ showToast('비밀번호가 일치하지 않습니다.', true); return; }
   try{
-    await callApi('signup', {name, dept, pw});
+    await callApi('signup', {name, dept, grade, pw});
     closeModal('signupModal');
     e.target.reset();
     showToast('가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.');
@@ -1119,6 +1372,8 @@ document.getElementById('photoForm').addEventListener('submit', async (e)=>{
       category: document.getElementById('photoCategory').value,
       shotAt: document.getElementById('photoShotAt').value.trim(),
       location: document.getElementById('photoLocation').value.trim(),
+      lat: document.getElementById('photoLat').value,
+      lng: document.getElementById('photoLng').value,
       equipment: document.getElementById('photoEquipment').value.trim(),
       desc: document.getElementById('photoDesc').value.trim()
     }, getAuthParams());
