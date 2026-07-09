@@ -362,13 +362,16 @@ footer{position:relative;z-index:5;text-align:center;padding:26px;color:var(--te
     <h2>회원가입</h2>
     <form id="signupForm">
       <label>이름<input type="text" id="signupName" required></label>
-      <label>부서<input type="text" id="signupDept" placeholder="예: 관측팀" required></label>
+      <label>부서<input type="text" id="signupDept" placeholder="예: 관측부, 촬영부, 홍보부, 편집부, 연구부" required></label>
       <label>등급
         <select id="signupGrade">
           <option value="재학생">코스모스 회원 (재학생)</option>
           <option value="졸업생">코스모스 회원 (졸업생)</option>
           <option value="일반회원">일반 회원</option>
         </select>
+      </label>
+      <label id="signupCohortLabel">기수
+        <input type="number" id="signupCohort" min="0" step="any" inputmode="decimal" placeholder="예: 3 또는 1.5">
       </label>
       <label>비밀번호<input type="password" id="signupPw" required></label>
       <label>비밀번호 확인<input type="password" id="signupPw2" required></label>
@@ -584,7 +587,12 @@ function getAuthParams(){
 function userGrade(){
   if(isAdminMode()) return 'admin';
   const u = getUser();
+  if(u && u.grade==='관리자') return 'admin';
   return u ? u.grade : null;
+}
+// 비밀번호 관리자 모드이거나, 회원 등급이 '관리자'로 설정된 계정으로 로그인한 경우 — 전체 관리자 권한 UI 노출용
+function isFullAdmin(){
+  return isAdminMode() || !!(getUser() && getUser().grade==='관리자');
 }
 // 서버 canPostBoard()와 동일한 규칙 — 버튼 노출용. 실제 권한은 서버가 다시 검증한다.
 function canPostBoard(board){
@@ -752,7 +760,7 @@ async function mountComments(container, targetType, targetId){
   reload();
 }
 function commentItemHtml(c){
-  const canDelete = (getUser() && norm(getUser().name)===norm(c.author)) || isAdminMode();
+  const canDelete = (getUser() && norm(getUser().name)===norm(c.author)) || isFullAdmin();
   const replies = (c.replies||[]).map(r=>commentItemHtml(r)).join('');
   return `
     <div class="comment-item" data-id="${c.id}">
@@ -854,6 +862,7 @@ async function renderHome(app){
         <a href="#/about" class="hero-nav-card"><span class="hero-nav-icon">🔭</span><span>동아리 소개</span></a>
         <a href="#/gallery" class="hero-nav-card"><span class="hero-nav-icon">🌌</span><span>천체사진 갤러리</span></a>
         <a href="#/logs" class="hero-nav-card"><span class="hero-nav-icon">📖</span><span>탐구 일지</span></a>
+        <a href="#/alumni" class="hero-nav-card"><span class="hero-nav-icon">🎓</span><span>졸업생 게시판</span></a>
       </div>
     </section>
     <section class="home-section">
@@ -864,6 +873,10 @@ async function renderHome(app){
       <div class="home-section-head"><h2>최근 탐구 일지</h2><a href="#/logs">더보기 →</a></div>
       <div id="homePosts" class="post-list-preview">${loadingHtml()}</div>
     </section>
+    <section class="home-section">
+      <div class="home-section-head"><h2>최근 졸업생 게시판</h2><a href="#/alumni">더보기 →</a></div>
+      <div id="homeAlumni" class="post-list-preview">${loadingHtml()}</div>
+    </section>
   `;
   try{
     const g = await callApi('listGallery', {});
@@ -873,11 +886,17 @@ async function renderHome(app){
   try{
     const p = await callApi('listPosts', {board:'research'});
     const list = (p.list||[]).slice(0,3);
-    document.getElementById('homePosts').innerHTML = list.length ? list.map(postPreviewHtml).join('') : '<div class="empty-state">등록된 글이 없습니다.</div>';
+    document.getElementById('homePosts').innerHTML = list.length ? list.map(p=>postPreviewHtml(p,'research')).join('') : '<div class="empty-state">등록된 글이 없습니다.</div>';
   }catch(e){ document.getElementById('homePosts').innerHTML = errorHtml(e.message); }
+  try{
+    const a = await callApi('listPosts', {board:'alumni'});
+    const list = (a.list||[]).slice(0,3);
+    document.getElementById('homeAlumni').innerHTML = list.length ? list.map(p=>postPreviewHtml(p,'alumni')).join('') : '<div class="empty-state">등록된 글이 없습니다.</div>';
+  }catch(e){ document.getElementById('homeAlumni').innerHTML = errorHtml(e.message); }
 }
-function postPreviewHtml(p){
-  return `<a href="#/post/research/${p.id}" class="post-preview-item">
+function postPreviewHtml(p, board){
+  board = board || 'research';
+  return `<a href="#/post/${board}/${p.id}" class="post-preview-item">
     <div class="post-preview-title">${esc(p.title)}</div>
     <div class="post-preview-meta">${esc(p.author)} · ${esc(p.createdAt)}</div>
   </a>`;
@@ -891,7 +910,7 @@ async function renderAbout(app){
   catch(err){ app.innerHTML = pageShell('about-page', errorHtml(err.message)); return; }
   app.innerHTML = pageShell('about-page', `
     <h1 class="page-title">동아리 소개</h1>
-    ${isAdminMode() ? '<div class="admin-toolbar"><button type="button" class="btn btn-ghost" id="editAboutBtn">수정</button></div>' : ''}
+    ${isFullAdmin() ? '<div class="admin-toolbar"><button type="button" class="btn btn-ghost" id="editAboutBtn">수정</button></div>' : ''}
     <div id="aboutContent" class="about-content">${sanitizeHtml(intro.content)}</div>
   `);
   const editBtn = document.getElementById('editAboutBtn');
@@ -1032,7 +1051,7 @@ async function renderPhotoDetail(app, id){
   let photo;
   try{ photo = await callApi('getPhoto', {id}); }
   catch(err){ app.innerHTML = pageShell('photo-page', errorHtml(err.message)); return; }
-  const canEdit = (getUser() && norm(getUser().name)===norm(photo.author)) || isAdminMode();
+  const canEdit = (getUser() && norm(getUser().name)===norm(photo.author)) || isFullAdmin();
   app.innerHTML = pageShell('photo-page', `
     <div class="photo-detail">
       <div class="photo-detail-img"><img src="${photo.full}" alt="${esc(photo.title)}"></div>
@@ -1124,7 +1143,7 @@ async function renderPostDetail(app, board, id){
   let post;
   try{ post = await callApi('getPost', {board, id}); }
   catch(err){ app.innerHTML = pageShell('post-page', errorHtml(err.message)); return; }
-  const canEdit = (getUser() && norm(getUser().name)===norm(post.author)) || isAdminMode();
+  const canEdit = (getUser() && norm(getUser().name)===norm(post.author)) || isFullAdmin();
   app.innerHTML = pageShell('post-page', `
     <div class="post-detail">
       <h1 class="page-title">${esc(post.title)}</h1>
@@ -1166,7 +1185,7 @@ async function renderWrite(app, board, id){
     app.innerHTML = pageShell('write-page', loadingHtml());
     try{ post = await callApi('getPost', {board, id}); }
     catch(err){ app.innerHTML = pageShell('write-page', errorHtml(err.message)); return; }
-    if(getUser() && norm(post.author)!==norm(getUser().name) && !isAdminMode()){
+    if(getUser() && norm(post.author)!==norm(getUser().name) && !isFullAdmin()){
       app.innerHTML = pageShell('write-page', errorHtml('본인 글만 수정할 수 있습니다.'));
       return;
     }
@@ -1200,12 +1219,13 @@ async function renderWrite(app, board, id){
 async function refreshHeader(){
   const user = getUser();
   const admin = isAdminMode();
+  const fullAdmin = isFullAdmin();
   const authBox = document.getElementById('authBox');
   let html = '';
-  if(admin){
-    html += `<span class="admin-badge">관리자 모드</span>
-             <button type="button" class="btn btn-ghost btn-sm" id="pendingBtn">가입 승인<span id="pendingCount" class="badge-count hidden">0</span></button>
-             <button type="button" class="btn btn-ghost btn-sm" id="adminExitBtn">관리자 종료</button>`;
+  if(fullAdmin){
+    html += `<span class="admin-badge">관리자${admin?' 모드':''}</span>
+             <button type="button" class="btn btn-ghost btn-sm" id="pendingBtn">가입 승인<span id="pendingCount" class="badge-count hidden">0</span></button>`;
+    if(admin) html += `<button type="button" class="btn btn-ghost btn-sm" id="adminExitBtn">관리자 종료</button>`;
   }
   if(user){
     html += `<span class="user-badge">${esc(user.name)}님</span>
@@ -1227,7 +1247,7 @@ async function refreshHeader(){
   bind('adminExitBtn', ()=>{ clearAdmin(); refreshHeader(); router(); showToast('관리자 모드를 종료했습니다.'); });
   bind('pendingBtn', ()=>openPendingModal());
 
-  if(admin){
+  if(fullAdmin){
     try{
       const res = await callApi('listPending', getAuthParams());
       const count = (res.list||[]).length;
@@ -1246,7 +1266,7 @@ async function openPendingModal(){
     const list = res.list || [];
     box.innerHTML = list.length ? list.map(m=>`
       <div class="pending-item">
-        <div><strong>${esc(m.name)}</strong> · ${esc(m.dept)}<span class="grade-tag">${esc(m.grade||'일반회원')}</span><span class="pending-date">${esc(m.date)}</span></div>
+        <div><strong>${esc(m.name)}</strong> · ${esc(m.dept)}<span class="grade-tag">${esc(m.grade||'일반회원')}${m.cohort?' '+esc(m.cohort)+'기':''}</span><span class="pending-date">${esc(m.date)}</span></div>
         <div class="pending-actions">
           <button type="button" class="btn btn-gold btn-sm" data-approve="${esc(m.name)}">승인</button>
           <button type="button" class="btn btn-danger btn-sm" data-reject="${esc(m.name)}">거절</button>
@@ -1254,12 +1274,12 @@ async function openPendingModal(){
       </div>
     `).join('') : '<div class="empty-state">대기 중인 가입 신청이 없습니다.</div>';
     box.querySelectorAll('[data-approve]').forEach(btn=>btn.addEventListener('click', async ()=>{
-      try{ await callApi('approveMember', Object.assign({name:btn.dataset.approve}, getAuthParams())); openPendingModal(); refreshHeader(); showToast('승인되었습니다.'); }
+      try{ await callApi('approveMember', Object.assign({targetName:btn.dataset.approve}, getAuthParams())); openPendingModal(); refreshHeader(); showToast('승인되었습니다.'); }
       catch(err){ showToast(err.message, true); }
     }));
     box.querySelectorAll('[data-reject]').forEach(btn=>btn.addEventListener('click', async ()=>{
       if(!confirm('가입 신청을 거절하시겠습니까?')) return;
-      try{ await callApi('rejectMember', Object.assign({name:btn.dataset.reject}, getAuthParams())); openPendingModal(); refreshHeader(); }
+      try{ await callApi('rejectMember', Object.assign({targetName:btn.dataset.reject}, getAuthParams())); openPendingModal(); refreshHeader(); }
       catch(err){ showToast(err.message, true); }
     }));
   }catch(err){ box.innerHTML = errorHtml(err.message); }
@@ -1321,7 +1341,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e)=>{
   const pw = document.getElementById('loginPw').value;
   try{
     const res = await callApi('login', {name, pw});
-    setUser({name:res.name, dept:res.dept, grade:res.grade, pw});
+    setUser({name:res.name, dept:res.dept, grade:res.grade, cohort:res.cohort, pw});
     closeModal('loginModal');
     e.target.reset();
     refreshHeader();
@@ -1331,6 +1351,14 @@ document.getElementById('loginForm').addEventListener('submit', async (e)=>{
 });
 document.getElementById('gotoSignup').addEventListener('click', (e)=>{ e.preventDefault(); closeModal('loginModal'); openModal('signupModal'); });
 
+function updateSignupCohortVisibility(){
+  const grade = document.getElementById('signupGrade').value;
+  const show = grade==='재학생' || grade==='졸업생';
+  document.getElementById('signupCohortLabel').classList.toggle('hidden', !show);
+}
+document.getElementById('signupGrade').addEventListener('change', updateSignupCohortVisibility);
+updateSignupCohortVisibility();
+
 document.getElementById('signupForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const name = document.getElementById('signupName').value.trim();
@@ -1339,10 +1367,17 @@ document.getElementById('signupForm').addEventListener('submit', async (e)=>{
   const pw = document.getElementById('signupPw').value;
   const pw2 = document.getElementById('signupPw2').value;
   if(pw!==pw2){ showToast('비밀번호가 일치하지 않습니다.', true); return; }
+  let cohort = '';
+  if(grade==='재학생' || grade==='졸업생'){
+    cohort = document.getElementById('signupCohort').value.trim();
+    const num = Number(cohort);
+    if(!cohort || !isFinite(num) || num<0){ showToast('기수는 0 이상의 숫자로 입력해주세요.', true); return; }
+  }
   try{
-    await callApi('signup', {name, dept, grade, pw});
+    await callApi('signup', {name, dept, grade, cohort, pw});
     closeModal('signupModal');
     e.target.reset();
+    updateSignupCohortVisibility();
     showToast('가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.');
   }catch(err){ showToast(err.message, true); }
 });
