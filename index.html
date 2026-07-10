@@ -1374,6 +1374,7 @@ async function renderEquipmentDetail(app, id){
           ${subLine ? `<dt>세부 분류</dt><dd>${esc(subLine)}</dd>` : ''}
           ${mountLine ? `<dt>가대 종류</dt><dd>${esc(mountLine)}</dd>` : ''}
           <dt>제작 회사</dt><dd>${esc(eq.maker||'-')}</dd>
+          ${eq.affiliation ? `<dt>소속</dt><dd>${esc(eq.affiliation)}</dd>` : ''}
           <dt>작성자</dt><dd>${esc(eq.author)}</dd>
           <dt>등록일</dt><dd>${esc(eq.createdAt)}</dd>
         </dl>
@@ -1410,7 +1411,7 @@ async function renderEquipmentWrite(app, id){
     app.innerHTML = pageShell('write-page', errorHtml('장비 자랑은 재학생·졸업생·관리자만 작성할 수 있습니다.'));
     return;
   }
-  let eq = {title:'', model:'', kind:'', kindOther:'', subKind:'', subKindOther:'', mount:'', mountOther:'', maker:'', desc:'', images:[], author:null};
+  let eq = {title:'', model:'', kind:'', kindOther:'', subKind:'', subKindOther:'', mount:'', mountOther:'', maker:'', affiliation:'', desc:'', images:[], author:null};
   if(id){
     app.innerHTML = pageShell('write-page', loadingHtml());
     try{ eq = await callApi('getEquipment', {id}); }
@@ -1457,6 +1458,13 @@ async function renderEquipmentWrite(app, id){
         </div>
       </div>
       <label>제작 회사<input type="text" id="eqMaker" class="text-input" value="${esc(eq.maker)}"></label>
+      <label>소속
+        <select id="eqAffiliation" class="select-input">
+          <option value="">선택 안 함</option>
+          <option value="학교">학교</option>
+          <option value="개인">개인</option>
+        </select>
+      </label>
       <label>장비 설명</label>
       <div id="eqDescMount"></div>
       <label>사진 첨부 (여러 장 가능)<input type="file" id="eqPhotos" accept="image/*" multiple></label>
@@ -1496,6 +1504,7 @@ async function renderEquipmentWrite(app, id){
   mountSel.addEventListener('change', ()=>{
     document.getElementById('eqMountOtherWrap').classList.toggle('hidden', mountSel.value!=='기타');
   });
+  document.getElementById('eqAffiliation').value = eq.affiliation || '';
 
   let eqNewFiles = [];
   let eqKeptExisting = (eq.images||[]).map(img=>img.fileId);
@@ -1552,6 +1561,7 @@ async function renderEquipmentWrite(app, id){
         mount: mountSel.value,
         mountOther: document.getElementById('eqMountOther').value.trim(),
         maker: document.getElementById('eqMaker').value.trim(),
+        affiliation: document.getElementById('eqAffiliation').value,
         desc: descEditor.getContent(),
         images: JSON.stringify(images)
       }, getAuthParams());
