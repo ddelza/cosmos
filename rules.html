@@ -76,29 +76,12 @@
 
   h1,h2,h3{ font-family:"Hahmlet", "Noto Serif KR", serif; text-wrap:balance; letter-spacing:-0.01em; }
 
-  .hero{
-    position:relative;
-    padding:40px 32px 34px;
-    border-radius:20px;
-    background:
-      radial-gradient(1.2px 1.2px at 12% 22%, var(--accent) 60%, transparent 61%),
-      radial-gradient(1px 1px at 78% 16%, var(--accent) 60%, transparent 61%),
-      radial-gradient(1.4px 1.4px at 88% 62%, var(--text-soft) 60%, transparent 61%),
-      radial-gradient(1px 1px at 34% 78%, var(--text-soft) 60%, transparent 61%),
-      radial-gradient(1.2px 1.2px at 60% 40%, var(--accent) 55%, transparent 56%),
-      linear-gradient(160deg, var(--surface), var(--surface-2));
-    border:1px solid var(--line);
-    box-shadow:var(--shadow);
-    overflow:hidden;
-  }
   .eyebrow{
     display:inline-flex; align-items:center; gap:8px;
     font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
     color:var(--accent-strong);
   }
   .eyebrow::before{ content:""; width:16px; height:1px; background:var(--accent-strong); display:inline-block; }
-  .hero h1{ font-size:clamp(28px,4.4vw,38px); margin:12px 0 10px; font-weight:600; }
-  .hero p{ color:var(--text-soft); max-width:62ch; margin:0; font-size:15px; }
 
   section{ margin-top:56px; }
   .section-head{ margin-bottom:22px; }
@@ -236,12 +219,6 @@
 </div>
 
 <div class="wrap">
-
-  <div class="hero">
-    <span class="eyebrow">천체부 OT 요약</span>
-    <h1>못 온 사람도 놓치지 않게</h1>
-    <p>오늘 OT 내용을 정리한 사전학습 자료입니다. 아래 규칙을 먼저 읽고, 맨 아래 자가 테스트로 얼마나 기억하는지 확인해보세요.</p>
-  </div>
 
   <section id="study">
     <div class="section-head">
