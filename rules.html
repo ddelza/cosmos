@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>천체부 규칙</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@400;500;600;700&family=Gothic+A1:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --bg:#EEF0F6;
+    --surface:#FFFFFF;
+    --surface-2:#E4E7F1;
+    --text:#1E2340;
+    --text-soft:#565C7E;
+    --accent:#B8722E;
+    --accent-strong:#8F5A22;
+    --accent-soft:#EADFC8;
+    --good:#2F7A4F;
+    --good-soft:#DEEEE2;
+    --bad:#B3403A;
+    --bad-soft:#F5DEDC;
+    --line:#D3D7E6;
+    --shadow: 0 1px 2px rgba(30,35,64,.06), 0 8px 24px -12px rgba(30,35,64,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#10142A;
+      --surface:#181D3A;
+      --surface-2:#212752;
+      --text:#E8E9F3;
+      --text-soft:#A6ACD1;
+      --accent:#E3A857;
+      --accent-strong:#F2C27E;
+      --accent-soft:#3A3220;
+      --good:#6FBF8B;
+      --good-soft:#1D3527;
+      --bad:#E28A82;
+      --bad-soft:#3B2224;
+      --line:#2C3260;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10142A;
+    --surface:#181D3A;
+    --surface-2:#212752;
+    --text:#E8E9F3;
+    --text-soft:#A6ACD1;
+    --accent:#E3A857;
+    --accent-strong:#F2C27E;
+    --accent-soft:#3A3220;
+    --good:#6FBF8B;
+    --good-soft:#1D3527;
+    --bad:#E28A82;
+    --bad-soft:#3B2224;
+    --line:#2C3260;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{ background:var(--bg); }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Gothic A1", "Apple SD Gothic Neo", sans-serif;
+    line-height:1.6;
+  }
+  ::selection{ background:var(--accent-soft); }
+
+  .topbar{ max-width:920px; margin:0 auto; padding:20px 20px 0; }
+  .back-link{ display:inline-flex; align-items:center; gap:6px; color:var(--text-soft); font-size:13px; text-decoration:none; font-weight:600; }
+  .back-link:hover{ color:var(--accent-strong); }
+
+  .wrap{ max-width:920px; margin:0 auto; padding:20px 20px 96px; }
+
+  h1,h2,h3{ font-family:"Hahmlet", "Noto Serif KR", serif; text-wrap:balance; letter-spacing:-0.01em; }
+
+  .hero{
+    position:relative;
+    padding:40px 32px 34px;
+    border-radius:20px;
+    background:
+      radial-gradient(1.2px 1.2px at 12% 22%, var(--accent) 60%, transparent 61%),
+      radial-gradient(1px 1px at 78% 16%, var(--accent) 60%, transparent 61%),
+      radial-gradient(1.4px 1.4px at 88% 62%, var(--text-soft) 60%, transparent 61%),
+      radial-gradient(1px 1px at 34% 78%, var(--text-soft) 60%, transparent 61%),
+      radial-gradient(1.2px 1.2px at 60% 40%, var(--accent) 55%, transparent 56%),
+      linear-gradient(160deg, var(--surface), var(--surface-2));
+    border:1px solid var(--line);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent-strong);
+  }
+  .eyebrow::before{ content:""; width:16px; height:1px; background:var(--accent-strong); display:inline-block; }
+  .hero h1{ font-size:clamp(28px,4.4vw,38px); margin:12px 0 10px; font-weight:600; }
+  .hero p{ color:var(--text-soft); max-width:62ch; margin:0; font-size:15px; }
+
+  section{ margin-top:56px; }
+  .section-head{ margin-bottom:22px; }
+  .section-head h2{ font-size:24px; font-weight:600; margin:6px 0 6px; }
+  .section-head .sub{ color:var(--text-soft); font-size:14px; margin:0; }
+
+  .cards{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:720px){ .cards{ grid-template-columns:1fr; } }
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:16px;
+    padding:22px 22px 20px; box-shadow:var(--shadow);
+  }
+  .card.wide{ grid-column:1 / -1; }
+  .card-num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:30px; height:30px; border-radius:9px;
+    background:var(--accent-soft); color:var(--accent-strong);
+    font-family:"Hahmlet",serif; font-weight:600; font-size:14px;
+    font-variant-numeric:tabular-nums;
+  }
+  .card h3{ font-size:17px; font-weight:600; margin:12px 0 14px; }
+  .card ol{ margin:0; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:11px; }
+  .card ol li{
+    display:grid; grid-template-columns:22px 1fr; gap:10px; font-size:14.5px; color:var(--text);
+  }
+  .card ol li::before{
+    counter-increment:item;
+    content:counter(item);
+    font-family:"Hahmlet",serif; font-size:12.5px; color:var(--text-soft);
+    padding-top:1px;
+  }
+  .card ol{ counter-reset:item; }
+  .mark{ background:var(--accent-soft); color:var(--accent-strong); padding:0 4px; border-radius:4px; font-weight:700; }
+
+  .roles{
+    display:flex; flex-wrap:wrap; gap:10px; margin-top:16px;
+  }
+  .role{
+    display:flex; align-items:baseline; gap:8px;
+    background:var(--surface-2); border:1px solid var(--line);
+    padding:9px 14px; border-radius:999px; font-size:13.5px;
+  }
+  .role b{ color:var(--accent-strong); font-weight:700; }
+
+  /* quiz */
+  .progress-bar{
+    position:sticky; top:0; z-index:5;
+    background:var(--bg); padding:10px 0 14px;
+    border-bottom:1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .progress-track{ height:6px; border-radius:999px; background:var(--surface-2); overflow:hidden; }
+  .progress-fill{ height:100%; width:0%; background:var(--accent); transition:width .25s ease; }
+  .progress-label{ font-size:12px; color:var(--text-soft); margin-top:6px; display:flex; justify-content:space-between; }
+
+  .qgroup{ margin-top:30px; }
+  .qgroup-title{
+    display:inline-block; font-size:12px; font-weight:700; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--accent-strong);
+    background:var(--accent-soft); padding:5px 10px; border-radius:7px; margin-bottom:14px;
+  }
+  .q{
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px 20px; margin-bottom:14px; box-shadow:var(--shadow);
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .q .qtext{ font-size:15px; font-weight:600; margin:0 0 14px; display:flex; gap:10px; }
+  .q .qtext .qn{ color:var(--text-soft); font-family:"Hahmlet",serif; font-weight:500; }
+  .options{ display:flex; flex-direction:column; gap:8px; }
+  .opt{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 12px; border-radius:10px; border:1px solid var(--line);
+    cursor:pointer; font-size:14px; background:var(--surface);
+  }
+  .opt:hover{ border-color:var(--accent); }
+  .opt input{ accent-color:var(--accent); width:15px; height:15px; flex-shrink:0; }
+  .fillin input[type=text]{
+    width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line);
+    background:var(--surface); color:var(--text); font-size:14px; font-family:inherit;
+  }
+  .fillin input[type=text]:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  textarea{
+    width:100%; min-height:78px; padding:10px 12px; border-radius:10px; border:1px solid var(--line);
+    background:var(--surface); color:var(--text); font-size:14px; font-family:inherit; resize:vertical;
+  }
+  textarea:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+
+  .feedback{ display:none; margin-top:12px; padding:11px 13px; border-radius:10px; font-size:13.5px; }
+  .feedback .verdict{ font-weight:700; margin-bottom:3px; }
+  .q.correct{ border-color:var(--good); }
+  .q.correct .feedback{ display:block; background:var(--good-soft); color:var(--good); }
+  .q.wrong{ border-color:var(--bad); }
+  .q.wrong .feedback{ display:block; background:var(--bad-soft); color:var(--bad); }
+  .q.wrong .feedback .verdict{ color:var(--bad); }
+  .q.correct .feedback .verdict{ color:var(--good); }
+  .q.revealed .feedback{ display:block; background:var(--surface-2); color:var(--text); }
+  .feedback .ans{ color:var(--text); font-weight:600; }
+
+  .selfcheck{ margin-top:12px; display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-soft); }
+  .selfcheck input{ accent-color:var(--accent); width:15px; height:15px; }
+
+  .grade-bar{
+    position:sticky; bottom:16px; display:flex; justify-content:center; margin-top:34px;
+  }
+  button.grade{
+    background:var(--accent); color:#fff; border:none; cursor:pointer;
+    padding:14px 30px; border-radius:999px; font-size:15px; font-weight:700;
+    font-family:inherit; box-shadow:var(--shadow);
+  }
+  button.grade:hover{ background:var(--accent-strong); }
+  button.grade:focus-visible{ outline:2px solid var(--text); outline-offset:3px; }
+
+  .result{
+    display:none; margin-top:26px; padding:26px; border-radius:16px;
+    background:var(--surface); border:1px solid var(--line); text-align:center; box-shadow:var(--shadow);
+  }
+  .result.show{ display:block; }
+  .result .score{ font-family:"Hahmlet",serif; font-size:44px; font-weight:700; color:var(--accent-strong); font-variant-numeric:tabular-nums; }
+  .result .score span{ font-size:20px; color:var(--text-soft); }
+  .result p{ color:var(--text-soft); font-size:13.5px; margin:8px 0 0; }
+
+  footer{ margin-top:60px; text-align:center; color:var(--text-soft); font-size:12.5px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html#/" class="back-link">← Cosmos 홈으로</a>
+</div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">천체부 OT 요약</span>
+    <h1>못 온 사람도 놓치지 않게</h1>
+    <p>오늘 OT 내용을 정리한 사전학습 자료입니다. 아래 규칙을 먼저 읽고, 맨 아래 자가 테스트로 얼마나 기억하는지 확인해보세요.</p>
+  </div>
+
+  <section id="study">
+    <div class="section-head">
+      <span class="eyebrow">학습자료</span>
+      <h2>천체부 규칙 정리</h2>
+      <p class="sub">OT에서 안내된 세 가지 규칙과 부서 구성입니다.</p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <span class="card-num">01</span>
+        <h3>천체부 안전 수칙</h3>
+        <ol>
+          <li><span>과자나 라면을 먹었다면 자신이 만든 쓰레기는 꼭 치우기</span></li>
+          <li><span><span class="mark">중요</span> 선생님 말씀 잘 듣기</span></li>
+          <li><span>선생님, 차장, 부장의 중요한 말이 나올 때는 떠들지 않고 경청하기</span></li>
+          <li><span>문이 잠겨 있을 때는 단톡방에 문 열어달라고 요청하기</span></li>
+          <li><span>학년 차이가 있다면 존중하는 말 사용하기</span></li>
+          <li><span>마음대로 돌아다니지 않기 (단독행동 금지)</span></li>
+          <li><span>심한 장난, 뛰기 금지 — 어두운 길이나 과학실 안에서는 조심히 이동하기</span></li>
+          <li><span>관측 때 옥상에서 강한 빛의 화면(밝기 최소로)과 플래시 절대 금지 — 관측 방해</span></li>
+          <li><span>망원경 관측 중 앞을 지나가거나 멋대로 만지는 등 방해하지 않기</span></li>
+          <li><span><span class="mark">중요</span> 무조건 보호자 허락 받고 오기 — 선생님이 곤란해질 수 있음</span></li>
+          <li><span>무엇을 먹든 사용하든 책임지기</span></li>
+          <li><span>통금과 버스 시간 잘 지키기 (활동 중간에 먼저 가는 건 괜찮음)</span></li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <span class="card-num">02</span>
+        <h3>라면 &amp; 음식물 뒷정리</h3>
+        <ol>
+          <li><span><span class="mark">중요</span> 남은 국물은 싱크대에 버리지 않고 한 층 내려가 화장실 변기에 버리기</span></li>
+          <li><span>설거지할 때 썼던 통 중 하나를 깨끗이 씻어 물과 세제를 희석시킨 뒤 수세미를 넣었다 빼서 설거지하기</span></li>
+          <li><span><span class="mark">중요</span> 기름 묻은 도구는 휴지로 먼저 닦고 설거지하기</span></li>
+        </ol>
+      </div>
+
+      <div class="card wide">
+        <span class="card-num">03</span>
+        <h3>과학실 이동 경로</h3>
+        <ol>
+          <li><span>도서관 현관 정문으로 입장 (열려있지 않으면 단톡방에 알리기)</span></li>
+          <li><span>계단으로 올라가 2층 구름다리를 통해 이동하기</span></li>
+        </ol>
+        <div class="roles">
+          <span class="role">부장 <b>백서후</b></span>
+          <span class="role">차장 <b>이하리</b></span>
+          <span class="role">주방장 <b>안예찬</b></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="quiz">
+    <div class="section-head">
+      <span class="eyebrow">자가 테스트</span>
+      <h2>제대로 기억했는지 확인하기</h2>
+      <p class="sub">OX·객관식·빈칸은 채점 시 자동으로 정답이 표시되고, 서술형은 모범답안과 비교해 스스로 체크하세요.</p>
+    </div>
+
+    <div class="progress-bar">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label"><span id="progressText">0 / 16문항 응답</span><span>16문항</span></div>
+    </div>
+
+    <form id="quizForm">
+
+      <div class="qgroup">
+        <span class="qgroup-title">OX 퀴즈</span>
+
+        <div class="q" data-type="choice" data-answer="X">
+          <p class="qtext"><span class="qn">1.</span> 라면을 먹은 후 남은 국물은 싱크대에 버려도 된다.</p>
+          <div class="options">
+            <label class="opt"><input type="radio" name="q1" value="O"> O (맞다)</label>
+            <label class="opt"><input type="radio" name="q1" value="X"> X (틀리다)</label>
+          </div>
+          <div class="feedback"><div class="verdict"></div>정답: <span class="ans">X</span> — 국물은 싱크대가 아니라 한 층 내려가 화장실 변기에 버려야 합니다.</div>
+        </div>
+
+        <div class="q" data-type="choice" data-answer="X">
+          <p class="qtext"><span class="qn">2.</span> 과학실 문이 잠겨 있으면 조용히 기다리다가 아무나 열어줄 때까지 기다리면 된다.</p>
+          <div class="options">
+            <label class="opt"><input type="radio" name="q2" value="O"> O (맞다)</label>
+            <label class="opt"><input type="radio" name="q2" value="X"> X (틀리다)</label>
+          </div>
+          <div class="feedback"><div class="verdict"></div>정답: <span class="ans">X</span> — 단톡방에 문을 열어달라고 요청해야 합니다.</div>
+        </div>
+
+        <div class="q" data-type="choice" data-answer="O">
+          <p class="qtext"><span class="qn">3.</span> 학년 차이가 나는 선후배 사이에도 서로 존중하는 말을 써야 한다.</p>
+          <div class="options">
+            <label class="opt"><input type="radio" name="q3" value="O"> O (맞다)</label>
+            <label class="opt"><input type="radio" name="q3" value="X"> X (틀리다)</label>
+          </div>
+          <div class="feedback"><div class="verdict"></div>정답: <span class="ans">O</span> — 학년 차이가 있다면 존중하는 말을 사용해야 합니다.</div>
+        </div>
+
+        <div class="q" data-type="choice" data-answer="X">
+          <p class="qtext"><span class="qn">4.</span> 보호자 허락을 받지 않아도 본인이 알아서 판단해 참여할 수 있다.</p>
+          <div class="options">
+            <label class="opt"><input type="radio" name="q4" value="O"> O (맞다)</label>
+            <label class="opt"><input type="radio" name="q4" value="X"> X (틀리다)</label>
+          </div>
+          <div class="feedback"><div class="verdict"></div>정답: <span class="ans">X</span> — 무조건 보호자 허락을 받고 와야 합니다. 그러지 않으면 선생님이 곤란해질 수 있습니다.</div>
+        </div>
+
+        <div class="q" data-type="choice" data-answer="X">
+          <p class="qtext"><span class="qn">5.</span> 버스 시간에 늦게 가도 상관없지만, 활동 중간에 먼저 집에 가는 것은 안 된다.</p>
+          <div class="options">
+            <label class="opt"><input type="radio" name="q5" value="O"> O (맞다)</label>
+            <label class="opt"><input type="radio" name="q5" value="X"> X (틀리다)</label>
+          </div>
+          <div class="feedback"><div class="verdict"></div>정답: <span class="ans">X</span> — 반대입니다. 통금과 버스 시간은 꼭 지켜야 하고, 오히려 중간에 먼저 가는 것은 괜찮습니다.</div>
+        </div>
+      </div>
+
+      <div class="qgroup">
+        <span class="qgroup-title">객관식</span>
+
+        <div class="q" data-type="choice" data-answer="C">
+          <p class="qtext"><span class="qn">6.</span> 관측 중 옥상에서 절대 해서는 안 되는 행동은?</p>
+          <div class="options">
+            <label class="opt"><input type="radio" name="q6" value="A"> A. 조용히 순서 기다리기</label>
+            <label class="opt"><input type="radio" name="q6" value="B"> B. 화면 밝기를 최소로 낮추기</label>
+            <label class="opt"><input type="radio" name="q6" value="C"> C. 강한 빛의 화면이나 플래시 사용하기</label>
+            <label class="opt"><input type="radio" name="q6" value="D"> D. 선생님 말씀 경청하기</label>
+          </div>
+          <div class="feedback"><div class="verdict"></div>정답: <span class="ans">C</span> — 강한 빛의 화면과 플래시는 관측을 방해하므로 절대 금지입니다.</div>
+        </div>
+
+        <div class="q" data-type="choice" data-answer="B">
+          <p class="qtext"><span class="qn">7.</span> 기름이 묻은 조리도구를 설거지하기 전, 먼저 해야 할 일은?</p>
+          <div class="options">
+            <label class="opt"><input type="radio" name="q7" value="A"> A. 그냥 물로만 헹군다</label>
+            <label class="opt"><input type="radio" name="q7" value="B"> B. 휴지로 먼저 닦는다</label>
+            <label class="opt"><input type="radio" name="q7" value="C"> C. 세제 없이 씻는다</label>
+            <label class="opt"><input type="radio" name="q7" value="D"> D. 다음 사람에게 맡긴다</label>
+          </div>
+          <div class="feedback"><div class="verdict"></div>정답: <span class="ans">B</span> — 기름 묻은 도구는 휴지로 먼저 닦고 설거지해야 합니다.</div>
+        </div>
+
+        <div class="q" data-type="choice" data-answer="C">
+          <p class="qtext"><span class="qn">8.</span> 다음 중 천체부 부장은 누구인가요?</p>
+          <div class="options">
+            <label class="opt"><input type="radio" name="q8" value="A"> A. 이하리</label>
+            <label class="opt"><input type="radio" name="q8" value="B"> B. 안예찬</label>
+            <label class="opt"><input type="radio" name="q8" value="C"> C. 백서후</label>
+            <label class="opt"><input type="radio" name="q8" value="D"> D. 정해지지 않았다</label>
+          </div>
+          <div class="feedback"><div class="verdict"></div>정답: <span class="ans">C. 백서후</span> — 차장은 이하리, 주방장은 안예찬입니다.</div>
+        </div>
+
+        <div class="q" data-type="choice" data-answer="B">
+          <p class="qtext"><span class="qn">9.</span> 설거지할 때 통을 이용하는 올바른 방법은?</p>
+          <div class="options">
+            <label class="opt"><input type="radio" name="q9" value="A"> A. 통을 씻지 않고 바로 세제만 푼다</label>
+            <label class="opt"><input type="radio" name="q9" value="B"> B. 썼던 통 중 하나를 깨끗이 씻어 물과 세제를 희석시킨 뒤 수세미를 넣었다 빼서 설거지한다</label>
+            <label class="opt"><input type="radio" name="q9" value="C"> C. 수세미 없이 손으로만 씻는다</label>
+            <label class="opt"><input type="radio" name="q9" value="D"> D. 흐르는 물에만 헹군다</label>
+          </div>
+          <div class="feedback"><div class="verdict"></div>정답: <span class="ans">B</span></div>
+        </div>
+      </div>
+
+      <div class="qgroup">
+        <span class="qgroup-title">빈칸 채우기</span>
+
+        <div class="q fillin" data-type="text" data-answer="단톡">
+          <p class="qtext"><span class="qn">10.</span> 문이 잠겨 있을 때는 ______ 에 문을 열어달라고 요청한다.</p>
+          <input type="text" name="q10" placeholder="답을 입력하세요">
+          <div class="feedback"><div class="verdict"></div>정답: <span class="ans">단톡(단체 카톡방)</span></div>
+        </div>
+
+        <div class="q fillin" data-type="text" data-answer="도서관">
+          <p class="qtext"><span class="qn">11.</span> 과학실로 갈 때는 ______ 현관 정문으로 입장한다.</p>
+          <input type="text" name="q11" placeholder="답을 입력하세요">
+          <div class="feedback"><div class="verdict"></div>정답: <span class="ans">도서관</span></div>
+        </div>
+
+        <div class="q fillin" data-type="text" data-answer="구름다리">
+          <p class="qtext"><span class="qn">12.</span> 계단으로 올라가 2층 ______ 를 통해 과학실로 이동한다.</p>
+          <input type="text" name="q12" placeholder="답을 입력하세요">
+          <div class="feedback"><div class="verdict"></div>정답: <span class="ans">구름다리</span></div>
+        </div>
+
+        <div class="q fillin" data-type="text" data-answer="이하리">
+          <p class="qtext"><span class="qn">13.</span> 천체부의 차장은 ______ 이다.</p>
+          <input type="text" name="q13" placeholder="답을 입력하세요">
+          <div class="feedback"><div class="verdict"></div>정답: <span class="ans">이하리</span></div>
+        </div>
+      </div>
+
+      <div class="qgroup">
+        <span class="qgroup-title">서술형 · 상황형 (자가 채점)</span>
+
+        <div class="q selfgrade" data-type="self">
+          <p class="qtext"><span class="qn">14.</span> 활동 중 화장실에 가려고 보니 과학실 문이 잠겨 있었다. 규칙에 따라 어떻게 행동해야 할까?</p>
+          <textarea name="q14" placeholder="답을 적어보세요"></textarea>
+          <div class="feedback"><div class="verdict">모범답안</div>마음대로 문을 열려 하거나 혼자 다른 곳으로 이동하지 않고, 단톡방에 문을 열어달라고 요청한다.</div>
+          <label class="selfcheck"><input type="checkbox" class="selfcheckbox"> 내 답이 핵심 내용을 포함했다</label>
+        </div>
+
+        <div class="q selfgrade" data-type="self">
+          <p class="qtext"><span class="qn">15.</span> 라면을 다 먹고 나서 지켜야 할 뒷정리 순서를 두 가지 이상 설명하시오.</p>
+          <textarea name="q15" placeholder="답을 적어보세요"></textarea>
+          <div class="feedback"><div class="verdict">모범답안</div>① 남은 국물은 싱크대가 아니라 한 층 내려가 화장실 변기에 버린다. ② 썼던 통 하나를 깨끗이 씻어 물과 세제를 희석한 뒤 수세미를 넣었다 빼서 설거지한다. ③ 기름 묻은 도구는 휴지로 먼저 닦고 설거지한다.</div>
+          <label class="selfcheck"><input type="checkbox" class="selfcheckbox"> 내 답이 핵심 내용을 포함했다</label>
+        </div>
+
+        <div class="q selfgrade" data-type="self">
+          <p class="qtext"><span class="qn">16.</span> 천체부 활동에 참여하기 전, 반드시 해야 할 일은 무엇인가?</p>
+          <textarea name="q16" placeholder="답을 적어보세요"></textarea>
+          <div class="feedback"><div class="verdict">모범답안</div>보호자(부모님)의 허락을 반드시 받아야 한다. 허락 없이 참여하면 선생님이 곤란해질 수 있다.</div>
+          <label class="selfcheck"><input type="checkbox" class="selfcheckbox"> 내 답이 핵심 내용을 포함했다</label>
+        </div>
+      </div>
+
+      <div class="grade-bar">
+        <button type="submit" class="grade" id="gradeBtn">채점하기</button>
+      </div>
+    </form>
+
+    <div class="result" id="result">
+      <div class="score" id="scoreText">0<span> / 13</span></div>
+      <p>자동채점 점수 (OX·객관식·빈칸 13문항 기준)</p>
+      <p id="selfCheckText"></p>
+    </div>
+  </section>
+
+  <footer>천체부 OT 사전학습 자료 · 오늘 나온 내용을 바탕으로 정리했습니다</footer>
+</div>
+
+<script>
+  const form = document.getElementById('quizForm');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const TOTAL = 16;
+
+  function countAnswered(){
+    let n = 0;
+    form.querySelectorAll('.q').forEach(q=>{
+      const type = q.dataset.type;
+      if(type === 'choice'){
+        if(q.querySelector('input[type=radio]:checked')) n++;
+      } else if(type === 'text'){
+        const inp = q.querySelector('input[type=text]');
+        if(inp && inp.value.trim() !== '') n++;
+      } else if(type === 'self'){
+        const ta = q.querySelector('textarea');
+        if(ta && ta.value.trim() !== '') n++;
+      }
+    });
+    return n;
+  }
+
+  function updateProgress(){
+    const n = countAnswered();
+    progressFill.style.width = (n / TOTAL * 100) + '%';
+    progressText.textContent = n + ' / ' + TOTAL + '문항 응답';
+  }
+  form.addEventListener('input', updateProgress);
+  updateProgress();
+
+  function normalize(s){
+    return (s || '').toString().trim().toLowerCase().replace(/\s+/g, '');
+  }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    let correct = 0;
+    let autoTotal = 0;
+
+    form.querySelectorAll('.q').forEach(q=>{
+      const type = q.dataset.type;
+      q.classList.remove('correct','wrong','revealed');
+
+      if(type === 'choice'){
+        autoTotal++;
+        const checked = q.querySelector('input[type=radio]:checked');
+        const isCorrect = checked && checked.value === q.dataset.answer;
+        q.classList.add(isCorrect ? 'correct' : 'wrong');
+        q.querySelector('.verdict').textContent = isCorrect ? '정답입니다' : '오답입니다';
+        if(isCorrect) correct++;
+      } else if(type === 'text'){
+        autoTotal++;
+        const inp = q.querySelector('input[type=text]');
+        const given = normalize(inp.value);
+        const answer = normalize(q.dataset.answer);
+        const isCorrect = given !== '' && (given === answer || given.includes(answer) || answer.includes(given));
+        q.classList.add(isCorrect ? 'correct' : 'wrong');
+        q.querySelector('.verdict').textContent = isCorrect ? '정답입니다' : '오답입니다';
+        if(isCorrect) correct++;
+      } else if(type === 'self'){
+        q.classList.add('revealed');
+      }
+    });
+
+    document.getElementById('scoreText').innerHTML = correct + '<span> / ' + autoTotal + '</span>';
+
+    let selfChecked = 0;
+    const selfBoxes = form.querySelectorAll('.selfcheckbox');
+    selfBoxes.forEach(cb=>{ if(cb.checked) selfChecked++; });
+    document.getElementById('selfCheckText').textContent =
+      '서술형 자가 점검: ' + selfChecked + ' / ' + selfBoxes.length + '개 체크됨 (모범답안과 비교 후 직접 표시하세요)';
+
+    document.getElementById('result').classList.add('show');
+    document.getElementById('result').scrollIntoView({behavior:'smooth', block:'center'});
+  });
+
+  form.querySelectorAll('.selfcheckbox').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      let selfChecked = 0;
+      const selfBoxes = form.querySelectorAll('.selfcheckbox');
+      selfBoxes.forEach(c=>{ if(c.checked) selfChecked++; });
+      if(document.getElementById('result').classList.contains('show')){
+        document.getElementById('selfCheckText').textContent =
+          '서술형 자가 점검: ' + selfChecked + ' / ' + selfBoxes.length + '개 체크됨 (모범답안과 비교 후 직접 표시하세요)';
+      }
+    });
+  });
+</script>
+</body>
+</html>

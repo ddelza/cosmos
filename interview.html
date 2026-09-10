@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>천체부 면접 평가표</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@400;500;600;700&family=Gothic+A1:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --bg:#EEF0F6; --surface:#FFFFFF; --surface-2:#E4E7F1;
+    --text:#1E2340; --text-soft:#565C7E;
+    --accent:#B8722E; --accent-strong:#8F5A22; --accent-soft:#EADFC8;
+    --gold:#C99A3E; --gold-soft:#F3E7C8;
+    --silver:#8891AC; --silver-soft:#E3E5EF;
+    --bronze:#B07A55; --bronze-soft:#EFE0D2;
+    --good:#2F7A4F; --good-soft:#DEEEE2;
+    --bad:#B3403A; --bad-soft:#F5DEDC;
+    --line:#D3D7E6; --filled:#DCE3F4;
+    --shadow: 0 1px 2px rgba(30,35,64,.06), 0 8px 24px -12px rgba(30,35,64,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#10142A; --surface:#181D3A; --surface-2:#212752;
+      --text:#E8E9F3; --text-soft:#A6ACD1;
+      --accent:#E3A857; --accent-strong:#F2C27E; --accent-soft:#3A3220;
+      --gold:#E3C169; --gold-soft:#3E351B;
+      --silver:#B7BEDB; --silver-soft:#262C4E;
+      --bronze:#CB9B78; --bronze-soft:#38271B;
+      --good:#6FBF8B; --good-soft:#1D3527;
+      --bad:#E28A82; --bad-soft:#3B2224;
+      --line:#2C3260; --filled:#293064;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10142A; --surface:#181D3A; --surface-2:#212752;
+    --text:#E8E9F3; --text-soft:#A6ACD1;
+    --accent:#E3A857; --accent-strong:#F2C27E; --accent-soft:#3A3220;
+    --gold:#E3C169; --gold-soft:#3E351B;
+    --silver:#B7BEDB; --silver-soft:#262C4E;
+    --bronze:#CB9B78; --bronze-soft:#38271B;
+    --good:#6FBF8B; --good-soft:#1D3527;
+    --bad:#E28A82; --bad-soft:#3B2224;
+    --line:#2C3260; --filled:#293064;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ background:var(--bg); }
+  body{ margin:0; color:var(--text); font-family:"Gothic A1","Apple SD Gothic Neo",sans-serif; line-height:1.55; }
+  .wrap{ max-width:1100px; margin:0 auto; padding:28px 18px 100px; }
+  h1,h2,h3{ font-family:"Hahmlet","Noto Serif KR",serif; text-wrap:balance; letter-spacing:-0.01em; }
+  [hidden]{ display:none !important; }
+
+  .hero{ padding:24px 26px 20px; border-radius:18px; background:linear-gradient(160deg,var(--surface),var(--surface-2)); border:1px solid var(--line); box-shadow:var(--shadow); display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:16px; }
+  .hero-text{ flex:1; min-width:240px; }
+  .eyebrow{ display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-strong); }
+  .eyebrow::before{ content:""; width:16px; height:1px; background:var(--accent-strong); display:inline-block; }
+  .hero h1{ font-size:clamp(20px,3.4vw,28px); margin:10px 0 6px; font-weight:600; }
+  .hero p{ color:var(--text-soft); font-size:13px; margin:0; max-width:60ch; }
+  .hero-actions{ display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+  .round-pill{ font-size:12px; font-weight:700; color:var(--text-soft); background:var(--surface-2); padding:6px 12px; border-radius:999px; white-space:nowrap; }
+
+  button{ font-family:inherit; cursor:pointer; }
+  .btn{ border:1px solid var(--line); background:var(--surface); color:var(--text); padding:9px 16px; border-radius:999px; font-size:13px; font-weight:600; }
+  .btn:hover{ border-color:var(--accent); color:var(--accent-strong); }
+  .btn.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn.primary:hover{ background:var(--accent-strong); border-color:var(--accent-strong); color:#fff; }
+  .btn.ghost{ background:none; }
+  .btn.danger:hover{ border-color:var(--bad); color:var(--bad); }
+  .btn.small{ padding:6px 12px; font-size:12px; }
+
+  section{ margin-top:32px; }
+  .section-head{ margin-bottom:14px; display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .section-head h2{ font-size:18px; font-weight:600; margin:4px 0 4px; }
+  .section-head .sub{ color:var(--text-soft); font-size:13px; margin:0; }
+
+  /* candidate bar */
+  .candidate-bar{ position:sticky; top:0; z-index:20; margin-top:20px; background:var(--bg); padding:14px 0; border-bottom:1px solid var(--line); }
+  .candidate-toprow{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px; }
+  .candidate-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .cand-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; box-shadow:var(--shadow); }
+  .cand-card.rank-1{ border-color:var(--gold); } .cand-card.rank-2{ border-color:var(--silver); } .cand-card.rank-3{ border-color:var(--bronze); }
+  .cand-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+  .rank-badge{ font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; background:var(--surface-2); color:var(--text-soft); }
+  .rank-badge.rank-1{ background:var(--gold-soft); color:var(--gold); } .rank-badge.rank-2{ background:var(--silver-soft); color:var(--silver); } .rank-badge.rank-3{ background:var(--bronze-soft); color:var(--bronze); }
+  .cand-card input.name{ width:100%; border:none; background:transparent; font-family:"Hahmlet",serif; font-size:16px; font-weight:600; color:var(--text); padding:2px 0; border-bottom:1px dashed var(--line); }
+  .cand-card input.name::placeholder{ color:var(--text-soft); font-weight:500; }
+  .cand-card input.name:focus{ outline:none; border-bottom-color:var(--accent); }
+  .cand-total{ display:flex; align-items:baseline; gap:5px; margin-top:8px; font-variant-numeric:tabular-nums; }
+  .cand-total .num{ font-family:"Hahmlet",serif; font-size:26px; font-weight:700; color:var(--accent-strong); }
+  .cand-total .of{ font-size:12px; color:var(--text-soft); }
+
+  .table-scroll{ overflow-x:auto; border-radius:14px; border:1px solid var(--line); box-shadow:var(--shadow); }
+  table{ width:100%; border-collapse:collapse; min-width:720px; background:var(--surface); }
+  thead th{ text-align:left; font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-soft); background:var(--surface-2); padding:10px 14px; border-bottom:1px solid var(--line); }
+  thead th.cand-col{ text-align:center; width:130px; }
+  tbody td{ padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:top; font-size:14px; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:nth-child(even){ background:color-mix(in srgb, var(--surface-2) 35%, transparent); }
+  .qcell .qnum{ font-family:"Hahmlet",serif; color:var(--text-soft); font-weight:600; margin-right:6px; }
+  .qcell .cat-tag{ display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:var(--accent-strong); background:var(--accent-soft); padding:2px 8px; border-radius:999px; margin-top:8px; }
+  .qcell details{ margin-top:8px; }
+  .qcell summary{ cursor:pointer; font-size:12px; color:var(--text-soft); }
+  .qcell summary:hover{ color:var(--accent-strong); }
+  .qcell details ol{ margin:8px 0 0; padding-left:18px; font-size:13px; color:var(--text-soft); display:flex; flex-direction:column; gap:5px; }
+  td.score-cell{ text-align:center; }
+  input.score{ width:64px; text-align:center; padding:8px 6px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--text); font-family:"Gothic A1",sans-serif; font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; }
+  input.score:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  input.score.filled{ background:var(--filled); border-color:var(--accent); }
+  .max-hint{ display:block; font-size:11px; color:var(--text-soft); margin-top:4px; }
+  tfoot td{ padding:12px 14px; font-weight:700; background:var(--surface-2); }
+  tfoot .foot-total{ font-family:"Hahmlet",serif; font-size:16px; color:var(--accent-strong); text-align:center; font-variant-numeric:tabular-nums; }
+  .summary-table td, .summary-table th{ text-align:center; }
+  .summary-table th.label-col, .summary-table td.label-col{ text-align:left; }
+  .summary-table td.best{ color:var(--accent-strong); font-weight:800; }
+  .summary-table tfoot .foot-total{ font-size:18px; }
+
+  /* stats */
+  .stat-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+  @media (max-width:720px){ .stat-cards{ grid-template-columns:repeat(2,1fr); } }
+  .stat-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px 16px; box-shadow:var(--shadow); }
+  .stat-card .label{ font-size:11.5px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+  .stat-card .value{ font-family:"Hahmlet",serif; font-size:24px; font-weight:700; margin-top:4px; color:var(--text); font-variant-numeric:tabular-nums; }
+  .stat-card .value small{ font-size:12px; color:var(--text-soft); font-family:"Gothic A1",sans-serif; font-weight:600; }
+
+  .stats-toolbar{ display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
+  .stats-table td, .stats-table th{ text-align:left; }
+  .stats-table td.num-col, .stats-table th.num-col{ text-align:center; font-variant-numeric:tabular-nums; }
+  .stats-table .rank-cell{ font-family:"Hahmlet",serif; font-weight:700; color:var(--text-soft); }
+  .stats-table .total-cell{ font-weight:800; color:var(--accent-strong); }
+  .breakdown-row td{ background:var(--surface-2); padding:10px 14px 14px; }
+  .breakdown-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px; }
+  .breakdown-item{ background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:6px 10px; font-size:12px; }
+  .breakdown-item b{ display:block; font-family:"Hahmlet",serif; font-size:14px; color:var(--accent-strong); }
+  .row-actions{ display:flex; gap:6px; justify-content:center; }
+  .empty-note{ padding:20px; text-align:center; color:var(--text-soft); font-size:13px; }
+
+  /* edit mode */
+  .edit-warn{ font-size:12px; padding:8px 12px; border-radius:9px; background:var(--good-soft); color:var(--good); display:inline-block; font-weight:700; }
+  .edit-warn.off{ background:var(--bad-soft); color:var(--bad); }
+  .edit-cat-row{ display:grid; grid-template-columns:1fr 90px; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); }
+  .edit-cat-row:last-child{ border-bottom:none; }
+  .edit-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 18px; margin-bottom:12px; box-shadow:var(--shadow); }
+  .edit-card .row1{ display:flex; gap:10px; align-items:flex-start; margin-bottom:8px; flex-wrap:wrap; }
+  .edit-card textarea.qtext-edit{ flex:1; min-width:220px; min-height:56px; padding:8px 10px; border-radius:9px; border:1px solid var(--line); background:var(--bg); color:var(--text); font-family:inherit; font-size:13.5px; resize:vertical; }
+  .edit-card .meta-col{ display:flex; flex-direction:column; gap:6px; width:150px; }
+  .edit-card label.small-label{ font-size:11px; color:var(--text-soft); font-weight:700; }
+  .edit-card select, .edit-card input.max-edit{ padding:7px 8px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--text); font-family:inherit; font-size:13px; }
+  .edit-card textarea.opt-edit{ width:100%; min-height:50px; padding:8px 10px; border-radius:9px; border:1px dashed var(--line); background:var(--bg); color:var(--text); font-family:inherit; font-size:12.5px; margin-top:8px; }
+  .edit-card .opt-label{ font-size:11px; color:var(--text-soft); margin-top:4px; display:block; }
+  .edit-actions{ display:flex; gap:10px; justify-content:center; margin-top:24px; flex-wrap:wrap; }
+
+  input, textarea, select{ outline-offset:2px; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible{ outline:2px solid var(--accent); }
+
+  footer{ margin-top:50px; text-align:center; color:var(--text-soft); font-size:12px; }
+
+  @media (max-width:640px){
+    .candidate-grid{ grid-template-columns:1fr; }
+    .candidate-bar{ position:static; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="hero-text">
+      <span class="eyebrow">천체부 신입 부원 면접</span>
+      <h1>면접 평가표</h1>
+      <p>3명씩 채점하고 저장하면 다음 3명으로 넘어갑니다. 모든 기록은 이 기기(브라우저)에 저장되며, 면접자별 통계에서 한눈에 볼 수 있습니다.</p>
+    </div>
+    <div class="hero-actions">
+      <span class="round-pill" id="roundPill">1번째 그룹</span>
+      <button class="btn" id="editToggleBtn" type="button">✎ 수정모드</button>
+    </div>
+  </div>
+
+  <!-- EDIT MODE VIEW -->
+  <div id="editView" hidden>
+    <section style="margin-top:24px;">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">설정</span>
+          <h2>평가요소 (카테고리) 배점</h2>
+          <p class="sub">각 평가요소의 이름과 배점을 수정할 수 있습니다.</p>
+        </div>
+        <span class="edit-warn" id="sumWarn">합계 100점</span>
+      </div>
+      <div class="edit-card" id="catEditList"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">설정</span>
+          <h2>질문별 문항</h2>
+          <p class="sub">질문 내용, 배점, 연결된 평가요소, 선택지(택1 항목)를 수정할 수 있습니다. 문항 추가·삭제는 지원하지 않습니다.</p>
+        </div>
+      </div>
+      <div id="questionEditList"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">설정</span>
+          <h2>질문에 딸리지 않은 종합 평가 항목</h2>
+          <p class="sub">면접 전체 태도를 보고 매기는 항목입니다.</p>
+        </div>
+      </div>
+      <div id="overallEditList"></div>
+    </section>
+
+    <div class="edit-actions">
+      <button class="btn danger" id="resetDefaultBtn" type="button">기본값으로 초기화</button>
+      <button class="btn ghost" id="cancelEditBtn" type="button">취소</button>
+      <button class="btn primary" id="applyEditBtn" type="button">적용하고 채점화면으로</button>
+    </div>
+  </div>
+
+  <!-- SCORING VIEW -->
+  <div id="scoringView">
+    <div class="candidate-bar">
+      <div class="candidate-toprow">
+        <div style="display:flex; gap:8px;">
+          <button class="btn small" id="clearBatchBtn" type="button">이번 3명 초기화</button>
+        </div>
+        <button class="btn primary" id="saveAdvanceBtn" type="button">저장하고 다음 3명 →</button>
+      </div>
+      <div class="candidate-grid" id="candidateBar"></div>
+    </div>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">질문별 채점</span>
+          <h2>면접 질문 (순서대로 진행)</h2>
+          <p class="sub">각 질문 옆 배점 범위 안에서 점수를 입력하세요.</p>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table id="questionTable">
+          <thead><tr><th>질문</th><th class="cand-col">면접자 1</th><th class="cand-col">면접자 2</th><th class="cand-col">면접자 3</th></tr></thead>
+          <tbody id="questionBody"></tbody>
+          <tfoot><tr><td id="qfootLabel">질문 합계</td><td class="foot-total" id="qfoot-0">0</td><td class="foot-total" id="qfoot-1">0</td><td class="foot-total" id="qfoot-2">0</td></tr></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">종합 평가</span>
+          <h2>질문에 딸리지 않은 항목</h2>
+          <p class="sub">특정 질문이 아니라 면접 전체 태도를 보고 매기는 항목입니다.</p>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table id="overallTable">
+          <thead><tr><th>평가 항목</th><th class="cand-col">면접자 1</th><th class="cand-col">면접자 2</th><th class="cand-col">면접자 3</th></tr></thead>
+          <tbody id="overallBody"></tbody>
+          <tfoot><tr><td id="ofootLabel">종합 합계</td><td class="foot-total" id="ofoot-0">0</td><td class="foot-total" id="ofoot-1">0</td><td class="foot-total" id="ofoot-2">0</td></tr></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">요약</span>
+          <h2>이번 3명 — 평가요소별 총점</h2>
+          <p class="sub">각 항목 최고점은 강조 표시됩니다.</p>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table class="summary-table" id="summaryTable">
+          <thead><tr><th class="label-col">평가요소</th><th class="cand-col">면접자 1</th><th class="cand-col">면접자 2</th><th class="cand-col">면접자 3</th></tr></thead>
+          <tbody id="summaryBody"></tbody>
+          <tfoot><tr><td class="label-col" id="tfootLabel">총점</td><td class="foot-total" id="sfoot-0">0</td><td class="foot-total" id="sfoot-1">0</td><td class="foot-total" id="sfoot-2">0</td></tr></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">누적 기록</span>
+          <h2>면접자별 통계</h2>
+          <p class="sub">저장된 모든 면접자를 한눈에 볼 수 있습니다.</p>
+        </div>
+        <div class="stats-toolbar">
+          <button class="btn small" id="sortByScoreBtn" type="button">총점순</button>
+          <button class="btn small" id="sortByRoundBtn" type="button">면접순</button>
+          <button class="btn small" id="exportCsvBtn" type="button">CSV 내보내기</button>
+          <button class="btn small danger" id="clearAllBtn" type="button">전체 기록 삭제</button>
+        </div>
+      </div>
+
+      <div class="stat-cards">
+        <div class="stat-card"><div class="label">총 면접 인원</div><div class="value" id="statCount">0<small> 명</small></div></div>
+        <div class="stat-card"><div class="label">평균 총점</div><div class="value" id="statAvg">–</div></div>
+        <div class="stat-card"><div class="label">최고점</div><div class="value" id="statMax">–</div></div>
+        <div class="stat-card"><div class="label">최저점</div><div class="value" id="statMin">–</div></div>
+      </div>
+
+      <div class="table-scroll">
+        <table class="stats-table">
+          <thead><tr><th class="num-col">순위</th><th>이름</th><th class="num-col">회차</th><th class="num-col">총점</th><th class="num-col">상세</th><th class="num-col">관리</th></tr></thead>
+          <tbody id="statsBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <footer>천체부 신입 부원 면접 평가표 · 입력 내용은 이 기기에만 저장됩니다</footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var STORAGE = {
+    config: 'cosmos-interview-config-v1',
+    batch: 'cosmos-interview-batch-v1',
+    records: 'cosmos-interview-records-v1',
+    round: 'cosmos-interview-round-v1'
+  };
+
+  var DEFAULT_CONFIG = {
+    categories: [
+      { id:'coop', label:'협동, 성실', max:20 },
+      { id:'safety', label:'안전, 책임', max:15 },
+      { id:'interest', label:'관심도', max:20 },
+      { id:'goal', label:'목표의 방향', max:15 },
+      { id:'diligence', label:'충실성', max:10 },
+      { id:'grit', label:'과제집착력', max:10 },
+      { id:'effort', label:'답변성실도', max:5 },
+      { id:'knowledge', label:'이해도', max:5 }
+    ],
+    questions: [
+      { id:'q1', num:1, text:'천체부를 왜 하고 싶으신가요?', cat:'goal', max:15, options:[] },
+      { id:'q2', num:2, text:'삶에서 무언가에 몰입해본 경험이 있나요?', cat:'grit', max:10, options:[] },
+      { id:'q3', num:3, text:'협동, 성실 — 아래 중 하나를 골라 질문', cat:'coop', max:20, options:[
+        '문제가 발생했을 때 어떤 방법으로 문제를 해결하고 조율할 것인가',
+        '다른 공동체에서 활동한 경험과 깨달음',
+        '단체 생활에서 본인의 행동으로 어떤 결과를 만들어본 경험이 있나요? (긍정/부정 모두 가능)',
+        '본인이 협동을 주도해본 경험을 이야기해주세요. 모둠 활동에서 혼자 의견이 다르면 어떻게 해결했는가?',
+        '팀원들이 책임감이 없어서 발생하는 문제는 어떤 방법으로 해결하고 조율하실 것인가'
+      ] },
+      { id:'q4', num:4, text:'본인의 밤하늘 관찰 경험 혹은 앞으로 할 수 있을 천체 활동 하나를 고르고, 어떤 경험·무엇을 느낄 수 있는지, 삶이나 미래 천체부 활동에 어떤 영향을 미칠 수 있는지', cat:'interest', max:10, options:[] },
+      { id:'q5', num:5, text:'천체관측회에서 내가 할 수 있는 역할은 무엇일까요?', cat:'interest', max:10, options:[] },
+      { id:'q6', num:6, text:'천체부 규칙 암기 후 쪽지시험 응시', cat:'safety', max:15, options:[] },
+      { id:'q7', num:7, text:'천체부에 합격하면 어떻게 활동할지 각오를 말씀해주세요', cat:'diligence', max:5, options:[] }
+    ],
+    overall: [
+      { id:'o1', text:'교사·선배의 지시를 따르는 태도 (충실성 추가분)', cat:'diligence', max:5 },
+      { id:'o2', text:'답변성실도 — 답변 길이가 너무 짧으면 감점', cat:'effort', max:5 },
+      { id:'o3', text:'이해도 — 천체 관련 사전지식이 드러나면 가산점', cat:'knowledge', max:5 }
+    ]
+  };
+
+  function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+  function escapeHTML(s){
+    return (s == null ? '' : String(s)).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+  function clamp(val, max){ if(isNaN(val)) return 0; return Math.max(0, Math.min(max, val)); }
+
+  function loadJSON(key, fallback){
+    try{ var v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; }
+    catch(e){ return fallback; }
+  }
+  function saveJSON(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+
+  var CONFIG = loadJSON(STORAGE.config, deepClone(DEFAULT_CONFIG));
+  var draftConfig = null;
+  var editMode = false;
+
+  var currentRound = loadJSON(STORAGE.round, 1);
+  var batch = loadJSON(STORAGE.batch, { names:['','',''], scores:{} });
+  if(!batch.names) batch.names = ['','',''];
+  if(!batch.scores) batch.scores = {};
+
+  var records = loadJSON(STORAGE.records, []);
+
+  var sortMode = 'score'; // 'score' | 'round'
+
+  // ---------- element refs ----------
+  var el = {
+    editView: document.getElementById('editView'),
+    scoringView: document.getElementById('scoringView'),
+    editToggleBtn: document.getElementById('editToggleBtn'),
+    roundPill: document.getElementById('roundPill'),
+    candidateBar: document.getElementById('candidateBar'),
+    questionBody: document.getElementById('questionBody'),
+    overallBody: document.getElementById('overallBody'),
+    summaryBody: document.getElementById('summaryBody'),
+    catEditList: document.getElementById('catEditList'),
+    questionEditList: document.getElementById('questionEditList'),
+    overallEditList: document.getElementById('overallEditList'),
+    sumWarn: document.getElementById('sumWarn'),
+    statsBody: document.getElementById('statsBody'),
+    statCount: document.getElementById('statCount'),
+    statAvg: document.getElementById('statAvg'),
+    statMax: document.getElementById('statMax'),
+    statMin: document.getElementById('statMin')
+  };
+
+  // ================= SCORING VIEW =================
+
+  function allRows(cfg){ return cfg.questions.concat(cfg.overall); }
+
+  function buildScoreRowHTML(r, isQuestion){
+    var optionsHTML = (r.options && r.options.length)
+      ? '<details><summary>택1 보기 항목 (' + r.options.length + '개)</summary><ol>' +
+        r.options.map(function(o){ return '<li>' + escapeHTML(o) + '</li>'; }).join('') + '</ol></details>'
+      : '';
+    var numHTML = isQuestion ? '<span class="qnum">' + r.num + '.</span>' : '';
+    var cat = CONFIG.categories.find(function(c){ return c.id === r.cat; });
+    var catLabel = cat ? cat.label : r.cat;
+    var scoreCells = [0,1,2].map(function(ci){
+      return '<td class="score-cell">' +
+        '<input type="number" class="score" min="0" max="' + r.max + '" step="1" data-row="' + r.id + '" data-cand="' + ci + '" data-max="' + r.max + '" placeholder="0">' +
+        '<span class="max-hint">/ ' + r.max + '</span></td>';
+    }).join('');
+    return '<tr><td class="qcell">' + numHTML + escapeHTML(r.text) + optionsHTML +
+      '<span class="cat-tag">' + escapeHTML(catLabel) + ' · ' + r.max + '점</span></td>' + scoreCells + '</tr>';
+  }
+
+  function renderScoringTables(){
+    el.questionBody.innerHTML = CONFIG.questions.map(function(r){ return buildScoreRowHTML(r, true); }).join('');
+    el.overallBody.innerHTML = CONFIG.overall.map(function(r){ return buildScoreRowHTML(r, false); }).join('');
+    var qMax = CONFIG.questions.reduce(function(s,r){ return s+r.max; }, 0);
+    var oMax = CONFIG.overall.reduce(function(s,r){ return s+r.max; }, 0);
+    document.getElementById('qfootLabel').textContent = '질문 합계 (' + qMax + '점)';
+    document.getElementById('ofootLabel').textContent = '종합 합계 (' + oMax + '점)';
+    document.getElementById('tfootLabel').textContent = '총점 (' + (qMax+oMax) + '점)';
+
+    el.summaryBody.innerHTML = CONFIG.categories.map(function(c){
+      return '<tr><td class="label-col">' + escapeHTML(c.label) + ' <span class="max-hint" style="display:inline">(' + c.max + '점)</span></td>' +
+        '<td data-summary="' + c.id + '" data-cand="0">0</td>' +
+        '<td data-summary="' + c.id + '" data-cand="1">0</td>' +
+        '<td data-summary="' + c.id + '" data-cand="2">0</td></tr>';
+    }).join('');
+
+    applyBatchToInputs();
+  }
+
+  function renderCandidateBar(){
+    el.candidateBar.innerHTML = [0,1,2].map(function(ci){
+      return '<div class="cand-card" id="cand-card-' + ci + '">' +
+        '<div class="cand-top"><input class="name" type="text" placeholder="면접자 ' + (ci+1) + ' 이름" data-name="' + ci + '"><span class="rank-badge" id="rank-' + ci + '"></span></div>' +
+        '<div class="cand-total"><span class="num" id="total-' + ci + '">0</span><span class="of">/ ' + totalMax() + '</span></div></div>';
+    }).join('');
+    [0,1,2].forEach(function(ci){
+      document.querySelector('[data-name="' + ci + '"]').value = batch.names[ci] || '';
+    });
+  }
+
+  function totalMax(){ return CONFIG.categories.reduce(function(s,c){ return s+c.max; }, 0); }
+
+  function applyBatchToInputs(){
+    Array.prototype.forEach.call(document.querySelectorAll('input.score'), function(inp){
+      var key = inp.dataset.row + '-' + inp.dataset.cand;
+      inp.value = (batch.scores[key] !== undefined) ? batch.scores[key] : '';
+      inp.classList.toggle('filled', inp.value !== '');
+    });
+  }
+
+  function scoreInputs(){ return Array.prototype.slice.call(document.querySelectorAll('input.score')); }
+  function nameInputs(){ return Array.prototype.slice.call(document.querySelectorAll('input.name')); }
+
+  function computeBatchTotals(){
+    var catTotals = [{},{},{}];
+    CONFIG.categories.forEach(function(c){ catTotals[0][c.id]=0; catTotals[1][c.id]=0; catTotals[2][c.id]=0; });
+    var rowsById = {};
+    allRows(CONFIG).forEach(function(r){ rowsById[r.id] = r; });
+
+    scoreInputs().forEach(function(inp){
+      var cand = parseInt(inp.dataset.cand, 10);
+      var max = parseFloat(inp.dataset.max);
+      var rowId = inp.dataset.row;
+      var val = inp.value === '' ? 0 : clamp(parseFloat(inp.value), max);
+      inp.classList.toggle('filled', inp.value !== '');
+      var rowDef = rowsById[rowId];
+      if(rowDef) catTotals[cand][rowDef.cat] += val;
+    });
+
+    var grandTotals = [0,1,2].map(function(ci){
+      return CONFIG.categories.reduce(function(s,c){ return s + catTotals[ci][c.id]; }, 0);
+    });
+    return { catTotals: catTotals, grandTotals: grandTotals };
+  }
+
+  function recalcBatchView(){
+    var r = computeBatchTotals();
+    CONFIG.categories.forEach(function(c){
+      var vals = [0,1,2].map(function(ci){ return r.catTotals[ci][c.id]; });
+      var best = Math.max.apply(null, vals);
+      [0,1,2].forEach(function(ci){
+        var cell = document.querySelector('[data-summary="' + c.id + '"][data-cand="' + ci + '"]');
+        if(!cell) return;
+        cell.textContent = vals[ci];
+        cell.classList.toggle('best', best > 0 && vals[ci] === best);
+      });
+    });
+
+    var qMaxIds = CONFIG.questions.map(function(q){ return q.id; });
+    [0,1,2].forEach(function(ci){
+      var qSum = 0, oSum = 0;
+      scoreInputs().forEach(function(inp){
+        if(parseInt(inp.dataset.cand,10) !== ci) return;
+        var v = inp.value === '' ? 0 : clamp(parseFloat(inp.value), parseFloat(inp.dataset.max));
+        if(qMaxIds.indexOf(inp.dataset.row) !== -1) qSum += v; else oSum += v;
+      });
+      document.getElementById('qfoot-' + ci).textContent = qSum;
+      document.getElementById('ofoot-' + ci).textContent = oSum;
+      document.getElementById('sfoot-' + ci).textContent = r.grandTotals[ci];
+      document.getElementById('total-' + ci).textContent = r.grandTotals[ci];
+    });
+
+    var order = [0,1,2].slice().sort(function(a,b){ return r.grandTotals[b] - r.grandTotals[a]; });
+    var ranks = [0,0,0], prevScore = null, prevRank = 0;
+    order.forEach(function(ci, idx){
+      if(r.grandTotals[ci] === prevScore){ ranks[ci] = prevRank; }
+      else { ranks[ci] = idx+1; prevRank = idx+1; prevScore = r.grandTotals[ci]; }
+    });
+    var hasAnyScore = r.grandTotals.some(function(t){ return t>0; });
+    [0,1,2].forEach(function(ci){
+      var card = document.getElementById('cand-card-' + ci);
+      var badge = document.getElementById('rank-' + ci);
+      card.classList.remove('rank-1','rank-2','rank-3');
+      badge.classList.remove('rank-1','rank-2','rank-3');
+      if(hasAnyScore){
+        card.classList.add('rank-' + ranks[ci]);
+        badge.classList.add('rank-' + ranks[ci]);
+        badge.textContent = ranks[ci] + '위';
+      } else { badge.textContent = ''; }
+    });
+
+    return r;
+  }
+
+  function saveBatchState(){
+    batch.names = nameInputs().map(function(i){ return i.value; });
+    batch.scores = {};
+    scoreInputs().forEach(function(inp){ batch.scores[inp.dataset.row + '-' + inp.dataset.cand] = inp.value; });
+    saveJSON(STORAGE.batch, batch);
+  }
+
+  function updateRoundPill(){
+    el.roundPill.textContent = currentRound + '번째 그룹 · 누적 ' + records.length + '명 저장됨';
+  }
+
+  document.addEventListener('input', function(e){
+    if(e.target.matches('input.score') || e.target.matches('input.name')){
+      recalcBatchView();
+      saveBatchState();
+    }
+  });
+
+  document.addEventListener('blur', function(e){
+    if(!e.target.matches('input.score')) return;
+    if(e.target.value === '') return;
+    var max = parseFloat(e.target.dataset.max);
+    e.target.value = clamp(parseFloat(e.target.value), max);
+    recalcBatchView();
+    saveBatchState();
+  }, true);
+
+  document.getElementById('clearBatchBtn').addEventListener('click', function(){
+    if(!confirm('이번 3명의 이름과 점수를 모두 지울까요? (저장되지 않은 내용만 사라집니다)')) return;
+    batch = { names:['','',''], scores:{} };
+    saveJSON(STORAGE.batch, batch);
+    renderCandidateBar();
+    applyBatchToInputs();
+    recalcBatchView();
+  });
+
+  document.getElementById('saveAdvanceBtn').addEventListener('click', function(){
+    var names = nameInputs().map(function(i){ return i.value.trim(); });
+    if(names.every(function(n){ return n===''; })){
+      alert('저장하려면 최소 한 명 이상의 이름을 입력하세요.');
+      return;
+    }
+    var r = computeBatchTotals();
+    var catMaxSnapshot = {};
+    CONFIG.categories.forEach(function(c){ catMaxSnapshot[c.id] = { label:c.label, max:c.max }; });
+
+    [0,1,2].forEach(function(ci){
+      if(!names[ci]) return;
+      var scoresSnap = {};
+      scoreInputs().forEach(function(inp){
+        if(parseInt(inp.dataset.cand,10) !== ci) return;
+        scoresSnap[inp.dataset.row] = inp.value === '' ? 0 : clamp(parseFloat(inp.value), parseFloat(inp.dataset.max));
+      });
+      records.push({
+        id: Date.now() + '-' + ci + '-' + Math.random().toString(36).slice(2,7),
+        round: currentRound,
+        name: names[ci],
+        timestamp: new Date().toISOString(),
+        scores: scoresSnap,
+        catTotals: r.catTotals[ci],
+        catMaxSnapshot: catMaxSnapshot,
+        total: r.grandTotals[ci]
+      });
+    });
+    saveJSON(STORAGE.records, records);
+    currentRound += 1;
+    saveJSON(STORAGE.round, currentRound);
+
+    batch = { names:['','',''], scores:{} };
+    saveJSON(STORAGE.batch, batch);
+    renderCandidateBar();
+    applyBatchToInputs();
+    recalcBatchView();
+    updateRoundPill();
+    renderStats();
+  });
+
+  // ================= STATS =================
+
+  function renderStats(){
+    el.statCount.innerHTML = records.length + '<small> 명</small>';
+    if(records.length === 0){
+      el.statAvg.textContent = '–';
+      el.statMax.textContent = '–';
+      el.statMin.textContent = '–';
+      el.statsBody.innerHTML = '<tr><td colspan="6"><div class="empty-note">아직 저장된 면접자가 없습니다. 3명을 채점한 뒤 "저장하고 다음 3명"을 눌러보세요.</div></td></tr>';
+      return;
+    }
+    var totals = records.map(function(r){ return r.total; });
+    var avg = (totals.reduce(function(a,b){ return a+b; },0) / totals.length);
+    var maxRec = records.reduce(function(a,b){ return b.total>a.total?b:a; });
+    var minRec = records.reduce(function(a,b){ return b.total<a.total?b:a; });
+    el.statAvg.textContent = avg.toFixed(1);
+    el.statMax.innerHTML = maxRec.total + '<small> · ' + escapeHTML(maxRec.name) + '</small>';
+    el.statMin.innerHTML = minRec.total + '<small> · ' + escapeHTML(minRec.name) + '</small>';
+
+    var sorted = records.slice();
+    if(sortMode === 'score') sorted.sort(function(a,b){ return b.total - a.total; });
+    else sorted.sort(function(a,b){ return a.round - b.round || a.timestamp.localeCompare(b.timestamp); });
+
+    el.statsBody.innerHTML = sorted.map(function(rec, idx){
+      var rank = sortMode === 'score' ? (idx+1) : '–';
+      var breakdown = CONFIG.categories.map(function(c){
+        var val = rec.catTotals[c.id] !== undefined ? rec.catTotals[c.id] : 0;
+        var snap = rec.catMaxSnapshot && rec.catMaxSnapshot[c.id];
+        var max = snap ? snap.max : c.max;
+        var label = snap ? snap.label : c.label;
+        return '<div class="breakdown-item"><b>' + val + ' / ' + max + '</b>' + escapeHTML(label) + '</div>';
+      }).join('');
+      return '<tr>' +
+        '<td class="num-col rank-cell">' + rank + '</td>' +
+        '<td>' + escapeHTML(rec.name) + '</td>' +
+        '<td class="num-col">' + rec.round + '</td>' +
+        '<td class="num-col total-cell">' + rec.total + '</td>' +
+        '<td class="num-col"><button class="btn small ghost detail-toggle" data-id="' + rec.id + '" type="button">보기</button></td>' +
+        '<td class="num-col"><div class="row-actions"><button class="btn small danger del-rec" data-id="' + rec.id + '" type="button">삭제</button></div></td>' +
+        '</tr>' +
+        '<tr class="breakdown-row" id="breakdown-' + rec.id + '" hidden><td colspan="6"><div class="breakdown-grid">' + breakdown + '</div></td></tr>';
+    }).join('');
+  }
+
+  el.statsBody.addEventListener('click', function(e){
+    var toggleBtn = e.target.closest('.detail-toggle');
+    if(toggleBtn){
+      var row = document.getElementById('breakdown-' + toggleBtn.dataset.id);
+      row.hidden = !row.hidden;
+      toggleBtn.textContent = row.hidden ? '보기' : '닫기';
+      return;
+    }
+    var delBtn = e.target.closest('.del-rec');
+    if(delBtn){
+      if(!confirm('이 면접자 기록을 삭제할까요?')) return;
+      records = records.filter(function(r){ return r.id !== delBtn.dataset.id; });
+      saveJSON(STORAGE.records, records);
+      updateRoundPill();
+      renderStats();
+    }
+  });
+
+  document.getElementById('sortByScoreBtn').addEventListener('click', function(){ sortMode='score'; renderStats(); });
+  document.getElementById('sortByRoundBtn').addEventListener('click', function(){ sortMode='round'; renderStats(); });
+
+  document.getElementById('clearAllBtn').addEventListener('click', function(){
+    if(!confirm('저장된 면접자 기록을 전부 삭제할까요? 이 작업은 되돌릴 수 없습니다.')) return;
+    if(!confirm('정말로 전체 삭제하시겠습니까? 마지막 확인입니다.')) return;
+    records = [];
+    currentRound = 1;
+    saveJSON(STORAGE.records, records);
+    saveJSON(STORAGE.round, currentRound);
+    updateRoundPill();
+    renderStats();
+  });
+
+  document.getElementById('exportCsvBtn').addEventListener('click', function(){
+    if(records.length === 0){ alert('내보낼 기록이 없습니다.'); return; }
+    var header = ['이름','회차','총점'].concat(CONFIG.categories.map(function(c){ return c.label; }));
+    var lines = [header.join(',')];
+    records.forEach(function(rec){
+      var row = [rec.name, rec.round, rec.total].concat(CONFIG.categories.map(function(c){
+        return rec.catTotals[c.id] !== undefined ? rec.catTotals[c.id] : 0;
+      }));
+      lines.push(row.map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(','));
+    });
+    var csv = '﻿' + lines.join('\r\n');
+    var blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '천체부_면접기록.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // ================= EDIT MODE =================
+
+  function renderCatEdit(){
+    el.catEditList.innerHTML = draftConfig.categories.map(function(c, idx){
+      return '<div class="edit-cat-row">' +
+        '<input type="text" class="cat-label-edit" data-idx="' + idx + '" value="' + escapeHTML(c.label) + '">' +
+        '<input type="number" class="cat-max-edit" data-idx="' + idx + '" min="0" value="' + c.max + '">' +
+        '</div>';
+    }).join('');
+    updateSumWarn();
+  }
+
+  function updateSumWarn(){
+    var sum = draftConfig.categories.reduce(function(s,c){ return s + (parseFloat(c.max)||0); }, 0);
+    el.sumWarn.textContent = '합계 ' + sum + '점';
+    el.sumWarn.classList.toggle('off', sum !== 100);
+  }
+
+  function catOptionsHTML(selectedId){
+    return draftConfig.categories.map(function(c){
+      return '<option value="' + c.id + '"' + (c.id===selectedId?' selected':'') + '>' + escapeHTML(c.label) + '</option>';
+    }).join('');
+  }
+
+  function renderQuestionEdit(){
+    el.questionEditList.innerHTML = draftConfig.questions.map(function(q, idx){
+      return '<div class="edit-card">' +
+        '<div class="row1">' +
+        '<textarea class="qtext-edit" data-kind="q" data-idx="' + idx + '" data-field="text">' + escapeHTML(q.text) + '</textarea>' +
+        '<div class="meta-col">' +
+          '<label class="small-label">배점</label>' +
+          '<input type="number" class="max-edit" data-kind="q" data-idx="' + idx + '" data-field="max" min="0" value="' + q.max + '">' +
+          '<label class="small-label">평가요소</label>' +
+          '<select data-kind="q" data-idx="' + idx + '" data-field="cat">' + catOptionsHTML(q.cat) + '</select>' +
+        '</div></div>' +
+        '<span class="opt-label">택1 선택지 (한 줄에 하나씩, 없으면 비워두기)</span>' +
+        '<textarea class="opt-edit" data-kind="q" data-idx="' + idx + '" data-field="options">' + escapeHTML((q.options||[]).join('\n')) + '</textarea>' +
+        '</div>';
+    }).join('');
+  }
+
+  function renderOverallEdit(){
+    el.overallEditList.innerHTML = draftConfig.overall.map(function(o, idx){
+      return '<div class="edit-card">' +
+        '<div class="row1">' +
+        '<textarea class="qtext-edit" data-kind="o" data-idx="' + idx + '" data-field="text">' + escapeHTML(o.text) + '</textarea>' +
+        '<div class="meta-col">' +
+          '<label class="small-label">배점</label>' +
+          '<input type="number" class="max-edit" data-kind="o" data-idx="' + idx + '" data-field="max" min="0" value="' + o.max + '">' +
+          '<label class="small-label">평가요소</label>' +
+          '<select data-kind="o" data-idx="' + idx + '" data-field="cat">' + catOptionsHTML(o.cat) + '</select>' +
+        '</div></div></div>';
+    }).join('');
+  }
+
+  el.catEditList.addEventListener('input', function(e){
+    var idx = parseInt(e.target.dataset.idx, 10);
+    if(e.target.classList.contains('cat-label-edit')) draftConfig.categories[idx].label = e.target.value;
+    if(e.target.classList.contains('cat-max-edit')){
+      draftConfig.categories[idx].max = parseFloat(e.target.value) || 0;
+      updateSumWarn();
+      renderQuestionEdit();
+      renderOverallEdit();
+    }
+  });
+
+  function bindEditListBehavior(container){
+    container.addEventListener('input', function(e){
+      var idx = parseInt(e.target.dataset.idx, 10);
+      var kind = e.target.dataset.kind;
+      var field = e.target.dataset.field;
+      if(idx == null || !kind || !field) return;
+      var list = kind === 'q' ? draftConfig.questions : draftConfig.overall;
+      var item = list[idx];
+      if(field === 'text') item.text = e.target.value;
+      else if(field === 'max') item.max = parseFloat(e.target.value) || 0;
+      else if(field === 'cat') item.cat = e.target.value;
+      else if(field === 'options') item.options = e.target.value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+    });
+  }
+  bindEditListBehavior(el.questionEditList);
+  bindEditListBehavior(el.overallEditList);
+
+  function enterEditMode(){
+    draftConfig = deepClone(CONFIG);
+    editMode = true;
+    el.scoringView.hidden = true;
+    el.editView.hidden = false;
+    el.editToggleBtn.textContent = '✕ 수정모드 닫기';
+    renderCatEdit();
+    renderQuestionEdit();
+    renderOverallEdit();
+  }
+
+  function exitEditMode(){
+    editMode = false;
+    el.editView.hidden = true;
+    el.scoringView.hidden = false;
+    el.editToggleBtn.textContent = '✎ 수정모드';
+  }
+
+  el.editToggleBtn.addEventListener('click', function(){
+    if(editMode){ exitEditMode(); } else { enterEditMode(); }
+  });
+
+  document.getElementById('cancelEditBtn').addEventListener('click', function(){
+    exitEditMode();
+  });
+
+  document.getElementById('resetDefaultBtn').addEventListener('click', function(){
+    if(!confirm('모든 질문과 배점을 기본값으로 되돌릴까요? (아직 적용 전이며, 적용하고 채점화면으로 눌러야 반영됩니다)')) return;
+    draftConfig = deepClone(DEFAULT_CONFIG);
+    renderCatEdit();
+    renderQuestionEdit();
+    renderOverallEdit();
+  });
+
+  document.getElementById('applyEditBtn').addEventListener('click', function(){
+    CONFIG = deepClone(draftConfig);
+    saveJSON(STORAGE.config, CONFIG);
+    renderScoringTables();
+    recalcBatchView();
+    renderCandidateBar();
+    applyBatchToInputs();
+    recalcBatchView();
+    renderStats();
+    exitEditMode();
+  });
+
+  // ================= INIT =================
+  renderCandidateBar();
+  renderScoringTables();
+  recalcBatchView();
+  updateRoundPill();
+  renderStats();
+
+})();
+</script>
+</body>
+</html>
