@@ -60,6 +60,11 @@
   .hero p{ color:var(--text-soft); font-size:13px; margin:0; max-width:60ch; }
   .hero-actions{ display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
   .round-pill{ font-size:12px; font-weight:700; color:var(--text-soft); background:var(--surface-2); padding:6px 12px; border-radius:999px; white-space:nowrap; }
+  .grader-field{ display:flex; align-items:center; gap:6px; }
+  .grader-field label{ font-size:11px; font-weight:700; color:var(--accent-strong); letter-spacing:.04em; }
+  .grader-input{ border:1px solid var(--accent); background:var(--surface); color:var(--text); padding:6px 10px; border-radius:999px; font-size:13px; font-weight:600; font-family:inherit; width:120px; }
+  .grader-input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .grader-input::placeholder{ color:var(--text-soft); font-weight:500; }
   .group-select{ border:1px solid var(--line); background:var(--surface); color:var(--text); padding:6px 10px; border-radius:999px; font-size:12px; font-weight:600; font-family:inherit; max-width:280px; }
   .group-select:hover{ border-color:var(--accent); }
 
@@ -177,9 +182,13 @@
     <div class="hero-text">
       <span class="eyebrow">천체부 신입 부원 면접</span>
       <h1>면접 평가표</h1>
-      <p>이름은 면접 명단에서 미리 채워지며 필요하면 언제든 수정할 수 있습니다. 3명씩 채점하고 저장하면 다음 조로 자동 전환되고, 질문마다 메모도 남길 수 있습니다.</p>
+      <p>이름은 면접 명단에서 미리 채워지며 필요하면 언제든 수정할 수 있습니다. 3명씩 채점하고 저장하면 다음 조로 자동 전환되고, 질문마다 메모도 남길 수 있습니다. 3명이 각자 기기로 따로 채점하는 경우, 채점자 이름을 입력해두면 나중에 CSV를 합칠 때 구분됩니다.</p>
     </div>
     <div class="hero-actions">
+      <div class="grader-field">
+        <label for="graderInput">채점자</label>
+        <input type="text" id="graderInput" class="grader-input" placeholder="이름 입력" autocomplete="off">
+      </div>
       <span class="round-pill" id="roundPill">1번째 그룹</span>
       <button class="btn" id="editToggleBtn" type="button">✎ 수정모드</button>
     </div>
@@ -316,7 +325,7 @@
 
       <div class="table-scroll">
         <table class="stats-table">
-          <thead><tr><th class="num-col">순위</th><th>이름</th><th class="num-col">회차</th><th class="num-col">총점</th><th class="num-col">상세</th><th class="num-col">관리</th></tr></thead>
+          <thead><tr><th class="num-col">순위</th><th>이름</th><th>채점자</th><th class="num-col">회차</th><th class="num-col">총점</th><th class="num-col">상세</th><th class="num-col">관리</th></tr></thead>
           <tbody id="statsBody"></tbody>
         </table>
       </div>
@@ -334,7 +343,8 @@
     config: 'cosmos-interview-config-v1',
     batch: 'cosmos-interview-batch-v1',
     records: 'cosmos-interview-records-v1',
-    round: 'cosmos-interview-round-v1'
+    round: 'cosmos-interview-round-v1',
+    grader: 'cosmos-interview-grader-v1'
   };
 
   var DEFAULT_CONFIG = {
@@ -422,6 +432,7 @@
   }
 
   var records = loadJSON(STORAGE.records, []);
+  var graderName = loadJSON(STORAGE.grader, '');
 
   var sortMode = 'score'; // 'score' | 'round'
 
@@ -432,6 +443,7 @@
     editToggleBtn: document.getElementById('editToggleBtn'),
     roundPill: document.getElementById('roundPill'),
     groupSelect: document.getElementById('groupSelect'),
+    graderInput: document.getElementById('graderInput'),
     candidateBar: document.getElementById('candidateBar'),
     questionBody: document.getElementById('questionBody'),
     overallBody: document.getElementById('overallBody'),
@@ -605,8 +617,16 @@
 
   function updateRoundPill(){
     var g = GROUPS[currentRound-1];
-    el.roundPill.textContent = currentRound + ' / ' + GROUPS.length + '번째 그룹' + (g ? ' · ' + g.label : ' · 명단 외 추가 입력') + ' · 누적 ' + records.length + '명 저장됨';
+    var graderPart = graderName ? '채점자 ' + graderName + ' · ' : '';
+    el.roundPill.textContent = graderPart + currentRound + ' / ' + GROUPS.length + '번째 그룹' + (g ? ' · ' + g.label : ' · 명단 외 추가 입력') + ' · 누적 ' + records.length + '명 저장됨';
   }
+
+  el.graderInput.value = graderName;
+  el.graderInput.addEventListener('input', function(e){
+    graderName = e.target.value;
+    saveJSON(STORAGE.grader, graderName);
+    updateRoundPill();
+  });
 
   function renderGroupSelect(){
     var opts = '<option value="" disabled>회차 선택…</option>' + GROUPS.map(function(g, idx){
@@ -670,6 +690,11 @@
   });
 
   document.getElementById('saveAdvanceBtn').addEventListener('click', function(){
+    if(!graderName.trim()){
+      alert('채점자 이름을 먼저 입력하세요. (3명이 각자 기기로 채점할 때, 나중에 CSV를 합치려면 누구 점수인지 구분이 필요합니다)');
+      el.graderInput.focus();
+      return;
+    }
     var names = nameInputs().map(function(i){ return i.value.trim(); });
     if(names.every(function(n){ return n===''; })){
       alert('저장하려면 최소 한 명 이상의 이름을 입력하세요.');
@@ -694,6 +719,7 @@
         id: Date.now() + '-' + ci + '-' + Math.random().toString(36).slice(2,7),
         round: currentRound,
         name: names[ci],
+        grader: graderName.trim(),
         timestamp: new Date().toISOString(),
         scores: scoresSnap,
         notes: notesSnap,
@@ -724,7 +750,7 @@
       el.statAvg.textContent = '–';
       el.statMax.textContent = '–';
       el.statMin.textContent = '–';
-      el.statsBody.innerHTML = '<tr><td colspan="6"><div class="empty-note">아직 저장된 면접자가 없습니다. 3명을 채점한 뒤 "저장하고 다음 3명"을 눌러보세요.</div></td></tr>';
+      el.statsBody.innerHTML = '<tr><td colspan="7"><div class="empty-note">아직 저장된 면접자가 없습니다. 3명을 채점한 뒤 "저장하고 다음 3명"을 눌러보세요.</div></td></tr>';
       return;
     }
     var totals = records.map(function(r){ return r.total; });
@@ -760,12 +786,13 @@
       return '<tr>' +
         '<td class="num-col rank-cell">' + rank + '</td>' +
         '<td>' + escapeHTML(rec.name) + '</td>' +
+        '<td>' + escapeHTML(rec.grader || '–') + '</td>' +
         '<td class="num-col">' + rec.round + '</td>' +
         '<td class="num-col total-cell">' + rec.total + '</td>' +
         '<td class="num-col"><button class="btn small ghost detail-toggle" data-id="' + rec.id + '" type="button">보기</button></td>' +
         '<td class="num-col"><div class="row-actions"><button class="btn small danger del-rec" data-id="' + rec.id + '" type="button">삭제</button></div></td>' +
         '</tr>' +
-        '<tr class="breakdown-row" id="breakdown-' + rec.id + '" hidden><td colspan="6"><div class="breakdown-grid">' + breakdown + '</div>' + notesHTML + '</td></tr>';
+        '<tr class="breakdown-row" id="breakdown-' + rec.id + '" hidden><td colspan="7"><div class="breakdown-grid">' + breakdown + '</div>' + notesHTML + '</td></tr>';
     }).join('');
   }
 
@@ -803,10 +830,10 @@
 
   document.getElementById('exportCsvBtn').addEventListener('click', function(){
     if(records.length === 0){ alert('내보낼 기록이 없습니다.'); return; }
-    var header = ['이름','회차','총점'].concat(CONFIG.categories.map(function(c){ return c.label; }));
+    var header = ['이름','채점자','회차','총점'].concat(CONFIG.categories.map(function(c){ return c.label; }));
     var lines = [header.join(',')];
     records.forEach(function(rec){
-      var row = [rec.name, rec.round, rec.total].concat(CONFIG.categories.map(function(c){
+      var row = [rec.name, rec.grader || '', rec.round, rec.total].concat(CONFIG.categories.map(function(c){
         return rec.catTotals[c.id] !== undefined ? rec.catTotals[c.id] : 0;
       }));
       lines.push(row.map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(','));
