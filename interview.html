@@ -308,12 +308,14 @@
         <div>
           <span class="eyebrow">누적 기록</span>
           <h2>면접자별 통계</h2>
-          <p class="sub">저장된 모든 면접자를 한눈에 볼 수 있습니다.</p>
+          <p class="sub">저장된 모든 면접자를 한눈에 볼 수 있습니다. CSV에는 쪽지시험 점수가 포함되지 않으니, 불러온 기록에 쪽지시험 점수가 필요하면 "이 기록 수정"으로 직접 입력하세요.</p>
         </div>
         <div class="stats-toolbar">
           <button class="btn small" id="sortByScoreBtn" type="button">총점순</button>
           <button class="btn small" id="sortByRoundBtn" type="button">면접순</button>
           <button class="btn small" id="exportCsvBtn" type="button">CSV 내보내기</button>
+          <button class="btn small" id="csvUploadBtn" type="button">다른 채점자 CSV 불러오기</button>
+          <input type="file" id="csvUploadInput" accept=".csv" hidden>
           <button class="btn small danger" id="clearAllBtn" type="button">전체 기록 삭제</button>
         </div>
       </div>
@@ -748,7 +750,7 @@
       var resume = editingSnapshot;
       editingSnapshot = null;
       editingRecordIds = null;
-      if(resume){ currentRound = resume.round; batch = resume.batch; }
+      if(resume){ currentRound = resume.round; batch = resume.batch; graderName = resume.grader; el.graderInput.value = graderName; }
       else { currentRound += 1; batch = makeBatchForRound(currentRound); }
       saveJSON(STORAGE.round, currentRound);
       saveJSON(STORAGE.batch, batch);
@@ -821,10 +823,10 @@
     if(hasUnsaved && !confirm('현재 입력 중인 내용이 저장되지 않고 사라집니다. 이 기록을 수정할까요?')) return;
 
     if(!editingSnapshot){
-      editingSnapshot = { round: currentRound, batch: deepClone(batch) };
+      editingSnapshot = { round: currentRound, batch: deepClone(batch), grader: graderName };
     }
 
-    var sameRound = records.filter(function(r){ return r.round === rec.round; });
+    var sameRound = records.filter(function(r){ return r.round === rec.round && r.grader === rec.grader; });
     var preset = GROUPS[rec.round - 1];
     var ordered = [];
     if(preset){
@@ -863,6 +865,8 @@
     if(!editingSnapshot){ editingRecordIds = null; updateSaveButtonLabel(); return; }
     currentRound = editingSnapshot.round;
     batch = editingSnapshot.batch;
+    graderName = editingSnapshot.grader;
+    el.graderInput.value = graderName;
     editingSnapshot = null;
     editingRecordIds = null;
     saveJSON(STORAGE.round, currentRound);
@@ -970,14 +974,23 @@
     renderStats();
   });
 
+  var CSV_EXCLUDE_ROW_ID = 'q6'; // 쪽지시험(안전,책임) 점수는 기기마다 직접 입력 — CSV로 주고받지 않음
+
+  function csvRowDefs(){ return allRows(CONFIG).filter(function(r){ return r.id !== CSV_EXCLUDE_ROW_ID; }); }
+
   document.getElementById('exportCsvBtn').addEventListener('click', function(){
     if(records.length === 0){ alert('내보낼 기록이 없습니다.'); return; }
-    var header = ['이름','채점자','회차','총점'].concat(CONFIG.categories.map(function(c){ return c.label; }));
+    var rowDefs = csvRowDefs();
+    var header = ['이름','채점자','회차'].concat(rowDefs.map(function(r){ return r.id; })).concat(['총점(쪽지시험 제외)']);
     var lines = [header.join(',')];
     records.forEach(function(rec){
-      var row = [rec.name, rec.grader || '', rec.round, rec.total].concat(CONFIG.categories.map(function(c){
-        return rec.catTotals[c.id] !== undefined ? rec.catTotals[c.id] : 0;
-      }));
+      var sum = 0;
+      var scoreCells = rowDefs.map(function(r){
+        var v = (rec.scores && rec.scores[r.id] !== undefined) ? rec.scores[r.id] : 0;
+        sum += v;
+        return v;
+      });
+      var row = [rec.name, rec.grader || '', rec.round].concat(scoreCells).concat([sum]);
       lines.push(row.map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(','));
     });
     var csv = '﻿' + lines.join('\r\n');
@@ -985,11 +998,111 @@
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = '천체부_면접기록.csv';
+    a.download = '천체부_면접기록_' + (graderName.trim() || '채점자미상') + '.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  });
+
+  function parseCSV(text){
+    if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    var rows = [], row = [], field = '', inQuotes = false, i = 0;
+    while(i < text.length){
+      var c = text[i];
+      if(inQuotes){
+        if(c === '"'){
+          if(text[i+1] === '"'){ field += '"'; i += 2; continue; }
+          inQuotes = false; i++; continue;
+        }
+        field += c; i++; continue;
+      }
+      if(c === '"'){ inQuotes = true; i++; continue; }
+      if(c === ','){ row.push(field); field = ''; i++; continue; }
+      if(c === '\r'){ i++; continue; }
+      if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+      field += c; i++;
+    }
+    if(field.length || row.length){ row.push(field); rows.push(row); }
+    return rows.filter(function(r){ return !(r.length === 1 && r[0] === ''); });
+  }
+
+  document.getElementById('csvUploadBtn').addEventListener('click', function(){
+    document.getElementById('csvUploadInput').click();
+  });
+
+  document.getElementById('csvUploadInput').addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(evt){
+      try{
+        var rows = parseCSV(String(evt.target.result));
+        if(rows.length < 2){ alert('CSV에서 데이터를 찾을 수 없습니다.'); e.target.value = ''; return; }
+        var header = rows[0];
+        var idxName = header.indexOf('이름');
+        var idxGrader = header.indexOf('채점자');
+        var idxRound = header.indexOf('회차');
+        if(idxName === -1 || idxRound === -1){
+          alert('CSV 형식을 인식할 수 없습니다. 이 페이지에서 내보낸 CSV인지 확인하세요.');
+          e.target.value = '';
+          return;
+        }
+        var allRowDefs = allRows(CONFIG);
+        var rowIdCols = header.map(function(h, idx){ return { id:h, idx:idx }; })
+          .filter(function(x){ return allRowDefs.some(function(r){ return r.id === x.id; }); });
+
+        var added = 0, updated = 0;
+        for(var i = 1; i < rows.length; i++){
+          var cols = rows[i];
+          var name = (cols[idxName] || '').trim();
+          if(!name) continue;
+          var grader = idxGrader !== -1 ? (cols[idxGrader] || '').trim() : '';
+          var round = parseInt(cols[idxRound], 10) || 0;
+
+          var scoresSnap = {};
+          rowIdCols.forEach(function(rc){
+            var rowDef = allRowDefs.find(function(r){ return r.id === rc.id; });
+            var v = parseFloat(cols[rc.idx]);
+            scoresSnap[rc.id] = isNaN(v) ? 0 : clamp(v, rowDef.max);
+          });
+
+          var existingIdx = records.findIndex(function(rr){ return rr.round === round && rr.name === name && rr.grader === grader; });
+          var existingNotes = {};
+          if(existingIdx !== -1){
+            existingNotes = records[existingIdx].notes || {};
+            if(records[existingIdx].scores && records[existingIdx].scores[CSV_EXCLUDE_ROW_ID] !== undefined){
+              scoresSnap[CSV_EXCLUDE_ROW_ID] = records[existingIdx].scores[CSV_EXCLUDE_ROW_ID];
+            }
+          }
+
+          var catTotals = {};
+          CONFIG.categories.forEach(function(c){ catTotals[c.id] = 0; });
+          allRowDefs.forEach(function(r){ catTotals[r.cat] = (catTotals[r.cat] || 0) + (scoresSnap[r.id] || 0); });
+          var total = CONFIG.categories.reduce(function(s,c){ return s + (catTotals[c.id] || 0); }, 0);
+          var catMaxSnapshot = {};
+          CONFIG.categories.forEach(function(c){ catMaxSnapshot[c.id] = { label:c.label, max:c.max }; });
+
+          var recordObj = {
+            id: existingIdx !== -1 ? records[existingIdx].id : (Date.now() + '-imp-' + i + '-' + Math.random().toString(36).slice(2,7)),
+            round: round, name: name, grader: grader,
+            timestamp: new Date().toISOString(),
+            scores: scoresSnap, notes: existingNotes,
+            catTotals: catTotals, catMaxSnapshot: catMaxSnapshot, total: total
+          };
+          if(existingIdx !== -1){ records[existingIdx] = recordObj; updated++; }
+          else { records.push(recordObj); added++; }
+        }
+        saveJSON(STORAGE.records, records);
+        updateRoundPill();
+        renderStats();
+        alert('CSV 불러오기 완료: 새 기록 ' + added + '건, 갱신 ' + updated + '건.\n쪽지시험 점수는 CSV에 없으니, 필요하면 "이 기록 수정"으로 직접 입력하세요.');
+      } catch(err){
+        alert('CSV를 읽는 중 문제가 발생했습니다: ' + (err && err.message));
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file, 'utf-8');
   });
 
   // ================= EDIT MODE =================
