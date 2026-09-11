@@ -244,6 +244,8 @@
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <select class="group-select" id="groupSelect" aria-label="면접 그룹 선택"></select>
           <button class="btn small" id="clearBatchBtn" type="button">이번 3명 초기화</button>
+          <span class="edit-warn" id="editingBanner" hidden></span>
+          <button class="btn small ghost" id="cancelEditRecordBtn" type="button" hidden>수정 취소</button>
         </div>
         <button class="btn primary" id="saveAdvanceBtn" type="button">저장하고 다음 3명 →</button>
       </div>
@@ -435,6 +437,8 @@
   var graderName = loadJSON(STORAGE.grader, '');
 
   var sortMode = 'score'; // 'score' | 'round'
+  var editingSnapshot = null; // { round, batch } captured when entering "수정" so we can resume the live round
+  var editingRecordIds = null; // [id0, id1, id2] parallel to candidate slots while editing a saved round
 
   // ---------- element refs ----------
   var el = {
@@ -704,6 +708,60 @@
     var catMaxSnapshot = {};
     CONFIG.categories.forEach(function(c){ catMaxSnapshot[c.id] = { label:c.label, max:c.max }; });
 
+    if(editingRecordIds){
+      // ---- UPDATE mode: overwrite the records being edited instead of appending new ones ----
+      [0,1,2].forEach(function(ci){
+        var scoresSnap = {}, notesSnap = {};
+        scoreInputs().forEach(function(inp){
+          if(parseInt(inp.dataset.cand,10) !== ci) return;
+          scoresSnap[inp.dataset.row] = inp.value === '' ? 0 : clamp(parseFloat(inp.value), parseFloat(inp.dataset.max));
+        });
+        noteInputs().forEach(function(ta){
+          if(parseInt(ta.dataset.cand,10) !== ci) return;
+          if(ta.value.trim() !== '') notesSnap[ta.dataset.row] = ta.value.trim();
+        });
+        var existingId = editingRecordIds[ci];
+        if(!names[ci]){
+          if(existingId) records = records.filter(function(rr){ return rr.id !== existingId; });
+          return;
+        }
+        if(existingId){
+          var idx = records.findIndex(function(rr){ return rr.id === existingId; });
+          if(idx !== -1){
+            records[idx] = Object.assign({}, records[idx], {
+              name: names[ci], grader: graderName.trim(), scores: scoresSnap, notes: notesSnap,
+              catTotals: r.catTotals[ci], catMaxSnapshot: catMaxSnapshot, total: r.grandTotals[ci],
+              timestamp: new Date().toISOString()
+            });
+          }
+        } else {
+          records.push({
+            id: Date.now() + '-' + ci + '-' + Math.random().toString(36).slice(2,7),
+            round: currentRound, name: names[ci], grader: graderName.trim(),
+            timestamp: new Date().toISOString(), scores: scoresSnap, notes: notesSnap,
+            catTotals: r.catTotals[ci], catMaxSnapshot: catMaxSnapshot, total: r.grandTotals[ci]
+          });
+        }
+      });
+      saveJSON(STORAGE.records, records);
+
+      var resume = editingSnapshot;
+      editingSnapshot = null;
+      editingRecordIds = null;
+      if(resume){ currentRound = resume.round; batch = resume.batch; }
+      else { currentRound += 1; batch = makeBatchForRound(currentRound); }
+      saveJSON(STORAGE.round, currentRound);
+      saveJSON(STORAGE.batch, batch);
+      updateSaveButtonLabel();
+      renderCandidateBar();
+      applyBatchToInputs();
+      recalcBatchView();
+      updateRoundPill();
+      renderGroupSelect();
+      renderStats();
+      return;
+    }
+
     [0,1,2].forEach(function(ci){
       if(!names[ci]) return;
       var scoresSnap = {}, notesSnap = {};
@@ -741,6 +799,83 @@
     renderGroupSelect();
     renderStats();
   });
+
+  function updateSaveButtonLabel(){
+    var saveBtn = document.getElementById('saveAdvanceBtn');
+    var banner = document.getElementById('editingBanner');
+    var cancelBtn = document.getElementById('cancelEditRecordBtn');
+    if(editingRecordIds){
+      saveBtn.textContent = '수정 내용 저장';
+      banner.hidden = false;
+      banner.textContent = currentRound + '회차 기록 수정 중';
+      cancelBtn.hidden = false;
+    } else {
+      saveBtn.textContent = '저장하고 다음 3명 →';
+      banner.hidden = true;
+      cancelBtn.hidden = true;
+    }
+  }
+
+  function startEditRecord(rec){
+    var hasUnsaved = scoreInputs().some(function(i){ return i.value !== ''; }) || nameInputs().some(function(i){ return i.value.trim() !== ''; });
+    if(hasUnsaved && !confirm('현재 입력 중인 내용이 저장되지 않고 사라집니다. 이 기록을 수정할까요?')) return;
+
+    if(!editingSnapshot){
+      editingSnapshot = { round: currentRound, batch: deepClone(batch) };
+    }
+
+    var sameRound = records.filter(function(r){ return r.round === rec.round; });
+    var preset = GROUPS[rec.round - 1];
+    var ordered = [];
+    if(preset){
+      preset.names.forEach(function(nm){
+        var match = sameRound.find(function(r){
+          return r.name === nm && ordered.indexOf(r) === -1;
+        });
+        ordered.push(match || null);
+      });
+    }
+    sameRound.forEach(function(r){ if(ordered.indexOf(r) === -1) ordered.push(r); });
+    ordered = ordered.slice(0, 3);
+    while(ordered.length < 3) ordered.push(null);
+
+    editingRecordIds = ordered.map(function(r){ return r ? r.id : null; });
+    currentRound = rec.round;
+    batch = { names:['','',''], scores:{}, notes:{} };
+    ordered.forEach(function(r, ci){
+      if(!r) return;
+      batch.names[ci] = r.name;
+      Object.keys(r.scores || {}).forEach(function(rowId){ batch.scores[rowId + '-' + ci] = r.scores[rowId]; });
+      Object.keys(r.notes || {}).forEach(function(rowId){ batch.notes[rowId + '-' + ci] = r.notes[rowId]; });
+    });
+    if(rec.grader){ graderName = rec.grader; el.graderInput.value = graderName; }
+
+    updateSaveButtonLabel();
+    renderGroupSelect();
+    renderCandidateBar();
+    applyBatchToInputs();
+    recalcBatchView();
+    updateRoundPill();
+    el.candidateBar.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  function cancelEditRecord(){
+    if(!editingSnapshot){ editingRecordIds = null; updateSaveButtonLabel(); return; }
+    currentRound = editingSnapshot.round;
+    batch = editingSnapshot.batch;
+    editingSnapshot = null;
+    editingRecordIds = null;
+    saveJSON(STORAGE.round, currentRound);
+    saveJSON(STORAGE.batch, batch);
+    updateSaveButtonLabel();
+    renderCandidateBar();
+    applyBatchToInputs();
+    recalcBatchView();
+    updateRoundPill();
+    renderGroupSelect();
+  }
+
+  document.getElementById('cancelEditRecordBtn').addEventListener('click', cancelEditRecord);
 
   // ================= STATS =================
 
@@ -792,7 +927,8 @@
         '<td class="num-col"><button class="btn small ghost detail-toggle" data-id="' + rec.id + '" type="button">보기</button></td>' +
         '<td class="num-col"><div class="row-actions"><button class="btn small danger del-rec" data-id="' + rec.id + '" type="button">삭제</button></div></td>' +
         '</tr>' +
-        '<tr class="breakdown-row" id="breakdown-' + rec.id + '" hidden><td colspan="7"><div class="breakdown-grid">' + breakdown + '</div>' + notesHTML + '</td></tr>';
+        '<tr class="breakdown-row" id="breakdown-' + rec.id + '" hidden><td colspan="7"><div class="breakdown-grid">' + breakdown + '</div>' + notesHTML +
+        '<div style="margin-top:10px;"><button class="btn small edit-rec" data-id="' + rec.id + '" type="button">✎ 이 기록 수정</button></div></td></tr>';
     }).join('');
   }
 
@@ -802,6 +938,12 @@
       var row = document.getElementById('breakdown-' + toggleBtn.dataset.id);
       row.hidden = !row.hidden;
       toggleBtn.textContent = row.hidden ? '보기' : '닫기';
+      return;
+    }
+    var editBtn = e.target.closest('.edit-rec');
+    if(editBtn){
+      var rec = records.find(function(rr){ return rr.id === editBtn.dataset.id; });
+      if(rec) startEditRecord(rec);
       return;
     }
     var delBtn = e.target.closest('.del-rec');
@@ -985,6 +1127,7 @@
   recalcBatchView();
   renderGroupSelect();
   updateRoundPill();
+  updateSaveButtonLabel();
   renderStats();
 
 })();
