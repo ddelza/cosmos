@@ -156,6 +156,30 @@
   .grader-record-head .total-cell{ font-weight:800; color:var(--accent-strong); margin-right:auto; }
   .grader-record-cats{ margin-top:6px; font-size:12px; color:var(--text-soft); }
 
+  /* roster + filters */
+  .roster-table td, .roster-table th{ font-size:13px; }
+  .roster-table select{ padding:5px 8px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--text); font-family:inherit; font-size:12.5px; }
+  .filter-groups{ display:flex; flex-wrap:wrap; gap:24px; }
+  .filter-group-title{ display:block; font-size:11.5px; font-weight:700; letter-spacing:.05em; color:var(--text-soft); text-transform:uppercase; margin-bottom:8px; }
+  .chip-group{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:var(--surface); color:var(--text-soft); padding:6px 12px; border-radius:999px; font-size:12.5px; font-weight:600; cursor:pointer; user-select:none; }
+  .chip input{ accent-color:var(--accent); width:13px; height:13px; }
+  .chip.checked{ border-color:var(--accent); color:var(--text); background:var(--accent-soft); }
+
+  /* charts */
+  .chart-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .chart-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 18px; box-shadow:var(--shadow); }
+  .chart-card.wide{ grid-column:1 / -1; }
+  .chart-card h3{ font-family:"Hahmlet",serif; font-size:15px; font-weight:600; margin:0 0 14px; }
+  @media (max-width:720px){ .chart-grid{ grid-template-columns:1fr; } }
+
+  .hbar-row{ display:grid; grid-template-columns:120px 1fr 56px; align-items:center; gap:10px; margin-bottom:9px; font-size:12.5px; }
+  .hbar-row:last-child{ margin-bottom:0; }
+  .hbar-label{ color:var(--text-soft); font-weight:600; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hbar-track{ background:var(--surface-2); border-radius:999px; height:14px; overflow:hidden; }
+  .hbar-fill{ background:var(--accent); height:100%; border-radius:999px; }
+  .hbar-value{ font-variant-numeric:tabular-nums; font-weight:700; color:var(--text); }
+
   /* edit mode */
   .edit-warn{ font-size:12px; padding:8px 12px; border-radius:9px; background:var(--good-soft); color:var(--good); display:inline-block; font-weight:700; }
   .edit-warn.off{ background:var(--bad-soft); color:var(--bad); }
@@ -197,7 +221,10 @@
         <input type="text" id="graderInput" class="grader-input" placeholder="이름 입력" autocomplete="off">
       </div>
       <span class="round-pill" id="roundPill">1번째 그룹</span>
-      <button class="btn" id="editToggleBtn" type="button">✎ 수정모드</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn" id="statsToggleBtn" type="button">📊 통계 모드</button>
+        <button class="btn" id="editToggleBtn" type="button">✎ 수정모드</button>
+      </div>
     </div>
   </div>
 
@@ -310,12 +337,105 @@
       </div>
     </section>
 
+  </div>
+
+  <!-- STATS MODE VIEW -->
+  <div id="statsView" hidden>
+    <section style="margin-top:24px;">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">설정</span>
+          <h2>면접자 학년·성별 입력</h2>
+          <p class="sub">아래 필터·통계에 쓰입니다. 이 기기에만 저장되며, 채점하면서 CSV로 내보내면 학년·성별도 같이 담겨 다른 기기에서 불러올 때 채워집니다.</p>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table class="roster-table" id="rosterTable">
+          <thead><tr><th>이름</th><th>학년</th><th>성별</th></tr></thead>
+          <tbody id="rosterBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">필터</span>
+          <h2>어떤 면접자·문항으로 볼지 고르기</h2>
+          <p class="sub">아래에서 고른 조건이 요약 카드·차트·순위표에 모두 반영됩니다.</p>
+        </div>
+        <button class="btn small ghost" id="resetFiltersBtn" type="button">필터 초기화</button>
+      </div>
+      <div class="filter-groups">
+        <div class="filter-group">
+          <span class="filter-group-title">학년</span>
+          <div class="chip-group" id="gradeFilterGroup"></div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group-title">성별</span>
+          <div class="chip-group" id="genderFilterGroup"></div>
+        </div>
+      </div>
+      <div class="filter-group" style="margin-top:14px;">
+        <span class="filter-group-title">합산에 포함할 문항 <span id="rowFilterHint" class="max-hint" style="display:inline;"></span></span>
+        <div class="chip-group" id="rowFilterGroup"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">요약</span>
+          <h2>필터 적용 통계</h2>
+          <p class="sub">평균·최고·최저는 채점자 간 평균 총점(위에서 고른 문항 기준) 기준입니다.</p>
+        </div>
+      </div>
+      <div class="stat-cards">
+        <div class="stat-card"><div class="label">대상 인원</div><div class="value" id="statCount">0<small> 명</small></div></div>
+        <div class="stat-card"><div class="label">평균 총점</div><div class="value" id="statAvg">–</div></div>
+        <div class="stat-card"><div class="label">최고점</div><div class="value" id="statMax">–</div></div>
+        <div class="stat-card"><div class="label">최저점</div><div class="value" id="statMin">–</div></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">차트</span>
+          <h2>그룹별 비교</h2>
+          <p class="sub">학년·성별 막대는 위 필터가 반영된 평균 총점 기준입니다.</p>
+        </div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h3>학년별 평균 총점</h3>
+          <div class="hbar-chart" id="chartGrade"></div>
+        </div>
+        <div class="chart-card">
+          <h3>성별 평균 총점</h3>
+          <div class="hbar-chart" id="chartGender"></div>
+        </div>
+        <div class="chart-card wide">
+          <h3>평가요소별 평균 (전체 문항 기준)</h3>
+          <div class="hbar-chart" id="chartCategory"></div>
+        </div>
+        <div class="chart-card wide">
+          <h3>문항별 평균 점수</h3>
+          <div class="hbar-chart" id="chartQuestion"></div>
+        </div>
+        <div class="chart-card wide">
+          <h3>점수 분포</h3>
+          <div class="hbar-chart" id="chartHistogram"></div>
+        </div>
+      </div>
+    </section>
+
     <section>
       <div class="section-head">
         <div>
           <span class="eyebrow">누적 기록</span>
           <h2>면접자별 통계</h2>
-          <p class="sub">면접자마다 채점자 3명의 점수를 모아 평균으로 보여줍니다. "보기"를 누르면 채점자별 원점수·메모를 확인하고 수정할 수 있습니다. CSV에는 쪽지시험 점수가 포함되지 않으니, 불러온 기록에 쪽지시험 점수가 필요하면 개별 기록을 수정하세요.</p>
+          <p class="sub">면접자마다 채점자들의 점수를 모아 평균으로 보여줍니다. "보기"를 누르면 채점자별 원점수·메모를 확인하고 수정할 수 있습니다. CSV에는 쪽지시험 점수가 포함되지 않으니, 불러온 기록에 쪽지시험 점수가 필요하면 개별 기록을 수정하세요.</p>
         </div>
         <div class="stats-toolbar">
           <button class="btn small" id="sortByScoreBtn" type="button">총점순</button>
@@ -327,16 +447,9 @@
         </div>
       </div>
 
-      <div class="stat-cards">
-        <div class="stat-card"><div class="label">총 면접 인원</div><div class="value" id="statCount">0<small> 명</small></div></div>
-        <div class="stat-card"><div class="label">평균 총점</div><div class="value" id="statAvg">–</div></div>
-        <div class="stat-card"><div class="label">최고점</div><div class="value" id="statMax">–</div></div>
-        <div class="stat-card"><div class="label">최저점</div><div class="value" id="statMin">–</div></div>
-      </div>
-
       <div class="table-scroll">
         <table class="stats-table">
-          <thead><tr><th class="num-col">순위</th><th>이름</th><th class="num-col">회차</th><th class="num-col">채점 인원</th><th class="num-col">평균 총점</th><th class="num-col">상세</th></tr></thead>
+          <thead><tr><th class="num-col">순위</th><th>이름</th><th>학년</th><th>성별</th><th class="num-col">회차</th><th class="num-col">채점 인원</th><th class="num-col">평균 총점</th><th class="num-col">상세</th></tr></thead>
           <tbody id="statsBody"></tbody>
         </table>
       </div>
@@ -355,7 +468,8 @@
     batch: 'cosmos-interview-batch-v1',
     records: 'cosmos-interview-records-v1',
     round: 'cosmos-interview-round-v1',
-    grader: 'cosmos-interview-grader-v1'
+    grader: 'cosmos-interview-grader-v1',
+    roster: 'cosmos-interview-roster-v1'
   };
 
   var DEFAULT_CONFIG = {
@@ -428,9 +542,35 @@
     return { names:names, scores:{}, notes:{} };
   }
 
+  var GRADE_OPTIONS = ['1학년','2학년','3학년','미상'];
+  var GENDER_OPTIONS = ['남','여','미상'];
+
+  var ROSTER = loadJSON(STORAGE.roster, {});
+  (function ensureRosterDefaults(){
+    var changed = false;
+    GROUPS.forEach(function(g){
+      g.names.forEach(function(n){
+        if(!ROSTER[n]){ ROSTER[n] = { grade:'', gender:'' }; changed = true; }
+      });
+    });
+    if(changed) saveJSON(STORAGE.roster, ROSTER);
+  })();
+
+  function rosterInfo(name){
+    var r = ROSTER[name];
+    return { grade: (r && r.grade) || '미상', gender: (r && r.gender) || '미상' };
+  }
+
   var CONFIG = loadJSON(STORAGE.config, deepClone(DEFAULT_CONFIG));
   var draftConfig = null;
   var editMode = false;
+  var statsMode = false;
+
+  var filterState = {
+    grades: GRADE_OPTIONS.slice(),
+    genders: GENDER_OPTIONS.slice(),
+    rowIds: allRows(CONFIG).map(function(r){ return r.id; })
+  };
 
   var currentRound = loadJSON(STORAGE.round, 1);
   var batch = loadJSON(STORAGE.batch, makeBatchForRound(currentRound));
@@ -453,6 +593,8 @@
   var el = {
     editView: document.getElementById('editView'),
     scoringView: document.getElementById('scoringView'),
+    statsView: document.getElementById('statsView'),
+    statsToggleBtn: document.getElementById('statsToggleBtn'),
     editToggleBtn: document.getElementById('editToggleBtn'),
     roundPill: document.getElementById('roundPill'),
     groupSelect: document.getElementById('groupSelect'),
@@ -898,30 +1040,164 @@
     return Object.keys(set);
   }
 
+  // 회차는 채점자 기기마다 어긋날 수 있으므로(예: 한쪽이 "다음 3명"을 한 번 더 누름),
+  // 통계에서는 이름만으로 같은 면접자를 묶는다 — 회차는 표시용 참고 정보로만 쓴다.
   function groupRecordsByCandidate(){
     var map = {}, order = [];
     records.forEach(function(r){
-      var key = r.round + '::' + r.name;
-      if(!map[key]){ map[key] = { round:r.round, name:r.name, records:[] }; order.push(key); }
+      var key = r.name;
+      if(!map[key]){ map[key] = { name:r.name, records:[] }; order.push(key); }
       map[key].records.push(r);
     });
-    return order.map(function(k){ return map[k]; });
+    return order.map(function(k){
+      var g = map[k];
+      var rounds = [];
+      g.records.forEach(function(r){ if(rounds.indexOf(r.round) === -1) rounds.push(r.round); });
+      rounds.sort(function(a,b){ return a-b; });
+      g.round = rounds.join('/');
+      return g;
+    });
+  }
+
+  function flatRosterNames(){
+    var names = [];
+    GROUPS.forEach(function(g){ g.names.forEach(function(n){ names.push(n); }); });
+    return names;
+  }
+
+  function candidateOrderIndex(name){
+    var idx = flatRosterNames().indexOf(name);
+    return idx === -1 ? 9999 : idx;
+  }
+
+  function hasVal(arr, v){ return arr.indexOf(v) !== -1; }
+
+  function selectedRowDefs(){
+    return allRows(CONFIG).filter(function(r){ return hasVal(filterState.rowIds, r.id); });
+  }
+
+  // Attaches grade/gender/filteredTotal to every candidate group and returns
+  // { all, filtered, selectedRows, maxSelected } — the single source of truth
+  // for the summary cards, charts and stats table so they always agree.
+  function computeCandidateAnalysis(){
+    var allGroups = groupRecordsByCandidate();
+    var selectedRows = selectedRowDefs();
+    var maxSelected = selectedRows.reduce(function(s,r){ return s + r.max; }, 0);
+
+    allGroups.forEach(function(g){
+      var info = rosterInfo(g.name);
+      g.grade = info.grade;
+      g.gender = info.gender;
+      g.filteredTotals = g.records.map(function(r){
+        return selectedRows.reduce(function(s,row){
+          return s + ((r.scores && r.scores[row.id] !== undefined) ? r.scores[row.id] : 0);
+        }, 0);
+      });
+      g.avgTotal = g.filteredTotals.length ? avgOf(g.filteredTotals) : 0;
+    });
+
+    var filtered = allGroups.filter(function(g){
+      return hasVal(filterState.grades, g.grade) && hasVal(filterState.genders, g.gender);
+    });
+
+    return { all: allGroups, filtered: filtered, selectedRows: selectedRows, maxSelected: maxSelected };
+  }
+
+  function renderHBarChart(elId, items){
+    var container = document.getElementById(elId);
+    if(!items.length){ container.innerHTML = '<div class="empty-note">표시할 데이터가 없습니다.</div>'; return; }
+    container.innerHTML = items.map(function(it){
+      var pct = it.max > 0 ? Math.max(0, Math.min(100, it.value / it.max * 100)) : 0;
+      return '<div class="hbar-row">' +
+        '<div class="hbar-label">' + escapeHTML(it.label) + '</div>' +
+        '<div class="hbar-track"><div class="hbar-fill" style="width:' + pct.toFixed(1) + '%"></div></div>' +
+        '<div class="hbar-value">' + escapeHTML(it.display) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderCharts(analysis){
+    var filtered = analysis.filtered;
+
+    // 학년별 평균
+    var byGrade = {};
+    GRADE_OPTIONS.forEach(function(g){ byGrade[g] = []; });
+    filtered.forEach(function(g){ byGrade[g.grade].push(g.avgTotal); });
+    renderHBarChart('chartGrade', GRADE_OPTIONS.filter(function(g){ return byGrade[g].length; }).map(function(g){
+      var avg = avgOf(byGrade[g]);
+      return { label:g + ' (' + byGrade[g].length + '명)', value:avg, max:analysis.maxSelected || 1, display:avg.toFixed(1) };
+    }));
+
+    // 성별 평균
+    var byGender = {};
+    GENDER_OPTIONS.forEach(function(g){ byGender[g] = []; });
+    filtered.forEach(function(g){ byGender[g.gender].push(g.avgTotal); });
+    renderHBarChart('chartGender', GENDER_OPTIONS.filter(function(g){ return byGender[g].length; }).map(function(g){
+      var avg = avgOf(byGender[g]);
+      return { label:g + ' (' + byGender[g].length + '명)', value:avg, max:analysis.maxSelected || 1, display:avg.toFixed(1) };
+    }));
+
+    // 평가요소(카테고리)별 평균 — 문항 선택과 무관하게 항상 전체 배점 기준
+    renderHBarChart('chartCategory', CONFIG.categories.map(function(c){
+      var vals = [];
+      filtered.forEach(function(g){ g.records.forEach(function(r){
+        vals.push((r.catTotals && r.catTotals[c.id] !== undefined) ? r.catTotals[c.id] : 0);
+      }); });
+      var avg = vals.length ? avgOf(vals) : 0;
+      return { label:c.label, value:avg, max:c.max, display:avg.toFixed(1) + '/' + c.max };
+    }));
+
+    // 문항별 평균 — 항상 전체 문항 기준(선택 필터를 정하는 데 참고하도록)
+    renderHBarChart('chartQuestion', allRows(CONFIG).map(function(r){
+      var vals = [];
+      filtered.forEach(function(g){ g.records.forEach(function(rec){
+        vals.push((rec.scores && rec.scores[r.id] !== undefined) ? rec.scores[r.id] : 0);
+      }); });
+      var avg = vals.length ? avgOf(vals) : 0;
+      var label = r.num ? ('Q' + r.num) : r.id.toUpperCase();
+      return { label:label, value:avg, max:r.max, display:avg.toFixed(1) + '/' + r.max };
+    }));
+
+    // 점수 분포 히스토그램 (선택 문항 합계 기준)
+    var totals = filtered.map(function(g){ return g.avgTotal; });
+    var max = analysis.maxSelected;
+    if(!totals.length || max <= 0){
+      renderHBarChart('chartHistogram', []);
+    } else {
+      var bucketCount = 5;
+      var bucketSize = max / bucketCount;
+      var buckets = [];
+      for(var i=0;i<bucketCount;i++){
+        var lo = i*bucketSize, hi = (i===bucketCount-1) ? max : (i+1)*bucketSize;
+        buckets.push({ lo:lo, hi:hi, count:0 });
+      }
+      totals.forEach(function(t){
+        var idx = Math.min(bucketCount-1, Math.floor(t / bucketSize));
+        if(idx < 0) idx = 0;
+        buckets[idx].count++;
+      });
+      var maxCount = Math.max.apply(null, buckets.map(function(b){ return b.count; }));
+      renderHBarChart('chartHistogram', buckets.map(function(b){
+        return { label: b.lo.toFixed(0) + '–' + b.hi.toFixed(0) + '점', value:b.count, max:maxCount || 1, display:b.count + '명' };
+      }));
+    }
   }
 
   function renderStats(){
-    var groups = groupRecordsByCandidate();
+    var analysis = computeCandidateAnalysis();
+    var groups = analysis.filtered;
     var allGraders = computeAllGraders();
+
+    renderCharts(analysis);
 
     el.statCount.innerHTML = groups.length + '<small> 명</small>';
     if(groups.length === 0){
       el.statAvg.textContent = '–';
       el.statMax.textContent = '–';
       el.statMin.textContent = '–';
-      el.statsBody.innerHTML = '<tr><td colspan="6"><div class="empty-note">아직 저장된 면접자가 없습니다. 3명을 채점한 뒤 "저장하고 다음 3명"을 눌러보세요.</div></td></tr>';
+      el.statsBody.innerHTML = '<tr><td colspan="8"><div class="empty-note">조건에 맞는 면접자가 없습니다. 필터를 확인하거나, 3명을 채점한 뒤 "저장하고 다음 3명"을 눌러보세요.</div></td></tr>';
       return;
     }
-
-    groups.forEach(function(g){ g.avgTotal = avgOf(g.records.map(function(r){ return r.total; })); });
 
     var avgOfAvgs = avgOf(groups.map(function(g){ return g.avgTotal; }));
     var maxG = groups.reduce(function(a,b){ return b.avgTotal > a.avgTotal ? b : a; });
@@ -932,7 +1208,7 @@
 
     var sorted = groups.slice();
     if(sortMode === 'score') sorted.sort(function(a,b){ return b.avgTotal - a.avgTotal; });
-    else sorted.sort(function(a,b){ return a.round - b.round || a.name.localeCompare(b.name); });
+    else sorted.sort(function(a,b){ return candidateOrderIndex(a.name) - candidateOrderIndex(b.name) || a.name.localeCompare(b.name); });
 
     var rowsById = {};
     allRows(CONFIG).forEach(function(r){ rowsById[r.id] = r; });
@@ -976,17 +1252,92 @@
       return '<tr>' +
         '<td class="num-col rank-cell">' + rank + '</td>' +
         '<td>' + escapeHTML(g.name) + '</td>' +
-        '<td class="num-col">' + g.round + '</td>' +
+        '<td>' + escapeHTML(g.grade) + '</td>' +
+        '<td>' + escapeHTML(g.gender) + '</td>' +
+        '<td class="num-col">' + escapeHTML(String(g.round)) + '</td>' +
         '<td class="num-col">' + g.records.length + '/' + expected + '</td>' +
         '<td class="num-col total-cell">' + g.avgTotal.toFixed(1) + '</td>' +
         '<td class="num-col"><button class="btn small ghost detail-toggle" data-id="' + groupKey + '" type="button">보기</button></td>' +
         '</tr>' +
-        '<tr class="breakdown-row" id="breakdown-' + groupKey + '" hidden><td colspan="6">' +
+        '<tr class="breakdown-row" id="breakdown-' + groupKey + '" hidden><td colspan="8">' +
           '<div class="breakdown-grid">' + avgBreakdownHTML + '</div>' + missingHTML +
           '<div class="grader-records-list">' + perGraderHTML + '</div>' +
         '</td></tr>';
     }).join('');
   }
+
+  function renderRoster(){
+    document.getElementById('rosterBody').innerHTML = GROUPS.map(function(g){
+      return '<tr><td colspan="3" style="background:var(--surface-2); font-weight:700; font-size:11.5px; color:var(--text-soft);">' + escapeHTML(g.label) + '</td></tr>' +
+        g.names.map(function(n){
+          var info = rosterInfo(n);
+          return '<tr>' +
+            '<td>' + escapeHTML(n) + '</td>' +
+            '<td><select class="roster-grade" data-name="' + escapeHTML(n) + '">' +
+              GRADE_OPTIONS.map(function(opt){ return '<option value="' + opt + '"' + (info.grade===opt?' selected':'') + '>' + opt + '</option>'; }).join('') +
+            '</select></td>' +
+            '<td><select class="roster-gender" data-name="' + escapeHTML(n) + '">' +
+              GENDER_OPTIONS.map(function(opt){ return '<option value="' + opt + '"' + (info.gender===opt?' selected':'') + '>' + opt + '</option>'; }).join('') +
+            '</select></td>' +
+          '</tr>';
+        }).join('');
+    }).join('');
+  }
+
+  document.getElementById('rosterBody').addEventListener('change', function(e){
+    var name = e.target.dataset.name;
+    if(!name) return;
+    if(!ROSTER[name]) ROSTER[name] = { grade:'', gender:'' };
+    if(e.target.classList.contains('roster-grade')) ROSTER[name].grade = e.target.value === '미상' ? '' : e.target.value;
+    if(e.target.classList.contains('roster-gender')) ROSTER[name].gender = e.target.value === '미상' ? '' : e.target.value;
+    saveJSON(STORAGE.roster, ROSTER);
+    renderStats();
+  });
+
+  function renderChipGroup(elId, options, selectedArr, onChange){
+    var container = document.getElementById(elId);
+    container.innerHTML = options.map(function(opt, i){
+      var checked = hasVal(selectedArr, opt.id !== undefined ? opt.id : opt);
+      return '<label class="chip' + (checked ? ' checked' : '') + '" data-idx="' + i + '">' +
+        '<input type="checkbox"' + (checked ? ' checked' : '') + '>' + escapeHTML(opt.label !== undefined ? opt.label : opt) +
+      '</label>';
+    }).join('');
+    Array.prototype.forEach.call(container.querySelectorAll('.chip'), function(chip, i){
+      chip.addEventListener('click', function(e){
+        e.preventDefault();
+        var opt = options[i];
+        var val = opt.id !== undefined ? opt.id : opt;
+        var idx = selectedArr.indexOf(val);
+        if(idx === -1) selectedArr.push(val); else selectedArr.splice(idx, 1);
+        chip.classList.toggle('checked');
+        chip.querySelector('input').checked = selectedArr.indexOf(val) !== -1;
+        onChange();
+      });
+    });
+  }
+
+  function renderFilters(){
+    renderChipGroup('gradeFilterGroup', GRADE_OPTIONS, filterState.grades, renderStats);
+    renderChipGroup('genderFilterGroup', GENDER_OPTIONS, filterState.genders, renderStats);
+    var rowOptions = allRows(CONFIG).map(function(r){
+      var label = (r.num ? ('Q' + r.num + ' ') : '') + (r.text.length > 16 ? r.text.slice(0,16) + '…' : r.text) + ' (' + r.max + '점)';
+      return { id:r.id, label:label };
+    });
+    renderChipGroup('rowFilterGroup', rowOptions, filterState.rowIds, function(){
+      var selected = selectedRowDefs();
+      document.getElementById('rowFilterHint').textContent = '· ' + selected.length + '개 선택 · 총 ' + selected.reduce(function(s,r){return s+r.max;},0) + '점';
+      renderStats();
+    });
+    document.getElementById('rowFilterHint').textContent = '· ' + selectedRowDefs().length + '개 선택 · 총 ' + selectedRowDefs().reduce(function(s,r){return s+r.max;},0) + '점';
+  }
+
+  document.getElementById('resetFiltersBtn').addEventListener('click', function(){
+    filterState.grades = GRADE_OPTIONS.slice();
+    filterState.genders = GENDER_OPTIONS.slice();
+    filterState.rowIds = allRows(CONFIG).map(function(r){ return r.id; });
+    renderFilters();
+    renderStats();
+  });
 
   el.statsBody.addEventListener('click', function(e){
     var toggleBtn = e.target.closest('.detail-toggle');
@@ -1119,7 +1470,7 @@
             scoresSnap[rc.id] = isNaN(v) ? 0 : clamp(v, rowDef.max);
           });
 
-          var existingIdx = records.findIndex(function(rr){ return rr.round === round && rr.name === name && rr.grader === grader; });
+          var existingIdx = records.findIndex(function(rr){ return rr.name === name && rr.grader === grader; });
           var existingNotes = {};
           if(existingIdx !== -1){
             existingNotes = records[existingIdx].notes || {};
@@ -1241,6 +1592,7 @@
   bindEditListBehavior(el.overallEditList);
 
   function enterEditMode(){
+    if(statsMode) exitStatsMode();
     draftConfig = deepClone(CONFIG);
     editMode = true;
     el.scoringView.hidden = true;
@@ -1254,12 +1606,34 @@
   function exitEditMode(){
     editMode = false;
     el.editView.hidden = true;
-    el.scoringView.hidden = false;
+    el.scoringView.hidden = statsMode;
     el.editToggleBtn.textContent = '✎ 수정모드';
   }
 
   el.editToggleBtn.addEventListener('click', function(){
     if(editMode){ exitEditMode(); } else { enterEditMode(); }
+  });
+
+  function enterStatsMode(){
+    if(editMode) exitEditMode();
+    statsMode = true;
+    el.scoringView.hidden = true;
+    el.statsView.hidden = false;
+    el.statsToggleBtn.textContent = '✕ 통계 모드 닫기';
+    renderRoster();
+    renderFilters();
+    renderStats();
+  }
+
+  function exitStatsMode(){
+    statsMode = false;
+    el.statsView.hidden = true;
+    el.scoringView.hidden = editMode;
+    el.statsToggleBtn.textContent = '📊 통계 모드';
+  }
+
+  el.statsToggleBtn.addEventListener('click', function(){
+    if(statsMode){ exitStatsMode(); } else { enterStatsMode(); }
   });
 
   document.getElementById('cancelEditBtn').addEventListener('click', function(){
@@ -1282,6 +1656,7 @@
     renderCandidateBar();
     applyBatchToInputs();
     recalcBatchView();
+    renderFilters();
     renderStats();
     exitEditMode();
   });
