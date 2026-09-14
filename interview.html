@@ -351,7 +351,7 @@
       </div>
       <div class="table-scroll">
         <table class="roster-table" id="rosterTable">
-          <thead><tr><th>이름</th><th>학년</th><th>성별</th></tr></thead>
+          <thead><tr><th>이름</th><th>반</th><th>학년</th><th>성별</th></tr></thead>
           <tbody id="rosterBody"></tbody>
         </table>
       </div>
@@ -545,20 +545,56 @@
   var GRADE_OPTIONS = ['1학년','2학년','3학년','미상'];
   var GENDER_OPTIONS = ['남','여','미상'];
 
+  // 학교 학적부에서 받은 학년/반/성별 원본 데이터. 처음 여는 기기에 기본값으로
+  // 깔아주되, 누가 이미 채워둔 값은 절대 덮어쓰지 않는다 — 빈 칸만 채운다.
+  var DEFAULT_ROSTER = {
+    '박도윤': { grade:'3학년', gender:'남', className:'2반' },
+    '박혜나': { grade:'3학년', gender:'여', className:'1반' },
+    '이상호': { grade:'3학년', gender:'남', className:'1반' },
+    '강승현': { grade:'3학년', gender:'남', className:'2반' },
+    '김우진': { grade:'3학년', gender:'남', className:'2반' },
+    '박건':   { grade:'3학년', gender:'남', className:'2반' },
+    '이문혁': { grade:'3학년', gender:'남', className:'2반' },
+    '김인구': { grade:'3학년', gender:'남', className:'3반' },
+    '서효준': { grade:'3학년', gender:'남', className:'3반' },
+    '양성원': { grade:'3학년', gender:'남', className:'4반' },
+    '이석호': { grade:'3학년', gender:'남', className:'4반' },
+    '박준':   { grade:'3학년', gender:'남', className:'5반' },
+    '이승준': { grade:'2학년', gender:'남', className:'3반' },
+    '김상이': { grade:'3학년', gender:'남', className:'3반' },
+    '김민성': { grade:'3학년', gender:'남', className:'2반' },
+    '우재균': { grade:'2학년', gender:'남', className:'3반' },
+    '윤지원': { grade:'2학년', gender:'남', className:'3반' },
+    '임주영': { grade:'2학년', gender:'남', className:'3반' },
+    '이연우': { grade:'2학년', gender:'여', className:'5반' },
+    '최다인': { grade:'1학년', gender:'여', className:'2반' },
+    '김나현': { grade:'1학년', gender:'여', className:'1반' },
+    '김은혜': { grade:'1학년', gender:'여', className:'2반' },
+    '김채연': { grade:'1학년', gender:'여', className:'3반' },
+    '홍석영': { grade:'1학년', gender:'여', className:'1반' }
+  };
+
   var ROSTER = loadJSON(STORAGE.roster, {});
   (function ensureRosterDefaults(){
     var changed = false;
-    GROUPS.forEach(function(g){
-      g.names.forEach(function(n){
-        if(!ROSTER[n]){ ROSTER[n] = { grade:'', gender:'' }; changed = true; }
-      });
+    var names = {};
+    GROUPS.forEach(function(g){ g.names.forEach(function(n){ names[n] = true; }); });
+    Object.keys(DEFAULT_ROSTER).forEach(function(n){ names[n] = true; });
+    Object.keys(names).forEach(function(n){
+      var d = DEFAULT_ROSTER[n];
+      if(!ROSTER[n]){ ROSTER[n] = { grade:'', gender:'', className:'' }; changed = true; }
+      if(d){
+        if(!ROSTER[n].grade && d.grade){ ROSTER[n].grade = d.grade; changed = true; }
+        if(!ROSTER[n].gender && d.gender){ ROSTER[n].gender = d.gender; changed = true; }
+        if(!ROSTER[n].className && d.className){ ROSTER[n].className = d.className; changed = true; }
+      }
     });
     if(changed) saveJSON(STORAGE.roster, ROSTER);
   })();
 
   function rosterInfo(name){
     var r = ROSTER[name];
-    return { grade: (r && r.grade) || '미상', gender: (r && r.gender) || '미상' };
+    return { grade: (r && r.grade) || '미상', gender: (r && r.gender) || '미상', className: (r && r.className) || '' };
   }
 
   var CONFIG = loadJSON(STORAGE.config, deepClone(DEFAULT_CONFIG));
@@ -1266,28 +1302,41 @@
     }).join('');
   }
 
+  function renderRosterRow(n){
+    var info = rosterInfo(n);
+    return '<tr>' +
+      '<td>' + escapeHTML(n) + '</td>' +
+      '<td>' + escapeHTML(info.className || '–') + '</td>' +
+      '<td><select class="roster-grade" data-name="' + escapeHTML(n) + '">' +
+        GRADE_OPTIONS.map(function(opt){ return '<option value="' + opt + '"' + (info.grade===opt?' selected':'') + '>' + opt + '</option>'; }).join('') +
+      '</select></td>' +
+      '<td><select class="roster-gender" data-name="' + escapeHTML(n) + '">' +
+        GENDER_OPTIONS.map(function(opt){ return '<option value="' + opt + '"' + (info.gender===opt?' selected':'') + '>' + opt + '</option>'; }).join('') +
+      '</select></td>' +
+    '</tr>';
+  }
+
   function renderRoster(){
-    document.getElementById('rosterBody').innerHTML = GROUPS.map(function(g){
-      return '<tr><td colspan="3" style="background:var(--surface-2); font-weight:700; font-size:11.5px; color:var(--text-soft);">' + escapeHTML(g.label) + '</td></tr>' +
-        g.names.map(function(n){
-          var info = rosterInfo(n);
-          return '<tr>' +
-            '<td>' + escapeHTML(n) + '</td>' +
-            '<td><select class="roster-grade" data-name="' + escapeHTML(n) + '">' +
-              GRADE_OPTIONS.map(function(opt){ return '<option value="' + opt + '"' + (info.grade===opt?' selected':'') + '>' + opt + '</option>'; }).join('') +
-            '</select></td>' +
-            '<td><select class="roster-gender" data-name="' + escapeHTML(n) + '">' +
-              GENDER_OPTIONS.map(function(opt){ return '<option value="' + opt + '"' + (info.gender===opt?' selected':'') + '>' + opt + '</option>'; }).join('') +
-            '</select></td>' +
-          '</tr>';
-        }).join('');
+    var groupNames = {};
+    var html = GROUPS.map(function(g){
+      g.names.forEach(function(n){ groupNames[n] = true; });
+      return '<tr><td colspan="4" style="background:var(--surface-2); font-weight:700; font-size:11.5px; color:var(--text-soft);">' + escapeHTML(g.label) + '</td></tr>' +
+        g.names.map(renderRosterRow).join('');
     }).join('');
+
+    var extraNames = Object.keys(ROSTER).filter(function(n){ return !groupNames[n]; }).sort();
+    if(extraNames.length){
+      html += '<tr><td colspan="4" style="background:var(--surface-2); font-weight:700; font-size:11.5px; color:var(--text-soft);">면접 명단 외 (참고용)</td></tr>' +
+        extraNames.map(renderRosterRow).join('');
+    }
+
+    document.getElementById('rosterBody').innerHTML = html;
   }
 
   document.getElementById('rosterBody').addEventListener('change', function(e){
     var name = e.target.dataset.name;
     if(!name) return;
-    if(!ROSTER[name]) ROSTER[name] = { grade:'', gender:'' };
+    if(!ROSTER[name]) ROSTER[name] = { grade:'', gender:'', className:'' };
     if(e.target.classList.contains('roster-grade')) ROSTER[name].grade = e.target.value === '미상' ? '' : e.target.value;
     if(e.target.classList.contains('roster-gender')) ROSTER[name].gender = e.target.value === '미상' ? '' : e.target.value;
     saveJSON(STORAGE.roster, ROSTER);
