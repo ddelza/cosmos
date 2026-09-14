@@ -148,6 +148,13 @@
   .breakdown-item b{ display:block; font-family:"Hahmlet",serif; font-size:14px; color:var(--accent-strong); }
   .row-actions{ display:flex; gap:6px; justify-content:center; }
   .empty-note{ padding:20px; text-align:center; color:var(--text-soft); font-size:13px; }
+  .missing-note{ margin-top:10px; font-size:12px; color:var(--bad); font-weight:600; }
+  .grader-records-list{ margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+  .grader-record{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  .grader-record-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .grader-record-head b{ font-family:"Hahmlet",serif; font-size:14px; }
+  .grader-record-head .total-cell{ font-weight:800; color:var(--accent-strong); margin-right:auto; }
+  .grader-record-cats{ margin-top:6px; font-size:12px; color:var(--text-soft); }
 
   /* edit mode */
   .edit-warn{ font-size:12px; padding:8px 12px; border-radius:9px; background:var(--good-soft); color:var(--good); display:inline-block; font-weight:700; }
@@ -308,7 +315,7 @@
         <div>
           <span class="eyebrow">누적 기록</span>
           <h2>면접자별 통계</h2>
-          <p class="sub">저장된 모든 면접자를 한눈에 볼 수 있습니다. CSV에는 쪽지시험 점수가 포함되지 않으니, 불러온 기록에 쪽지시험 점수가 필요하면 "이 기록 수정"으로 직접 입력하세요.</p>
+          <p class="sub">면접자마다 채점자 3명의 점수를 모아 평균으로 보여줍니다. "보기"를 누르면 채점자별 원점수·메모를 확인하고 수정할 수 있습니다. CSV에는 쪽지시험 점수가 포함되지 않으니, 불러온 기록에 쪽지시험 점수가 필요하면 개별 기록을 수정하세요.</p>
         </div>
         <div class="stats-toolbar">
           <button class="btn small" id="sortByScoreBtn" type="button">총점순</button>
@@ -329,7 +336,7 @@
 
       <div class="table-scroll">
         <table class="stats-table">
-          <thead><tr><th class="num-col">순위</th><th>이름</th><th>채점자</th><th class="num-col">회차</th><th class="num-col">총점</th><th class="num-col">상세</th><th class="num-col">관리</th></tr></thead>
+          <thead><tr><th class="num-col">순위</th><th>이름</th><th class="num-col">회차</th><th class="num-col">채점 인원</th><th class="num-col">평균 총점</th><th class="num-col">상세</th></tr></thead>
           <tbody id="statsBody"></tbody>
         </table>
       </div>
@@ -883,56 +890,101 @@
 
   // ================= STATS =================
 
+  function avgOf(arr){ return arr.reduce(function(a,b){ return a+b; }, 0) / arr.length; }
+
+  function computeAllGraders(){
+    var set = {};
+    records.forEach(function(r){ if(r.grader) set[r.grader] = true; });
+    return Object.keys(set);
+  }
+
+  function groupRecordsByCandidate(){
+    var map = {}, order = [];
+    records.forEach(function(r){
+      var key = r.round + '::' + r.name;
+      if(!map[key]){ map[key] = { round:r.round, name:r.name, records:[] }; order.push(key); }
+      map[key].records.push(r);
+    });
+    return order.map(function(k){ return map[k]; });
+  }
+
   function renderStats(){
-    el.statCount.innerHTML = records.length + '<small> 명</small>';
-    if(records.length === 0){
+    var groups = groupRecordsByCandidate();
+    var allGraders = computeAllGraders();
+
+    el.statCount.innerHTML = groups.length + '<small> 명</small>';
+    if(groups.length === 0){
       el.statAvg.textContent = '–';
       el.statMax.textContent = '–';
       el.statMin.textContent = '–';
-      el.statsBody.innerHTML = '<tr><td colspan="7"><div class="empty-note">아직 저장된 면접자가 없습니다. 3명을 채점한 뒤 "저장하고 다음 3명"을 눌러보세요.</div></td></tr>';
+      el.statsBody.innerHTML = '<tr><td colspan="6"><div class="empty-note">아직 저장된 면접자가 없습니다. 3명을 채점한 뒤 "저장하고 다음 3명"을 눌러보세요.</div></td></tr>';
       return;
     }
-    var totals = records.map(function(r){ return r.total; });
-    var avg = (totals.reduce(function(a,b){ return a+b; },0) / totals.length);
-    var maxRec = records.reduce(function(a,b){ return b.total>a.total?b:a; });
-    var minRec = records.reduce(function(a,b){ return b.total<a.total?b:a; });
-    el.statAvg.textContent = avg.toFixed(1);
-    el.statMax.innerHTML = maxRec.total + '<small> · ' + escapeHTML(maxRec.name) + '</small>';
-    el.statMin.innerHTML = minRec.total + '<small> · ' + escapeHTML(minRec.name) + '</small>';
 
-    var sorted = records.slice();
-    if(sortMode === 'score') sorted.sort(function(a,b){ return b.total - a.total; });
-    else sorted.sort(function(a,b){ return a.round - b.round || a.timestamp.localeCompare(b.timestamp); });
+    groups.forEach(function(g){ g.avgTotal = avgOf(g.records.map(function(r){ return r.total; })); });
+
+    var avgOfAvgs = avgOf(groups.map(function(g){ return g.avgTotal; }));
+    var maxG = groups.reduce(function(a,b){ return b.avgTotal > a.avgTotal ? b : a; });
+    var minG = groups.reduce(function(a,b){ return b.avgTotal < a.avgTotal ? b : a; });
+    el.statAvg.textContent = avgOfAvgs.toFixed(1);
+    el.statMax.innerHTML = maxG.avgTotal.toFixed(1) + '<small> · ' + escapeHTML(maxG.name) + '</small>';
+    el.statMin.innerHTML = minG.avgTotal.toFixed(1) + '<small> · ' + escapeHTML(minG.name) + '</small>';
+
+    var sorted = groups.slice();
+    if(sortMode === 'score') sorted.sort(function(a,b){ return b.avgTotal - a.avgTotal; });
+    else sorted.sort(function(a,b){ return a.round - b.round || a.name.localeCompare(b.name); });
 
     var rowsById = {};
     allRows(CONFIG).forEach(function(r){ rowsById[r.id] = r; });
 
-    el.statsBody.innerHTML = sorted.map(function(rec, idx){
+    el.statsBody.innerHTML = sorted.map(function(g, idx){
       var rank = sortMode === 'score' ? (idx+1) : '–';
-      var breakdown = CONFIG.categories.map(function(c){
-        var val = rec.catTotals[c.id] !== undefined ? rec.catTotals[c.id] : 0;
-        var snap = rec.catMaxSnapshot && rec.catMaxSnapshot[c.id];
-        var max = snap ? snap.max : c.max;
-        var label = snap ? snap.label : c.label;
-        return '<div class="breakdown-item"><b>' + val + ' / ' + max + '</b>' + escapeHTML(label) + '</div>';
+      var gradersPresent = g.records.map(function(r){ return r.grader || ''; }).filter(Boolean);
+      var missing = allGraders.filter(function(gr){ return gradersPresent.indexOf(gr) === -1; });
+      var expected = Math.max(allGraders.length, g.records.length);
+      var groupKey = 'cg-' + idx;
+
+      var avgBreakdownHTML = CONFIG.categories.map(function(c){
+        var vals = g.records.map(function(r){ return (r.catTotals && r.catTotals[c.id] !== undefined) ? r.catTotals[c.id] : 0; });
+        return '<div class="breakdown-item"><b>' + avgOf(vals).toFixed(1) + ' / ' + c.max + '</b>' + escapeHTML(c.label) + ' 평균</div>';
       }).join('');
-      var noteEntries = rec.notes ? Object.keys(rec.notes).filter(function(k){ return rec.notes[k]; }) : [];
-      var notesHTML = noteEntries.length ? '<div class="note-list">' + noteEntries.map(function(rowId){
-        var rowDef = rowsById[rowId];
-        var label = rowDef ? (rowDef.num ? '질문 ' + rowDef.num : rowDef.text) : rowId;
-        return '<div><b>' + escapeHTML(label) + '</b> — ' + escapeHTML(rec.notes[rowId]) + '</div>';
-      }).join('') + '</div>' : '';
+
+      var missingHTML = missing.length ? '<div class="missing-note">아직 채점 안 함: ' + missing.map(escapeHTML).join(', ') + '</div>' : '';
+
+      var perGraderHTML = g.records.map(function(r){
+        var catStr = CONFIG.categories.map(function(c){
+          var v = (r.catTotals && r.catTotals[c.id] !== undefined) ? r.catTotals[c.id] : 0;
+          return escapeHTML(c.label) + ' ' + v;
+        }).join(' · ');
+        var noteEntries = r.notes ? Object.keys(r.notes).filter(function(k){ return r.notes[k]; }) : [];
+        var notesHTML = noteEntries.length ? '<div class="note-list">' + noteEntries.map(function(rowId){
+          var rowDef = rowsById[rowId];
+          var label = rowDef ? (rowDef.num ? '질문 ' + rowDef.num : rowDef.text) : rowId;
+          return '<div><b>' + escapeHTML(label) + '</b> — ' + escapeHTML(r.notes[rowId]) + '</div>';
+        }).join('') + '</div>' : '';
+        return '<div class="grader-record">' +
+          '<div class="grader-record-head"><b>' + escapeHTML(r.grader || '채점자 미상') + '</b>' +
+          '<span class="total-cell">' + r.total + '점</span>' +
+          '<div class="row-actions">' +
+            '<button class="btn small ghost edit-rec" data-id="' + r.id + '" type="button">수정</button>' +
+            '<button class="btn small danger del-rec" data-id="' + r.id + '" type="button">삭제</button>' +
+          '</div></div>' +
+          '<div class="grader-record-cats">' + catStr + '</div>' + notesHTML +
+          '</div>';
+      }).join('');
+
       return '<tr>' +
         '<td class="num-col rank-cell">' + rank + '</td>' +
-        '<td>' + escapeHTML(rec.name) + '</td>' +
-        '<td>' + escapeHTML(rec.grader || '–') + '</td>' +
-        '<td class="num-col">' + rec.round + '</td>' +
-        '<td class="num-col total-cell">' + rec.total + '</td>' +
-        '<td class="num-col"><button class="btn small ghost detail-toggle" data-id="' + rec.id + '" type="button">보기</button></td>' +
-        '<td class="num-col"><div class="row-actions"><button class="btn small danger del-rec" data-id="' + rec.id + '" type="button">삭제</button></div></td>' +
+        '<td>' + escapeHTML(g.name) + '</td>' +
+        '<td class="num-col">' + g.round + '</td>' +
+        '<td class="num-col">' + g.records.length + '/' + expected + '</td>' +
+        '<td class="num-col total-cell">' + g.avgTotal.toFixed(1) + '</td>' +
+        '<td class="num-col"><button class="btn small ghost detail-toggle" data-id="' + groupKey + '" type="button">보기</button></td>' +
         '</tr>' +
-        '<tr class="breakdown-row" id="breakdown-' + rec.id + '" hidden><td colspan="7"><div class="breakdown-grid">' + breakdown + '</div>' + notesHTML +
-        '<div style="margin-top:10px;"><button class="btn small edit-rec" data-id="' + rec.id + '" type="button">✎ 이 기록 수정</button></div></td></tr>';
+        '<tr class="breakdown-row" id="breakdown-' + groupKey + '" hidden><td colspan="6">' +
+          '<div class="breakdown-grid">' + avgBreakdownHTML + '</div>' + missingHTML +
+          '<div class="grader-records-list">' + perGraderHTML + '</div>' +
+        '</td></tr>';
     }).join('');
   }
 
@@ -952,7 +1004,7 @@
     }
     var delBtn = e.target.closest('.del-rec');
     if(delBtn){
-      if(!confirm('이 면접자 기록을 삭제할까요?')) return;
+      if(!confirm('이 채점자의 기록을 삭제할까요?')) return;
       records = records.filter(function(r){ return r.id !== delBtn.dataset.id; });
       saveJSON(STORAGE.records, records);
       updateRoundPill();
