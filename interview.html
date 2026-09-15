@@ -446,7 +446,7 @@
         <div>
           <span class="eyebrow">누적 기록</span>
           <h2>면접자별 통계</h2>
-          <p class="sub">면접자마다 채점자들의 점수를 모아 평균으로 보여줍니다. "보기"를 누르면 채점자별 원점수·메모를 확인하고 수정할 수 있습니다. CSV에는 쪽지시험 점수가 포함되지 않으니, 불러온 기록에 쪽지시험 점수가 필요하면 개별 기록을 수정하세요.</p>
+          <p class="sub">면접자마다 채점자들의 점수를 모아 평균으로 보여줍니다. "보기"를 누르면 채점자별 원점수·메모를 확인하고 수정할 수 있습니다. CSV에는 쪽지시험 점수도 포함됩니다.</p>
         </div>
         <div class="stats-toolbar">
           <button class="btn small active" id="statsTableViewBtn" type="button">표로 보기</button>
@@ -1585,23 +1585,22 @@
     renderStats();
   });
 
-  var CSV_EXCLUDE_ROW_ID = 'q6'; // 쪽지시험(안전,책임) 점수는 기기마다 직접 입력 — CSV로 주고받지 않음
+  // 예전 CSV(쪽지시험 제외 형식)를 불러올 때도 기존 로컬 점수를 지키거나
+  // 기준표로 채워 넣기 위한 폴백 대상 — 지금 내보내기에는 쪽지시험도 포함된다.
+  var CSV_EXCLUDE_ROW_ID = 'q6';
 
-  function csvRowDefs(){ return allRows(CONFIG).filter(function(r){ return r.id !== CSV_EXCLUDE_ROW_ID; }); }
+  function csvRowDefs(){ return allRows(CONFIG); }
 
   document.getElementById('exportCsvBtn').addEventListener('click', function(){
     if(records.length === 0){ alert('내보낼 기록이 없습니다.'); return; }
     var rowDefs = csvRowDefs();
-    var header = ['이름','채점자','회차'].concat(rowDefs.map(function(r){ return r.id; })).concat(['총점(쪽지시험 제외)']);
+    var header = ['이름','채점자','회차'].concat(rowDefs.map(function(r){ return r.id; })).concat(['총점']);
     var lines = [header.join(',')];
     records.forEach(function(rec){
-      var sum = 0;
       var scoreCells = rowDefs.map(function(r){
-        var v = (rec.scores && rec.scores[r.id] !== undefined) ? rec.scores[r.id] : 0;
-        sum += v;
-        return v;
+        return (rec.scores && rec.scores[r.id] !== undefined) ? rec.scores[r.id] : 0;
       });
-      var row = [rec.name, rec.grader || '', rec.round].concat(scoreCells).concat([sum]);
+      var row = [rec.name, rec.grader || '', rec.round].concat(scoreCells).concat([rec.total]);
       lines.push(row.map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(','));
     });
     var csv = '﻿' + lines.join('\r\n');
@@ -1662,6 +1661,7 @@
         var allRowDefs = allRows(CONFIG);
         var rowIdCols = header.map(function(h, idx){ return { id:h, idx:idx }; })
           .filter(function(x){ return allRowDefs.some(function(r){ return r.id === x.id; }); });
+        var csvHasQuizCol = rowIdCols.some(function(rc){ return rc.id === CSV_EXCLUDE_ROW_ID; });
 
         var added = 0, updated = 0;
         for(var i = 1; i < rows.length; i++){
@@ -1680,14 +1680,16 @@
 
           var existingIdx = records.findIndex(function(rr){ return rr.name === name && rr.grader === grader; });
           var existingNotes = {};
-          if(existingIdx !== -1){
-            existingNotes = records[existingIdx].notes || {};
-            if(records[existingIdx].scores && records[existingIdx].scores[CSV_EXCLUDE_ROW_ID] !== undefined){
+          if(existingIdx !== -1) existingNotes = records[existingIdx].notes || {};
+
+          // 예전 형식(쪽지시험 열 없음) CSV일 때만 로컬 값을 지키거나 기준표로 채운다 —
+          // 지금 형식은 CSV에 쪽지시험이 들어있으므로 그 값을 그대로 반영한다.
+          if(!csvHasQuizCol){
+            if(existingIdx !== -1 && records[existingIdx].scores && records[existingIdx].scores[CSV_EXCLUDE_ROW_ID] !== undefined){
               scoresSnap[CSV_EXCLUDE_ROW_ID] = records[existingIdx].scores[CSV_EXCLUDE_ROW_ID];
+            } else if(QUIZ_SCORES[name] !== undefined){
+              scoresSnap[CSV_EXCLUDE_ROW_ID] = QUIZ_SCORES[name];
             }
-          }
-          if(scoresSnap[CSV_EXCLUDE_ROW_ID] === undefined && QUIZ_SCORES[name] !== undefined){
-            scoresSnap[CSV_EXCLUDE_ROW_ID] = QUIZ_SCORES[name];
           }
 
           var catTotals = {};
@@ -1710,7 +1712,7 @@
         saveJSON(STORAGE.records, records);
         updateRoundPill();
         renderStats();
-        alert('CSV 불러오기 완료: 새 기록 ' + added + '건, 갱신 ' + updated + '건.\n쪽지시험 점수는 CSV에 없으니, 필요하면 "이 기록 수정"으로 직접 입력하세요.');
+        alert('CSV 불러오기 완료: 새 기록 ' + added + '건, 갱신 ' + updated + '건.');
       } catch(err){
         alert('CSV를 읽는 중 문제가 발생했습니다: ' + (err && err.message));
       }
