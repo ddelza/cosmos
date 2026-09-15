@@ -16,6 +16,7 @@
     --good:#2F7A4F; --good-soft:#DEEEE2;
     --bad:#B3403A; --bad-soft:#F5DEDC;
     --line:#D3D7E6; --filled:#DCE3F4;
+    --grader-1:#2E6FE0; --grader-2:#1D9A6C; --grader-3:#C0447A;
     --shadow: 0 1px 2px rgba(30,35,64,.06), 0 8px 24px -12px rgba(30,35,64,.18);
   }
   @media (prefers-color-scheme: dark){
@@ -29,6 +30,7 @@
       --good:#6FBF8B; --good-soft:#1D3527;
       --bad:#E28A82; --bad-soft:#3B2224;
       --line:#2C3260; --filled:#293064;
+      --grader-1:#7FB0FF; --grader-2:#5FE0A8; --grader-3:#FF9AC1;
       --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
     }
   }
@@ -42,6 +44,7 @@
     --good:#6FBF8B; --good-soft:#1D3527;
     --bad:#E28A82; --bad-soft:#3B2224;
     --line:#2C3260; --filled:#293064;
+    --grader-1:#7FB0FF; --grader-2:#5FE0A8; --grader-3:#FF9AC1;
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
   }
 
@@ -190,6 +193,30 @@
   .candidate-card-total{ text-align:right; }
   .candidate-card-total .num{ font-family:"Hahmlet",serif; font-size:32px; font-weight:700; color:var(--accent-strong); font-variant-numeric:tabular-nums; }
   .candidate-card-total .of{ display:block; font-size:11px; color:var(--text-soft); }
+
+  .radar-wrap{ display:flex; flex-direction:column; align-items:center; gap:10px; margin:4px 0 20px; }
+  .radar-svg{ width:100%; max-width:320px; height:auto; }
+  .radar-legend{ display:flex; flex-wrap:wrap; justify-content:center; gap:12px; }
+  .radar-legend-item{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-soft); font-weight:600; }
+  .radar-legend-item .swatch{ width:11px; height:11px; border-radius:3px; display:inline-block; }
+
+  #printReportContainer{ display:none; }
+  .print-page{ background:var(--surface); }
+  .print-page + .print-page{ margin-top:40px; }
+  @media print{
+    body.printing-report > .wrap > *{ display:none !important; }
+    body.printing-report #printReportContainer{ display:block !important; }
+    :root{
+      --bg:#EEF0F6; --surface:#FFFFFF; --surface-2:#E4E7F1; --text:#1E2340; --text-soft:#565C7E;
+      --accent:#B8722E; --accent-strong:#8F5A22; --accent-soft:#EADFC8; --line:#D3D7E6;
+      --grader-1:#2E6FE0; --grader-2:#1D9A6C; --grader-3:#C0447A;
+    }
+    body{ background:#fff; }
+    * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .print-page{ padding:28px 6px; break-after:page; page-break-after:always; }
+    .print-page:last-child{ break-after:auto; page-break-after:auto; }
+    .row-actions{ display:none !important; }
+  }
 
   /* edit mode */
   .edit-warn{ font-size:12px; padding:8px 12px; border-radius:9px; background:var(--good-soft); color:var(--good); display:inline-block; font-weight:700; }
@@ -473,11 +500,14 @@
           <select class="group-select" id="cardJumpSelect" aria-label="면접자 바로가기"></select>
           <span class="round-pill" id="cardPosition">0 / 0</span>
           <button class="btn small" id="cardNextBtn" type="button">다음 →</button>
+          <button class="btn small primary" id="printReportBtn" type="button">🖨️ 전체 PDF로 저장</button>
         </div>
         <div id="candidateCard"></div>
       </div>
     </section>
   </div>
+
+  <div id="printReportContainer"></div>
 
   <footer>천체부 신입 부원 면접 평가표 · 입력 내용은 이 기기에만 저장됩니다</footer>
 </div>
@@ -1429,22 +1459,77 @@
     sel.value = String(cardIndex);
   }
 
-  function renderCandidateCard(){
-    var list = currentCardList();
-    var rowsById = {};
-    allRows(CONFIG).forEach(function(r){ rowsById[r.id] = r; });
-    var wrap = document.getElementById('candidateCard');
+  // 육각형(N각) 레이더 차트 — 평가요소마다 배점이 달라서 %로 정규화한다.
+  // 채점자별(g.effectiveRecords) 선을 겹쳐 그리고, 평균은 채워진 다각형으로 강조한다.
+  var GRADER_COLORS = ['var(--grader-1)', 'var(--grader-2)', 'var(--grader-3)'];
 
-    if(!list.length){
-      wrap.innerHTML = '<div class="empty-note">조건에 맞는 면접자가 없습니다.</div>';
-      document.getElementById('cardPosition').textContent = '0 / 0';
-      renderCardJumpSelect([]);
-      return;
+  function buildRadarSVG(g){
+    var cats = CONFIG.categories;
+    if(cats.length < 3) return '';
+    var n = cats.length;
+    var size = 280, cx = size/2, cy = size/2, maxR = size/2 - 52;
+
+    function angle(i){ return -Math.PI/2 + i * (2*Math.PI/n); }
+    function pointAt(i, pct){
+      var r = maxR * Math.max(0, Math.min(100, pct)) / 100;
+      var a = angle(i);
+      return { x: cx + r*Math.cos(a), y: cy + r*Math.sin(a) };
     }
-    if(cardIndex >= list.length) cardIndex = list.length - 1;
-    if(cardIndex < 0) cardIndex = 0;
+    function polyPoints(pcts){
+      return pcts.map(function(p,i){ var pt = pointAt(i,p); return pt.x.toFixed(1) + ',' + pt.y.toFixed(1); }).join(' ');
+    }
+    function catPct(catId, r){
+      var cat = cats.filter(function(c){ return c.id === catId; })[0];
+      if(!cat || cat.max <= 0) return 0;
+      var v = (r.catTotals && r.catTotals[catId] !== undefined) ? r.catTotals[catId] : 0;
+      return v / cat.max * 100;
+    }
 
-    var g = list[cardIndex];
+    var rings = [25,50,75,100].map(function(pct){
+      var pts = cats.map(function(c,i){ var p = pointAt(i,pct); return p.x.toFixed(1)+','+p.y.toFixed(1); }).join(' ');
+      return '<polygon points="' + pts + '" fill="none" stroke="var(--line)" stroke-width="1"/>';
+    }).join('');
+
+    var axes = cats.map(function(c,i){
+      var outer = pointAt(i,100);
+      var labelR = maxR + 30;
+      var a = angle(i);
+      var lx = cx + labelR*Math.cos(a), ly = cy + labelR*Math.sin(a);
+      var cosA = Math.cos(a);
+      var anchor = Math.abs(cosA) < 0.25 ? 'middle' : (cosA > 0 ? 'start' : 'end');
+      return '<line x1="' + cx + '" y1="' + cy + '" x2="' + outer.x.toFixed(1) + '" y2="' + outer.y.toFixed(1) + '" stroke="var(--line)" stroke-width="1"/>' +
+        '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="11" font-weight="700" fill="var(--text-soft)">' + escapeHTML(c.label) + '</text>';
+    }).join('');
+
+    var avgPcts = cats.map(function(c){
+      var vals = g.effectiveRecords.map(function(r){ return catPct(c.id, r); });
+      return vals.length ? avgOf(vals) : 0;
+    });
+    var avgPoly = '<polygon points="' + polyPoints(avgPcts) + '" fill="var(--accent)" fill-opacity="0.22" stroke="var(--accent-strong)" stroke-width="2.5"/>';
+    var avgDots = avgPcts.map(function(p,i){ var d = pointAt(i,p); return '<circle cx="' + d.x.toFixed(1) + '" cy="' + d.y.toFixed(1) + '" r="3.5" fill="var(--accent-strong)"/>'; }).join('');
+
+    var graderPolys = g.effectiveRecords.map(function(r, idx){
+      var color = GRADER_COLORS[idx % GRADER_COLORS.length];
+      var pcts = cats.map(function(c){ return catPct(c.id, r); });
+      var dots = pcts.map(function(p,i){ var d = pointAt(i,p); return '<circle cx="' + d.x.toFixed(1) + '" cy="' + d.y.toFixed(1) + '" r="2.5" fill="' + color + '"/>'; }).join('');
+      return '<polygon points="' + polyPoints(pcts) + '" fill="none" stroke="' + color + '" stroke-width="1.8" stroke-dasharray="5 3"/>' + dots;
+    }).join('');
+
+    var svg = '<svg viewBox="0 0 ' + size + ' ' + size + '" class="radar-svg" role="img" aria-label="평가요소 육각형 스탯">' +
+      rings + axes + avgPoly + graderPolys + avgDots + '</svg>';
+
+    var legend = '<div class="radar-legend">' +
+      '<span class="radar-legend-item"><span class="swatch" style="background:var(--accent-strong)"></span>평균</span>' +
+      g.effectiveRecords.map(function(r, idx){
+        var color = GRADER_COLORS[idx % GRADER_COLORS.length];
+        return '<span class="radar-legend-item"><span class="swatch" style="background:' + color + '"></span>' + escapeHTML(r.grader || '채점자 미상') + '</span>';
+      }).join('') +
+      '</div>';
+
+    return '<div class="radar-wrap">' + svg + legend + '</div>';
+  }
+
+  function buildCandidateDetailHTML(g, rowsById, interactive){
     var allGraders = computeAllGraders();
     var gradersPresent = g.records.map(function(r){ return r.grader || ''; }).filter(Boolean);
     var missing = allGraders.filter(function(gr){ return gradersPresent.indexOf(gr) === -1; });
@@ -1456,6 +1541,7 @@
     }).join('');
 
     var missingHTML = missing.length ? '<div class="missing-note">아직 채점 안 함: ' + missing.map(escapeHTML).join(', ') + '</div>' : '';
+    var radarHTML = buildRadarSVG(g);
 
     var resolvedQuizForCard = resolveQuizScore(g.name, g.records);
     var perGraderHTML = g.records.map(function(r){
@@ -1474,29 +1560,68 @@
       var ownQuizCard = r.scores ? r.scores[CSV_EXCLUDE_ROW_ID] : undefined;
       var quizNoteCard = (resolvedQuizForCard !== undefined && ownQuizCard === undefined)
         ? '<div class="missing-note">쪽지시험 미입력 — 평균에는 ' + resolvedQuizForCard + '점(다른 채점자 값/기준표)이 적용됨</div>' : '';
+      var actionsHTML = interactive
+        ? '<div class="row-actions">' +
+            '<button class="btn small ghost edit-rec" data-id="' + r.id + '" type="button">수정</button>' +
+            '<button class="btn small danger del-rec" data-id="' + r.id + '" type="button">삭제</button>' +
+          '</div>'
+        : '';
       return '<div class="grader-record">' +
         '<div class="grader-record-head"><b>' + escapeHTML(r.grader || '채점자 미상') + '</b>' +
-        '<span class="total-cell">' + r.total + '점</span>' +
-        '<div class="row-actions">' +
-          '<button class="btn small ghost edit-rec" data-id="' + r.id + '" type="button">수정</button>' +
-          '<button class="btn small danger del-rec" data-id="' + r.id + '" type="button">삭제</button>' +
-        '</div></div>' +
+        '<span class="total-cell">' + r.total + '점</span>' + actionsHTML + '</div>' +
         '<div class="grader-record-cats">' + catStr + '</div>' + notesHTML + quizNoteCard +
         '</div>';
     }).join('');
 
-    wrap.innerHTML =
-      '<div class="candidate-card-head">' +
+    return '<div class="candidate-card-head">' +
         '<div><h3>' + escapeHTML(g.name) + '</h3>' +
         '<div class="candidate-card-meta">' + escapeHTML(g.grade) + ' · ' + escapeHTML(g.gender) + ' · 회차 ' + escapeHTML(String(g.round)) + ' · 채점 ' + g.records.length + '/' + expected + '</div></div>' +
         '<div class="candidate-card-total"><span class="num">' + g.avgTotal.toFixed(1) + '</span><span class="of">평균 총점</span></div>' +
       '</div>' +
+      radarHTML +
       '<div class="breakdown-grid">' + avgBreakdownHTML + '</div>' + missingHTML +
       '<div class="grader-records-list">' + perGraderHTML + '</div>';
+  }
+
+  function renderCandidateCard(){
+    var list = currentCardList();
+    var rowsById = {};
+    allRows(CONFIG).forEach(function(r){ rowsById[r.id] = r; });
+    var wrap = document.getElementById('candidateCard');
+
+    if(!list.length){
+      wrap.innerHTML = '<div class="empty-note">조건에 맞는 면접자가 없습니다.</div>';
+      document.getElementById('cardPosition').textContent = '0 / 0';
+      renderCardJumpSelect([]);
+      return;
+    }
+    if(cardIndex >= list.length) cardIndex = list.length - 1;
+    if(cardIndex < 0) cardIndex = 0;
+
+    var g = list[cardIndex];
+    wrap.innerHTML = buildCandidateDetailHTML(g, rowsById, true);
 
     document.getElementById('cardPosition').textContent = (cardIndex+1) + ' / ' + list.length;
     renderCardJumpSelect(list);
   }
+
+  document.getElementById('printReportBtn').addEventListener('click', function(){
+    var list = currentCardList();
+    if(!list.length){ alert('PDF로 저장할 면접자가 없습니다. 필터를 확인하세요.'); return; }
+    var rowsById = {};
+    allRows(CONFIG).forEach(function(r){ rowsById[r.id] = r; });
+    var html = list.map(function(g){
+      return '<div class="print-page">' + buildCandidateDetailHTML(g, rowsById, false) + '</div>';
+    }).join('');
+    document.getElementById('printReportContainer').innerHTML = html;
+    document.body.classList.add('printing-report');
+    window.print();
+  });
+
+  window.addEventListener('afterprint', function(){
+    document.body.classList.remove('printing-report');
+    document.getElementById('printReportContainer').innerHTML = '';
+  });
 
   document.getElementById('cardPrevBtn').addEventListener('click', function(){
     cardIndex = Math.max(0, cardIndex - 1);
