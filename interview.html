@@ -248,7 +248,7 @@
           <h2>평가요소 (카테고리) 배점</h2>
           <p class="sub">각 평가요소의 이름과 배점을 수정할 수 있습니다.</p>
         </div>
-        <span class="edit-warn" id="sumWarn">합계 100점</span>
+        <span class="edit-warn" id="sumWarn">합계 확인 중</span>
       </div>
       <div class="edit-card" id="catEditList"></div>
     </section>
@@ -314,7 +314,7 @@
       </div>
     </section>
 
-    <section>
+    <section id="overallSection">
       <div class="section-head">
         <div>
           <span class="eyebrow">종합 평가</span>
@@ -501,10 +501,8 @@
       { id:'safety', label:'안전, 책임', max:15 },
       { id:'interest', label:'관심도', max:20 },
       { id:'goal', label:'목표의 방향', max:15 },
-      { id:'diligence', label:'충실성', max:10 },
-      { id:'grit', label:'과제집착력', max:10 },
-      { id:'effort', label:'답변성실도', max:5 },
-      { id:'knowledge', label:'이해도', max:5 }
+      { id:'diligence', label:'충실성', max:5 },
+      { id:'grit', label:'과제집착력', max:10 }
     ],
     questions: [
       { id:'q1', num:1, text:'천체부를 왜 하고 싶으신가요?', cat:'goal', max:15, options:[] },
@@ -521,11 +519,7 @@
       { id:'q6', num:6, text:'천체부 규칙 암기 후 쪽지시험 응시', cat:'safety', max:15, options:[] },
       { id:'q7', num:7, text:'천체부에 합격하면 어떻게 활동할지 각오를 말씀해주세요', cat:'diligence', max:5, options:[] }
     ],
-    overall: [
-      { id:'o1', text:'교사·선배의 지시를 따르는 태도 (충실성 추가분)', cat:'diligence', max:5 },
-      { id:'o2', text:'답변성실도 — 답변 길이가 너무 짧으면 감점', cat:'effort', max:5 },
-      { id:'o3', text:'이해도 — 천체 관련 사전지식이 드러나면 가산점', cat:'knowledge', max:5 }
-    ]
+    overall: []
   };
 
   function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
@@ -700,6 +694,7 @@
   function renderScoringTables(){
     el.questionBody.innerHTML = CONFIG.questions.map(function(r){ return buildScoreRowHTML(r, true); }).join('');
     el.overallBody.innerHTML = CONFIG.overall.map(function(r){ return buildScoreRowHTML(r, false); }).join('');
+    document.getElementById('overallSection').hidden = CONFIG.overall.length === 0;
     var qMax = CONFIG.questions.reduce(function(s,r){ return s+r.max; }, 0);
     var oMax = CONFIG.overall.reduce(function(s,r){ return s+r.max; }, 0);
     document.getElementById('qfootLabel').textContent = '질문 합계 (' + qMax + '점)';
@@ -1711,8 +1706,9 @@
 
   function updateSumWarn(){
     var sum = draftConfig.categories.reduce(function(s,c){ return s + (parseFloat(c.max)||0); }, 0);
-    el.sumWarn.textContent = '합계 ' + sum + '점';
-    el.sumWarn.classList.toggle('off', sum !== 100);
+    var rowTotal = draftConfig.questions.concat(draftConfig.overall).reduce(function(s,r){ return s + (parseFloat(r.max)||0); }, 0);
+    el.sumWarn.textContent = '평가요소 합계 ' + sum + '점 · 문항 합계 ' + rowTotal + '점';
+    el.sumWarn.classList.toggle('off', sum !== rowTotal);
   }
 
   function catOptionsHTML(selectedId){
