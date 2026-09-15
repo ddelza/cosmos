@@ -146,7 +146,7 @@
   .stats-table .rank-cell{ font-family:"Hahmlet",serif; font-weight:700; color:var(--text-soft); }
   .stats-table .total-cell{ font-weight:800; color:var(--accent-strong); }
   .breakdown-row td{ background:var(--surface-2); padding:10px 14px 14px; }
-  .breakdown-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px; }
+  .breakdown-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(88px,1fr)); gap:8px; }
   .breakdown-item{ background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:6px 10px; font-size:12px; }
   .breakdown-item b{ display:block; font-family:"Hahmlet",serif; font-size:14px; color:var(--accent-strong); }
   .row-actions{ display:flex; gap:6px; justify-content:center; }
@@ -194,11 +194,13 @@
   .candidate-card-total .num{ font-family:"Hahmlet",serif; font-size:32px; font-weight:700; color:var(--accent-strong); font-variant-numeric:tabular-nums; }
   .candidate-card-total .of{ display:block; font-size:11px; color:var(--text-soft); }
 
-  .radar-wrap{ display:flex; flex-direction:column; align-items:center; gap:10px; margin:4px 0 20px; }
-  .radar-svg{ width:100%; max-width:320px; height:auto; }
-  .radar-legend{ display:flex; flex-wrap:wrap; justify-content:center; gap:12px; }
-  .radar-legend-item{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-soft); font-weight:600; }
-  .radar-legend-item .swatch{ width:11px; height:11px; border-radius:3px; display:inline-block; }
+  .radar-pair{ display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin:4px 0 18px; }
+  .radar-chart{ display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; min-width:170px; max-width:230px; }
+  .radar-caption{ font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-strong); }
+  .radar-svg{ width:100%; max-width:210px; height:auto; }
+  .radar-legend{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+  .radar-legend-item{ display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text-soft); font-weight:600; }
+  .radar-legend-item .swatch{ width:10px; height:10px; border-radius:3px; display:inline-block; }
 
   #printReportContainer{ display:none; }
   .print-page{ background:var(--surface); }
@@ -213,9 +215,34 @@
     }
     body{ background:#fff; }
     * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .print-page{ padding:28px 6px; break-after:page; page-break-after:always; }
+    .print-page{ padding:10px 4px 0; break-after:page; page-break-after:always; break-inside:avoid; }
     .print-page:last-child{ break-after:auto; page-break-after:auto; }
     .row-actions{ display:none !important; }
+
+    /* 메모가 길어도 한 장 안에 들어오도록 전반적으로 빽빽하게 */
+    .print-page .candidate-card-head{ margin-bottom:8px; }
+    .print-page .candidate-card-head h3{ font-size:17px; }
+    .print-page .candidate-card-meta{ font-size:10.5px; }
+    .print-page .candidate-card-total .num{ font-size:22px; }
+    .print-page .candidate-card-total .of{ font-size:9px; }
+    .print-page .radar-pair{ margin:0 0 8px; gap:10px; }
+    .print-page .radar-chart{ min-width:130px; max-width:160px; gap:3px; }
+    .print-page .radar-svg{ max-width:150px; }
+    .print-page .radar-caption{ font-size:9px; }
+    .print-page .radar-legend{ gap:6px; }
+    .print-page .radar-legend-item{ font-size:9px; gap:3px; }
+    .print-page .radar-legend-item .swatch{ width:8px; height:8px; }
+    .print-page .breakdown-grid{ gap:4px; margin-bottom:6px; }
+    .print-page .breakdown-item{ padding:3px 6px; font-size:9.5px; }
+    .print-page .breakdown-item b{ font-size:11px; }
+    .print-page .missing-note{ margin-top:4px; font-size:9.5px; }
+    .print-page .grader-records-list{ gap:4px; }
+    .print-page .grader-record{ padding:5px 8px; break-inside:avoid; }
+    .print-page .grader-record-head{ gap:6px; }
+    .print-page .grader-record-head b{ font-size:11.5px; }
+    .print-page .grader-record-cats{ margin-top:3px; font-size:9.5px; }
+    .print-page .note-list{ margin-top:4px; padding-top:3px; font-size:9px; gap:1px; line-height:1.3; }
+    .print-page footer{ display:none; }
   }
 
   /* edit mode */
@@ -1463,11 +1490,13 @@
   // 채점자별(g.effectiveRecords) 선을 겹쳐 그리고, 평균은 채워진 다각형으로 강조한다.
   var GRADER_COLORS = ['var(--grader-1)', 'var(--grader-2)', 'var(--grader-3)'];
 
-  function buildRadarSVG(g){
+  // mode 'avg' → 채점자 평균만 채운 다각형 하나. mode 'graders' → 채점자별 선만
+  // 색을 나눠 겹쳐 그린 것. 서로 다른 두 육각형으로 분리해 각각 읽기 쉽게 한다.
+  function buildRadarSVG(g, mode){
     var cats = CONFIG.categories;
     if(cats.length < 3) return '';
     var n = cats.length;
-    var size = 280, cx = size/2, cy = size/2, maxR = size/2 - 52;
+    var size = 220, cx = size/2, cy = size/2, maxR = size/2 - 42;
 
     function angle(i){ return -Math.PI/2 + i * (2*Math.PI/n); }
     function pointAt(i, pct){
@@ -1492,41 +1521,41 @@
 
     var axes = cats.map(function(c,i){
       var outer = pointAt(i,100);
-      var labelR = maxR + 30;
+      var labelR = maxR + 24;
       var a = angle(i);
       var lx = cx + labelR*Math.cos(a), ly = cy + labelR*Math.sin(a);
       var cosA = Math.cos(a);
       var anchor = Math.abs(cosA) < 0.25 ? 'middle' : (cosA > 0 ? 'start' : 'end');
       return '<line x1="' + cx + '" y1="' + cy + '" x2="' + outer.x.toFixed(1) + '" y2="' + outer.y.toFixed(1) + '" stroke="var(--line)" stroke-width="1"/>' +
-        '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="11" font-weight="700" fill="var(--text-soft)">' + escapeHTML(c.label) + '</text>';
+        '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="9.5" font-weight="700" fill="var(--text-soft)">' + escapeHTML(c.label) + '</text>';
     }).join('');
 
-    var avgPcts = cats.map(function(c){
-      var vals = g.effectiveRecords.map(function(r){ return catPct(c.id, r); });
-      return vals.length ? avgOf(vals) : 0;
-    });
-    var avgPoly = '<polygon points="' + polyPoints(avgPcts) + '" fill="var(--accent)" fill-opacity="0.22" stroke="var(--accent-strong)" stroke-width="2.5"/>';
-    var avgDots = avgPcts.map(function(p,i){ var d = pointAt(i,p); return '<circle cx="' + d.x.toFixed(1) + '" cy="' + d.y.toFixed(1) + '" r="3.5" fill="var(--accent-strong)"/>'; }).join('');
-
-    var graderPolys = g.effectiveRecords.map(function(r, idx){
-      var color = GRADER_COLORS[idx % GRADER_COLORS.length];
-      var pcts = cats.map(function(c){ return catPct(c.id, r); });
-      var dots = pcts.map(function(p,i){ var d = pointAt(i,p); return '<circle cx="' + d.x.toFixed(1) + '" cy="' + d.y.toFixed(1) + '" r="2.5" fill="' + color + '"/>'; }).join('');
-      return '<polygon points="' + polyPoints(pcts) + '" fill="none" stroke="' + color + '" stroke-width="1.8" stroke-dasharray="5 3"/>' + dots;
-    }).join('');
-
-    var svg = '<svg viewBox="0 0 ' + size + ' ' + size + '" class="radar-svg" role="img" aria-label="평가요소 육각형 스탯">' +
-      rings + axes + avgPoly + graderPolys + avgDots + '</svg>';
-
-    var legend = '<div class="radar-legend">' +
-      '<span class="radar-legend-item"><span class="swatch" style="background:var(--accent-strong)"></span>평균</span>' +
-      g.effectiveRecords.map(function(r, idx){
+    var dataHTML, legendHTML;
+    if(mode === 'avg'){
+      var avgPcts = cats.map(function(c){
+        var vals = g.effectiveRecords.map(function(r){ return catPct(c.id, r); });
+        return vals.length ? avgOf(vals) : 0;
+      });
+      dataHTML = '<polygon points="' + polyPoints(avgPcts) + '" fill="var(--accent)" fill-opacity="0.28" stroke="var(--accent-strong)" stroke-width="2.5"/>' +
+        avgPcts.map(function(p,i){ var d = pointAt(i,p); return '<circle cx="' + d.x.toFixed(1) + '" cy="' + d.y.toFixed(1) + '" r="3" fill="var(--accent-strong)"/>'; }).join('');
+      legendHTML = '<div class="radar-legend"><span class="radar-legend-item"><span class="swatch" style="background:var(--accent-strong)"></span>평균</span></div>';
+    } else {
+      dataHTML = g.effectiveRecords.map(function(r, idx){
+        var color = GRADER_COLORS[idx % GRADER_COLORS.length];
+        var pcts = cats.map(function(c){ return catPct(c.id, r); });
+        var dots = pcts.map(function(p,i){ var d = pointAt(i,p); return '<circle cx="' + d.x.toFixed(1) + '" cy="' + d.y.toFixed(1) + '" r="2.4" fill="' + color + '"/>'; }).join('');
+        return '<polygon points="' + polyPoints(pcts) + '" fill="none" stroke="' + color + '" stroke-width="1.8"/>' + dots;
+      }).join('');
+      legendHTML = '<div class="radar-legend">' + g.effectiveRecords.map(function(r, idx){
         var color = GRADER_COLORS[idx % GRADER_COLORS.length];
         return '<span class="radar-legend-item"><span class="swatch" style="background:' + color + '"></span>' + escapeHTML(r.grader || '채점자 미상') + '</span>';
-      }).join('') +
-      '</div>';
+      }).join('') + '</div>';
+    }
 
-    return '<div class="radar-wrap">' + svg + legend + '</div>';
+    var svg = '<svg viewBox="0 0 ' + size + ' ' + size + '" class="radar-svg" role="img" aria-label="평가요소 육각형 스탯 (' + (mode==='avg'?'평균':'채점자별') + ')">' +
+      rings + axes + dataHTML + '</svg>';
+
+    return '<div class="radar-chart"><span class="radar-caption">' + (mode === 'avg' ? '평균' : '채점자별') + '</span>' + svg + legendHTML + '</div>';
   }
 
   function buildCandidateDetailHTML(g, rowsById, interactive){
@@ -1541,7 +1570,7 @@
     }).join('');
 
     var missingHTML = missing.length ? '<div class="missing-note">아직 채점 안 함: ' + missing.map(escapeHTML).join(', ') + '</div>' : '';
-    var radarHTML = buildRadarSVG(g);
+    var radarHTML = '<div class="radar-pair">' + buildRadarSVG(g, 'avg') + buildRadarSVG(g, 'graders') + '</div>';
 
     var resolvedQuizForCard = resolveQuizScore(g.name, g.records);
     var perGraderHTML = g.records.map(function(r){
