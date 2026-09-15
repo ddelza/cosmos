@@ -180,6 +180,17 @@
   .hbar-fill{ background:var(--accent); height:100%; border-radius:999px; }
   .hbar-value{ font-variant-numeric:tabular-nums; font-weight:700; color:var(--text); }
 
+  .btn.active{ background:var(--accent-soft); border-color:var(--accent); color:var(--accent-strong); }
+
+  .card-nav{ display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .card-nav select{ flex:1; min-width:160px; max-width:320px; }
+  .candidate-card-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+  .candidate-card-head h3{ font-family:"Hahmlet",serif; font-size:22px; font-weight:700; margin:0; }
+  .candidate-card-meta{ color:var(--text-soft); font-size:13px; margin-top:4px; }
+  .candidate-card-total{ text-align:right; }
+  .candidate-card-total .num{ font-family:"Hahmlet",serif; font-size:32px; font-weight:700; color:var(--accent-strong); font-variant-numeric:tabular-nums; }
+  .candidate-card-total .of{ display:block; font-size:11px; color:var(--text-soft); }
+
   /* edit mode */
   .edit-warn{ font-size:12px; padding:8px 12px; border-radius:9px; background:var(--good-soft); color:var(--good); display:inline-block; font-weight:700; }
   .edit-warn.off{ background:var(--bad-soft); color:var(--bad); }
@@ -438,6 +449,8 @@
           <p class="sub">면접자마다 채점자들의 점수를 모아 평균으로 보여줍니다. "보기"를 누르면 채점자별 원점수·메모를 확인하고 수정할 수 있습니다. CSV에는 쪽지시험 점수가 포함되지 않으니, 불러온 기록에 쪽지시험 점수가 필요하면 개별 기록을 수정하세요.</p>
         </div>
         <div class="stats-toolbar">
+          <button class="btn small active" id="statsTableViewBtn" type="button">표로 보기</button>
+          <button class="btn small" id="statsCardViewBtn" type="button">👤 한 명씩 보기</button>
           <button class="btn small" id="sortByScoreBtn" type="button">총점순</button>
           <button class="btn small" id="sortByRoundBtn" type="button">면접순</button>
           <button class="btn small" id="exportCsvBtn" type="button">CSV 내보내기</button>
@@ -447,11 +460,21 @@
         </div>
       </div>
 
-      <div class="table-scroll">
+      <div class="table-scroll" id="statsTableWrap">
         <table class="stats-table">
           <thead><tr><th class="num-col">순위</th><th>이름</th><th>학년</th><th>성별</th><th class="num-col">회차</th><th class="num-col">채점 인원</th><th class="num-col">평균 총점</th><th class="num-col">상세</th></tr></thead>
           <tbody id="statsBody"></tbody>
         </table>
+      </div>
+
+      <div id="statsCardWrap" hidden>
+        <div class="card-nav">
+          <button class="btn small" id="cardPrevBtn" type="button">← 이전</button>
+          <select class="group-select" id="cardJumpSelect" aria-label="면접자 바로가기"></select>
+          <span class="round-pill" id="cardPosition">0 / 0</span>
+          <button class="btn small" id="cardNextBtn" type="button">다음 →</button>
+        </div>
+        <div id="candidateCard"></div>
       </div>
     </section>
   </div>
@@ -844,13 +867,31 @@
   });
 
   document.addEventListener('click', function(e){
-    var btn = e.target.closest('.note-toggle');
-    if(!btn) return;
-    var ta = document.querySelector('textarea.note-box[data-row="' + btn.dataset.row + '"][data-cand="' + btn.dataset.cand + '"]');
-    if(!ta) return;
-    ta.hidden = !ta.hidden;
-    btn.textContent = ta.hidden ? '메모' : '메모 접기';
-    if(!ta.hidden) ta.focus();
+    var noteBtn = e.target.closest('.note-toggle');
+    if(noteBtn){
+      var ta = document.querySelector('textarea.note-box[data-row="' + noteBtn.dataset.row + '"][data-cand="' + noteBtn.dataset.cand + '"]');
+      if(!ta) return;
+      ta.hidden = !ta.hidden;
+      noteBtn.textContent = ta.hidden ? '메모' : '메모 접기';
+      if(!ta.hidden) ta.focus();
+      return;
+    }
+    // shared by the stats table's expanded rows and the one-by-one candidate card
+    var editBtn = e.target.closest('.edit-rec');
+    if(editBtn){
+      var rec = records.find(function(rr){ return rr.id === editBtn.dataset.id; });
+      if(rec) startEditRecord(rec);
+      return;
+    }
+    var delBtn = e.target.closest('.del-rec');
+    if(delBtn){
+      if(!confirm('이 채점자의 기록을 삭제할까요?')) return;
+      records = records.filter(function(r){ return r.id !== delBtn.dataset.id; });
+      saveJSON(STORAGE.records, records);
+      updateRoundPill();
+      renderStats();
+      return;
+    }
   });
 
   document.addEventListener('input', function(e){
@@ -1006,6 +1047,8 @@
   function startEditRecord(rec){
     var hasUnsaved = scoreInputs().some(function(i){ return i.value !== ''; }) || nameInputs().some(function(i){ return i.value.trim() !== ''; });
     if(hasUnsaved && !confirm('현재 입력 중인 내용이 저장되지 않고 사라집니다. 이 기록을 수정할까요?')) return;
+
+    if(statsMode) exitStatsMode();
 
     if(!editingSnapshot){
       editingSnapshot = { round: currentRound, batch: deepClone(batch), grader: graderName };
@@ -1232,6 +1275,7 @@
       el.statMax.textContent = '–';
       el.statMin.textContent = '–';
       el.statsBody.innerHTML = '<tr><td colspan="8"><div class="empty-note">조건에 맞는 면접자가 없습니다. 필터를 확인하거나, 3명을 채점한 뒤 "저장하고 다음 3명"을 눌러보세요.</div></td></tr>';
+      renderCandidateCard();
       return;
     }
 
@@ -1300,7 +1344,118 @@
           '<div class="grader-records-list">' + perGraderHTML + '</div>' +
         '</td></tr>';
     }).join('');
+
+    renderCandidateCard();
   }
+
+  // ---- 한 명씩 보기 (카드형) ----
+  var cardIndex = 0;
+
+  function currentCardList(){
+    var analysis = computeCandidateAnalysis();
+    var groups = analysis.filtered.slice();
+    if(sortMode === 'score') groups.sort(function(a,b){ return b.avgTotal - a.avgTotal; });
+    else groups.sort(function(a,b){ return candidateOrderIndex(a.name) - candidateOrderIndex(b.name) || a.name.localeCompare(b.name); });
+    return groups;
+  }
+
+  function renderCardJumpSelect(list){
+    var sel = document.getElementById('cardJumpSelect');
+    sel.innerHTML = list.map(function(g, i){ return '<option value="' + i + '">' + (i+1) + '. ' + escapeHTML(g.name) + '</option>'; }).join('');
+    sel.value = String(cardIndex);
+  }
+
+  function renderCandidateCard(){
+    var list = currentCardList();
+    var rowsById = {};
+    allRows(CONFIG).forEach(function(r){ rowsById[r.id] = r; });
+    var wrap = document.getElementById('candidateCard');
+
+    if(!list.length){
+      wrap.innerHTML = '<div class="empty-note">조건에 맞는 면접자가 없습니다.</div>';
+      document.getElementById('cardPosition').textContent = '0 / 0';
+      renderCardJumpSelect([]);
+      return;
+    }
+    if(cardIndex >= list.length) cardIndex = list.length - 1;
+    if(cardIndex < 0) cardIndex = 0;
+
+    var g = list[cardIndex];
+    var allGraders = computeAllGraders();
+    var gradersPresent = g.records.map(function(r){ return r.grader || ''; }).filter(Boolean);
+    var missing = allGraders.filter(function(gr){ return gradersPresent.indexOf(gr) === -1; });
+    var expected = Math.max(allGraders.length, g.records.length);
+
+    var avgBreakdownHTML = CONFIG.categories.map(function(c){
+      var vals = g.records.map(function(r){ return (r.catTotals && r.catTotals[c.id] !== undefined) ? r.catTotals[c.id] : 0; });
+      return '<div class="breakdown-item"><b>' + avgOf(vals).toFixed(1) + ' / ' + c.max + '</b>' + escapeHTML(c.label) + ' 평균</div>';
+    }).join('');
+
+    var missingHTML = missing.length ? '<div class="missing-note">아직 채점 안 함: ' + missing.map(escapeHTML).join(', ') + '</div>' : '';
+
+    var perGraderHTML = g.records.map(function(r){
+      var catStr = CONFIG.categories.map(function(c){
+        var v = (r.catTotals && r.catTotals[c.id] !== undefined) ? r.catTotals[c.id] : 0;
+        return escapeHTML(c.label) + ' ' + v;
+      }).join(' · ');
+      var noteEntries = r.notes ? Object.keys(r.notes).filter(function(k){ return r.notes[k]; }) : [];
+      var notesHTML = noteEntries.length
+        ? '<div class="note-list">' + noteEntries.map(function(rowId){
+            var rowDef = rowsById[rowId];
+            var label = rowDef ? (rowDef.num ? '질문 ' + rowDef.num : rowDef.text) : rowId;
+            return '<div><b>' + escapeHTML(label) + '</b> — ' + escapeHTML(r.notes[rowId]) + '</div>';
+          }).join('') + '</div>'
+        : '<div class="note-list"><em>메모 없음</em></div>';
+      return '<div class="grader-record">' +
+        '<div class="grader-record-head"><b>' + escapeHTML(r.grader || '채점자 미상') + '</b>' +
+        '<span class="total-cell">' + r.total + '점</span>' +
+        '<div class="row-actions">' +
+          '<button class="btn small ghost edit-rec" data-id="' + r.id + '" type="button">수정</button>' +
+          '<button class="btn small danger del-rec" data-id="' + r.id + '" type="button">삭제</button>' +
+        '</div></div>' +
+        '<div class="grader-record-cats">' + catStr + '</div>' + notesHTML +
+        '</div>';
+    }).join('');
+
+    wrap.innerHTML =
+      '<div class="candidate-card-head">' +
+        '<div><h3>' + escapeHTML(g.name) + '</h3>' +
+        '<div class="candidate-card-meta">' + escapeHTML(g.grade) + ' · ' + escapeHTML(g.gender) + ' · 회차 ' + escapeHTML(String(g.round)) + ' · 채점 ' + g.records.length + '/' + expected + '</div></div>' +
+        '<div class="candidate-card-total"><span class="num">' + g.avgTotal.toFixed(1) + '</span><span class="of">평균 총점</span></div>' +
+      '</div>' +
+      '<div class="breakdown-grid">' + avgBreakdownHTML + '</div>' + missingHTML +
+      '<div class="grader-records-list">' + perGraderHTML + '</div>';
+
+    document.getElementById('cardPosition').textContent = (cardIndex+1) + ' / ' + list.length;
+    renderCardJumpSelect(list);
+  }
+
+  document.getElementById('cardPrevBtn').addEventListener('click', function(){
+    cardIndex = Math.max(0, cardIndex - 1);
+    renderCandidateCard();
+  });
+  document.getElementById('cardNextBtn').addEventListener('click', function(){
+    cardIndex = cardIndex + 1;
+    renderCandidateCard();
+  });
+  document.getElementById('cardJumpSelect').addEventListener('change', function(e){
+    cardIndex = parseInt(e.target.value, 10) || 0;
+    renderCandidateCard();
+  });
+
+  document.getElementById('statsTableViewBtn').addEventListener('click', function(){
+    document.getElementById('statsTableWrap').hidden = false;
+    document.getElementById('statsCardWrap').hidden = true;
+    this.classList.add('active');
+    document.getElementById('statsCardViewBtn').classList.remove('active');
+  });
+  document.getElementById('statsCardViewBtn').addEventListener('click', function(){
+    document.getElementById('statsTableWrap').hidden = true;
+    document.getElementById('statsCardWrap').hidden = false;
+    this.classList.add('active');
+    document.getElementById('statsTableViewBtn').classList.remove('active');
+    renderCandidateCard();
+  });
 
   function renderRosterRow(n){
     var info = rosterInfo(n);
@@ -1394,21 +1549,6 @@
       var row = document.getElementById('breakdown-' + toggleBtn.dataset.id);
       row.hidden = !row.hidden;
       toggleBtn.textContent = row.hidden ? '보기' : '닫기';
-      return;
-    }
-    var editBtn = e.target.closest('.edit-rec');
-    if(editBtn){
-      var rec = records.find(function(rr){ return rr.id === editBtn.dataset.id; });
-      if(rec) startEditRecord(rec);
-      return;
-    }
-    var delBtn = e.target.closest('.del-rec');
-    if(delBtn){
-      if(!confirm('이 채점자의 기록을 삭제할까요?')) return;
-      records = records.filter(function(r){ return r.id !== delBtn.dataset.id; });
-      saveJSON(STORAGE.records, records);
-      updateRoundPill();
-      renderStats();
     }
   });
 
