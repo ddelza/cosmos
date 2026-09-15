@@ -556,7 +556,7 @@
     var g = GROUPS[round-1];
     var names = g ? g.names.slice(0,3) : [];
     while(names.length < 3) names.push('');
-    return { names:names, scores:{}, notes:{} };
+    return applyQuizDefaults({ names:names, scores:{}, notes:{} });
   }
 
   var GRADE_OPTIONS = ['1학년','2학년','3학년','미상'];
@@ -590,6 +590,29 @@
     '김채연': { grade:'1학년', gender:'여', className:'3반' },
     '홍석영': { grade:'1학년', gender:'여', className:'1반' }
   };
+
+  // 쪽지시험(Q6) 원점수 — "시트5"에서 받은 기준. 빈칸이던 학생은 응시하지 않은
+  // 것이므로 여기 없다 = 자동 채점 대상이 아니라는 뜻(직접 0/미응시 처리).
+  var QUIZ_SCORES = {
+    '박도윤':15, '이상호':14, '강승현':15, '김우진':15, '이문혁':15,
+    '김인구':15, '양성원':15, '이석호':15, '이승준':15, '김상이':14,
+    '김민성':14, '윤지원':15, '임주영':12, '김채연':14, '홍석영':15,
+    '최제이':15, '박찬율':15, '이이나':15, '홍다연':15, '박재인':15,
+    '이예랑':15, '최지원':15, '문하은':15, '곽서율':15, '최재우':15,
+    '박가빈':15
+  };
+
+  // 새로 만들어지는 채점 배치(batch)에 쪽지시험 점수를 미리 채워 넣는다.
+  // 이미 값이 있으면 절대 덮어쓰지 않는다 — 빈 칸만 채운다.
+  function applyQuizDefaults(batch){
+    batch.names.forEach(function(n, ci){
+      var key = 'q6-' + ci;
+      if(n && batch.scores[key] === undefined && QUIZ_SCORES[n] !== undefined){
+        batch.scores[key] = QUIZ_SCORES[n];
+      }
+    });
+    return batch;
+  }
 
   var ROSTER = loadJSON(STORAGE.roster, {});
   (function ensureRosterDefaults(){
@@ -1073,6 +1096,7 @@
       Object.keys(r.scores || {}).forEach(function(rowId){ batch.scores[rowId + '-' + ci] = r.scores[rowId]; });
       Object.keys(r.notes || {}).forEach(function(rowId){ batch.notes[rowId + '-' + ci] = r.notes[rowId]; });
     });
+    applyQuizDefaults(batch);
     if(rec.grader){ graderName = rec.grader; el.graderInput.value = graderName; }
 
     updateSaveButtonLabel();
@@ -1661,6 +1685,9 @@
             if(records[existingIdx].scores && records[existingIdx].scores[CSV_EXCLUDE_ROW_ID] !== undefined){
               scoresSnap[CSV_EXCLUDE_ROW_ID] = records[existingIdx].scores[CSV_EXCLUDE_ROW_ID];
             }
+          }
+          if(scoresSnap[CSV_EXCLUDE_ROW_ID] === undefined && QUIZ_SCORES[name] !== undefined){
+            scoresSnap[CSV_EXCLUDE_ROW_ID] = QUIZ_SCORES[name];
           }
 
           var catTotals = {};
