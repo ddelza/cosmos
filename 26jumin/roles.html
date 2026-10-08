@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>역할 분담 — 2026 주민 천체관측회</title>
+<link rel="stylesheet" href="common.css">
+<style>
+.wrap { max-width: 640px; }
+select {
+  width: 100%; padding: 11px 12px; border: 1.5px solid var(--border); border-radius: 10px;
+  font-size: 0.95rem; font-family: inherit; background: var(--surface); color: var(--text);
+}
+.form-row { display: flex; gap: 8px; }
+.form-row > div { flex: 1; }
+.my-roles { background: var(--accent-soft); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.86rem; line-height: 1.6; color: var(--accent); }
+.my-roles b { font-weight: 700; }
+.group-label { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin: 18px 4px 8px; }
+
+.role-card { background: var(--surface); border-radius: 14px; padding: 16px 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.role-card.mine { box-shadow: 0 0 0 2px var(--accent); }
+.role-head { display: flex; align-items: flex-start; gap: 10px; }
+.role-head h3 { margin: 0; font-size: 1rem; flex: 1; line-height: 1.4; }
+.cap { font-size: 0.78rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
+.cap.full { color: var(--danger); }
+.role-desc { font-size: 0.85rem; line-height: 1.6; color: var(--text); margin: 6px 0 8px; white-space: pre-wrap; word-break: break-word; }
+.role-meta { font-size: 0.74rem; color: var(--text-muted); margin-bottom: 10px; }
+.role-meta button { background: none; border: none; color: var(--text-muted); font-size: 0.74rem; cursor: pointer; padding: 0 0 0 8px; text-decoration: underline; }
+.role-meta button:hover { color: var(--danger); }
+.members { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.chip { background: var(--bg); border-radius: 999px; padding: 4px 10px; font-size: 0.78rem; }
+.chip.me { background: var(--accent); color: #fff; }
+.no-members { font-size: 0.78rem; color: var(--text-muted); }
+.join-btn {
+  width: 100%; padding: 10px; border-radius: 10px; border: none; background: var(--accent); color: #fff;
+  font-size: 0.88rem; font-weight: 700; cursor: pointer;
+}
+.join-btn.leave { background: var(--surface); color: var(--danger); border: 1.5px solid var(--danger-soft); }
+.join-btn:disabled { opacity: 0.45; cursor: default; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <h1>🙋 0차시 · 역할 분담</h1>
+    <p id="countLabel">불러오는 중...</p>
+  </div>
+
+  <div class="who-banner">
+    <span id="whoLabel"></span>
+    <div class="links"><a href="index.html">메인으로</a></div>
+  </div>
+
+  <div class="my-roles" id="myRoles"></div>
+
+  <!-- 역할 개설 폼 (목록 새로고침과 분리되어 있어 입력 중 내용이 유지됨) -->
+  <div class="card">
+    <h2>➕ 새 역할 개설하기</h2>
+    <p class="hint">필요하다고 생각하는 역할을 만들어 주세요. 만든 사람도 자동으로 참여되지는 않으니, 하고 싶으면 참여하기를 눌러요.</p>
+    <label class="field-label" for="roleTitle">역할 이름</label>
+    <input type="text" id="roleTitle" maxlength="40" placeholder="예) 망원경 조작 도우미">
+    <label class="field-label" for="roleDesc">하는 일</label>
+    <textarea id="roleDesc" placeholder="예) 옥상에서 망원경 초점을 맞추고 주민분들께 보는 법 안내"></textarea>
+    <div class="form-row">
+      <div>
+        <label class="field-label" for="rolePlace">장소</label>
+        <select id="rolePlace"></select>
+      </div>
+      <div>
+        <label class="field-label" for="roleMax">정원 (0=무제한)</label>
+        <input type="tel" id="roleMax" inputmode="numeric" maxlength="2" value="0">
+      </div>
+    </div>
+    <div class="error-msg" id="roleError"></div>
+    <button class="btn" id="createBtn" onclick="createRole()">역할 개설하기</button>
+  </div>
+
+  <div id="roleList"><div class="loading-state">불러오는 중...</div></div>
+</div>
+
+<script src="session.js"></script>
+<script>
+const student = requireJmLogin();
+const GROUPS = [{ key: 'common', icon: '🧭', title: '공통 (전체 운영)' }, ...PLACES];
+let BASE = null;
+let roles = {}, members = {};
+
+function memberLabel(m) {
+  return m.id === TEACHER_ID ? `${m.name}(교사)` : (m.grade ? `${m.grade}-${m.ban} ${m.name}` : m.name);
+}
+
+async function loadAll() {
+  const [r, m] = await Promise.all([
+    fetch(`${BASE}/roles.json`).then(x => x.json()),
+    fetch(`${BASE}/roleMembers.json`).then(x => x.json()),
+  ]);
+  roles = r || {}; members = m || {};
+  render();
+}
+
+function render() {
+  const ids = Object.keys(roles).sort((a, b) => (roles[a].ts || 0) - (roles[b].ts || 0));
+  const joined = ids.filter(id => members[id] && members[id][student.id]);
+  document.getElementById('countLabel').textContent =
+    `역할 ${ids.length}개 · 참여 ${new Set(ids.flatMap(id => Object.keys(members[id] || {}))).size}명`;
+  document.getElementById('myRoles').innerHTML = joined.length
+    ? `내 역할: <b>${joined.map(id => esc(roles[id].title)).join(', ')}</b>`
+    : '아직 참여한 역할이 없어요. 아래에서 하고 싶은 역할의 <b>참여하기</b>를 눌러주세요.';
+
+  const wrap = document.getElementById('roleList');
+  if (!ids.length) { wrap.innerHTML = '<div class="empty-state">아직 개설된 역할이 없어요. 첫 역할을 만들어 보세요!</div>'; return; }
+
+  wrap.innerHTML = GROUPS.map(g => {
+    const gids = ids.filter(id => (roles[id].place || 'common') === g.key);
+    if (!gids.length) return '';
+    return `<div class="group-label">${g.icon} ${esc(g.title)}</div>` + gids.map(id => {
+      const r = roles[id];
+      const ms = Object.values(members[id] || {}).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      const max = Number(r.max) || 0;
+      const isIn = !!(members[id] && members[id][student.id]);
+      const full = max > 0 && ms.length >= max;
+      const canDel = student.isTeacher || r.creatorId === student.id;
+      return `<div class="role-card${isIn ? ' mine' : ''}">
+        <div class="role-head">
+          <h3>${esc(r.title)}</h3>
+          <span class="cap${full ? ' full' : ''}">${ms.length}${max ? ' / ' + max : ''}명${full ? ' (마감)' : ''}</span>
+        </div>
+        ${r.desc ? `<div class="role-desc">${esc(r.desc)}</div>` : ''}
+        <div class="role-meta">개설: ${esc(r.creatorName)}${canDel ? `<button onclick="deleteRole('${id}')">역할 삭제</button>` : ''}</div>
+        <div class="members">${ms.length
+          ? ms.map(m => `<span class="chip${m.id === student.id ? ' me' : ''}">${esc(memberLabel(m))}</span>`).join('')
+          : '<span class="no-members">아직 참여자가 없어요</span>'}</div>
+        ${isIn
+          ? `<button class="join-btn leave" onclick="leaveRole('${id}')">참여 취소</button>`
+          : `<button class="join-btn" onclick="joinRole('${id}')"${full ? ' disabled' : ''}>${full ? '정원 마감' : '참여하기'}</button>`}
+      </div>`;
+    }).join('');
+  }).join('');
+}
+
+window.createRole = async function() {
+  const title = document.getElementById('roleTitle').value.trim();
+  const desc = document.getElementById('roleDesc').value.trim();
+  const place = document.getElementById('rolePlace').value;
+  const max = parseInt(document.getElementById('roleMax').value, 10) || 0;
+  const err = document.getElementById('roleError');
+  err.classList.remove('show');
+  if (!title) { err.textContent = '역할 이름을 입력해주세요.'; err.classList.add('show'); return; }
+  if (Object.values(roles).some(r => r.title.replace(/\s/g, '') === title.replace(/\s/g, ''))) {
+    err.textContent = '같은 이름의 역할이 이미 있어요. 그 역할에 참여하기를 눌러주세요.'; err.classList.add('show'); return;
+  }
+  const btn = document.getElementById('createBtn');
+  btn.disabled = true;
+  try {
+    await fetch(`${BASE}/roles.json`, { method: 'POST', body: JSON.stringify({
+      title, desc, place, max: Math.max(0, max), creatorId: student.id, creatorName: student.name, ts: Date.now(),
+    }) });
+    document.getElementById('roleTitle').value = '';
+    document.getElementById('roleDesc').value = '';
+    document.getElementById('roleMax').value = '0';
+    await loadAll();
+  } catch (e) {
+    err.textContent = '저장 실패: ' + (e.message || e); err.classList.add('show');
+  } finally { btn.disabled = false; }
+};
+
+window.joinRole = async function(id) {
+  await loadAll(); // 정원 확인은 최신 데이터 기준으로
+  const r = roles[id];
+  if (!r) return;
+  const max = Number(r.max) || 0;
+  if (max && Object.keys(members[id] || {}).length >= max) { alert('정원이 다 찼어요.'); return; }
+  await fetch(`${BASE}/roleMembers/${id}/${student.id}.json`, { method: 'PUT', body: JSON.stringify({
+    id: student.id, name: student.name, grade: student.grade || '', ban: student.ban || '', ts: Date.now(),
+  }) });
+  await loadAll();
+};
+
+window.leaveRole = async function(id) {
+  if (!confirm(`'${roles[id].title}' 역할 참여를 취소할까요?`)) return;
+  await fetch(`${BASE}/roleMembers/${id}/${student.id}.json`, { method: 'DELETE' });
+  await loadAll();
+};
+
+window.deleteRole = async function(id) {
+  const n = Object.keys(members[id] || {}).length;
+  if (!confirm(`'${roles[id].title}' 역할을 삭제할까요?${n ? `\n참여한 ${n}명의 참여 기록도 함께 삭제됩니다.` : ''}`)) return;
+  await Promise.all([
+    fetch(`${BASE}/roles/${id}.json`, { method: 'DELETE' }),
+    fetch(`${BASE}/roleMembers/${id}.json`, { method: 'DELETE' }),
+  ]);
+  await loadAll();
+};
+
+(async function init() {
+  if (!student) return;
+  document.getElementById('whoLabel').textContent = jmWhoLabel(student);
+  document.getElementById('rolePlace').innerHTML = GROUPS.map(g => `<option value="${g.key}">${g.icon} ${esc(g.title)}</option>`).join('');
+  try {
+    BASE = await jmBase();
+    await loadAll();
+    setInterval(loadAll, 8000);
+  } catch (e) {
+    document.getElementById('roleList').innerHTML = `<div class="empty-state">불러오기 실패: ${esc(e.message || e)}</div>`;
+  }
+})();
+</script>
+</body>
+</html>

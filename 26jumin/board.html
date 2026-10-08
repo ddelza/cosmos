@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>아이디어 게시판 — 2026 주민 천체관측회</title>
+<link rel="stylesheet" href="common.css">
+<style>
+.wrap { max-width: 640px; }
+.place-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.place-tabs a {
+  flex: 1; text-align: center; padding: 9px 2px; border-radius: 10px; border: 1.5px solid var(--border); white-space: nowrap;
+  background: var(--surface); color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-decoration: none;
+}
+.place-tabs a.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.sort-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.sort-btn {
+  flex: 1; padding: 9px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface);
+  color: var(--text-muted); font-size: 0.84rem; font-weight: 600; cursor: pointer;
+}
+.sort-btn.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.teacher-tag { color: var(--accent); font-weight: 700; }
+
+.post-card { background: var(--surface); border-radius: 14px; padding: 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.post-author { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; }
+.post-author .tools button { background: none; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; padding: 0 0 0 8px; }
+.post-author .tools button:hover { color: var(--accent); text-decoration: underline; }
+.post-title { font-size: 1rem; font-weight: 700; margin: 0 0 8px; line-height: 1.4; }
+.post-body { background: var(--bg); border-radius: 10px; padding: 10px 12px; font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px; white-space: pre-wrap; word-break: break-word; }
+.post-edit input, .post-edit textarea { margin-bottom: 8px; }
+.post-edit .row { display: flex; gap: 8px; margin-bottom: 10px; }
+.post-edit .row .btn { margin-top: 0; }
+
+.post-actions { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.like-btn {
+  display: flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 999px;
+  border: 1.5px solid var(--border); background: var(--surface); color: var(--text); font-size: 0.85rem;
+  cursor: pointer; font-weight: 600;
+}
+.like-btn.liked { background: #fdecea; border-color: #f2b8ae; color: var(--danger); }
+.like-names { font-size: 0.75rem; color: var(--text-muted); flex: 1; }
+
+.comment-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.comment-row { display: flex; align-items: baseline; gap: 6px; font-size: 0.83rem; line-height: 1.5; }
+.comment-row .comment-text { flex: 1; word-break: break-word; }
+.comment-row b { color: var(--accent); font-weight: 700; white-space: nowrap; }
+.comment-del-btn { background: none; border: none; color: var(--text-muted); font-size: 0.72rem; cursor: pointer; padding: 0; white-space: nowrap; }
+.comment-del-btn:hover { color: var(--danger); text-decoration: underline; }
+.comment-input-row { display: flex; gap: 6px; }
+.comment-input-row input { flex: 1; padding: 8px 10px; font-size: 0.85rem; }
+.comment-input-row button {
+  padding: 8px 14px; border: none; border-radius: 8px; background: var(--accent); color: #fff;
+  font-size: 0.82rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <h1 id="placeTitle">아이디어 게시판</h1>
+    <p id="countLabel">불러오는 중...</p>
+  </div>
+
+  <div class="who-banner">
+    <span id="whoLabel"></span>
+    <div class="links"><a href="roles.html">역할 분담</a><a href="index.html">메인으로</a></div>
+  </div>
+
+  <div class="place-tabs" id="placeTabs"></div>
+
+  <!-- 새 아이디어 작성 (목록 새로고침과 분리되어 있어 입력 중 내용이 지워지지 않음) -->
+  <div class="card">
+    <h2>💡 새 아이디어 올리기</h2>
+    <p class="hint" id="writeHint"></p>
+    <input type="text" id="newTitle" maxlength="60" placeholder="한 줄 제목 (예: 별자리 판 만들기 체험)">
+    <textarea id="newBody" style="margin-top:8px" placeholder="어떻게 하면 좋을지, 필요한 준비물·인원 등을 자유롭게 적어주세요."></textarea>
+    <div class="error-msg" id="writeError"></div>
+    <button class="btn" id="writeBtn" onclick="addPost()">게시하기</button>
+  </div>
+
+  <div class="sort-row">
+    <button class="sort-btn active" id="sortLikeBtn" onclick="setSort('like')">좋아요 많은 순</button>
+    <button class="sort-btn" id="sortTimeBtn" onclick="setSort('time')">최신순</button>
+  </div>
+
+  <div id="postList"><div class="loading-state">불러오는 중...</div></div>
+</div>
+
+<script src="session.js"></script>
+<script>
+const student = requireJmLogin();
+const placeKey = new URLSearchParams(location.search).get('place') || 'lab';
+const PLACE = PLACES.find(p => p.key === placeKey) || PLACES[0];
+
+let BASE = null;
+let posts = {}, likes = {}, comments = {};
+let sortMode = 'like';
+let drafts = {};          // 입력 중인 댓글
+let editingPostId = null; // 수정 중인 게시물
+let editDraft = null;     // 수정 중 내용 {title, body}
+
+function authorLabel(o) {
+  if (o.id === TEACHER_ID) return `${o.name} <span class="teacher-tag">(교사)</span>`;
+  return o.grade ? `${esc(o.grade)}학년 ${esc(o.ban)}반 ${esc(o.name)}` : esc(o.name);
+}
+function canManage(o) { return student.isTeacher || o.id === student.id; }
+function me() {
+  return { id: student.id, name: student.name, grade: student.grade || '', ban: student.ban || '', num: student.num || '' };
+}
+
+async function loadAll() {
+  const [p, l, c] = await Promise.all([
+    fetch(`${BASE}/posts.json`).then(r => r.json()),
+    fetch(`${BASE}/likes.json`).then(r => r.json()),
+    fetch(`${BASE}/comments.json`).then(r => r.json()),
+  ]);
+  posts = p || {}; likes = l || {}; comments = c || {};
+  render();
+}
+
+function sortedIds() {
+  const ids = Object.keys(posts);
+  if (sortMode === 'like') {
+    ids.sort((a, b) => {
+      const d = Object.keys(likes[b] || {}).length - Object.keys(likes[a] || {}).length;
+      return d || (posts[a].ts || 0) - (posts[b].ts || 0);
+    });
+  } else {
+    ids.sort((a, b) => (posts[b].ts || 0) - (posts[a].ts || 0));
+  }
+  return ids;
+}
+
+window.setSort = function(mode) {
+  sortMode = mode;
+  document.getElementById('sortLikeBtn').classList.toggle('active', mode === 'like');
+  document.getElementById('sortTimeBtn').classList.toggle('active', mode === 'time');
+  render();
+};
+
+function captureDrafts() {
+  document.querySelectorAll('.comment-input-row input').forEach(inp => { drafts[inp.dataset.postId] = inp.value; });
+  if (editingPostId) {
+    const t = document.getElementById('editTitle'), b = document.getElementById('editBody');
+    if (t && b) editDraft = { title: t.value, body: b.value };
+  }
+}
+
+function render() {
+  captureDrafts();
+  const ids = sortedIds();
+  document.getElementById('countLabel').textContent = `${PLACE.sub} · 아이디어 ${ids.length}개`;
+  const wrap = document.getElementById('postList');
+  if (!ids.length) {
+    wrap.innerHTML = '<div class="empty-state">아직 아이디어가 없어요. 첫 번째로 올려보세요!</div>';
+    return;
+  }
+
+  wrap.innerHTML = ids.map(pid => {
+    const post = posts[pid];
+    const pl = likes[pid] || {};
+    const iLiked = !!pl[student.id];
+    const likeNames = Object.values(pl).map(l => l.name).join(', ');
+    const pc = Object.entries(comments[pid] || {}).sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0));
+
+    const main = editingPostId === pid
+      ? `<div class="post-edit">
+          <input type="text" id="editTitle" maxlength="60" value="${esc(editDraft ? editDraft.title : post.title)}">
+          <textarea id="editBody">${esc(editDraft ? editDraft.body : post.body)}</textarea>
+          <div class="row">
+            <button class="btn small" onclick="saveEdit('${pid}')">저장</button>
+            <button class="btn small secondary" onclick="cancelEdit()">취소</button>
+          </div>
+        </div>`
+      : `<div class="post-title">${esc(post.title)}</div>
+         ${post.body ? `<div class="post-body">${esc(post.body)}</div>` : ''}`;
+
+    return `<div class="post-card">
+      <div class="post-author">
+        <span>${authorLabel(post)}${post.edited ? ' · 수정됨' : ''}</span>
+        ${canManage(post) && editingPostId !== pid ? `<span class="tools">
+          <button onclick="startEdit('${pid}')">수정</button><button onclick="deletePost('${pid}')">삭제</button></span>` : ''}
+      </div>
+      ${main}
+      <div class="post-actions">
+        <button class="like-btn${iLiked ? ' liked' : ''}" onclick="toggleLike('${pid}')">${iLiked ? '❤️' : '🤍'} ${Object.keys(pl).length}</button>
+        <span class="like-names">${esc(likeNames)}</span>
+      </div>
+      <div class="comment-list">
+        ${pc.map(([cid, c]) => `<div class="comment-row">
+          <b>${esc(c.name)}${c.id === TEACHER_ID ? ' (교사)' : ''}</b>
+          <span class="comment-text">${esc(c.text)}</span>
+          ${canManage(c) ? `<button class="comment-del-btn" onclick="deleteComment('${pid}','${cid}')">삭제</button>` : ''}
+        </div>`).join('')}
+      </div>
+      <div class="comment-input-row">
+        <input type="text" placeholder="의견 달기" data-post-id="${pid}" id="c-${pid}" value="${esc(drafts[pid] || '')}">
+        <button onclick="addComment('${pid}')">등록</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  ids.forEach(pid => {
+    const inp = document.getElementById('c-' + pid);
+    if (inp) inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addComment(pid); }
+    });
+  });
+}
+
+window.addPost = async function() {
+  const title = document.getElementById('newTitle').value.trim();
+  const body = document.getElementById('newBody').value.trim();
+  const err = document.getElementById('writeError');
+  err.classList.remove('show');
+  if (!title) { err.textContent = '제목을 입력해주세요.'; err.classList.add('show'); return; }
+  const btn = document.getElementById('writeBtn');
+  btn.disabled = true;
+  try {
+    await fetch(`${BASE}/posts.json`, { method: 'POST', body: JSON.stringify({ ...me(), title, body, ts: Date.now() }) });
+    document.getElementById('newTitle').value = '';
+    document.getElementById('newBody').value = '';
+    setSort('time');
+    await loadAll();
+  } catch (e) {
+    err.textContent = '저장 실패: ' + (e.message || e); err.classList.add('show');
+  } finally { btn.disabled = false; }
+};
+
+window.startEdit = function(pid) { editingPostId = pid; editDraft = null; render(); };
+window.cancelEdit = function() { editingPostId = null; editDraft = null; render(); };
+window.saveEdit = async function(pid) {
+  const title = document.getElementById('editTitle').value.trim();
+  const body = document.getElementById('editBody').value.trim();
+  if (!title) { alert('제목을 입력해주세요.'); return; }
+  await fetch(`${BASE}/posts/${pid}.json`, { method: 'PATCH', body: JSON.stringify({ title, body, edited: true }) });
+  editingPostId = null; editDraft = null;
+  await loadAll();
+};
+window.deletePost = async function(pid) {
+  if (!confirm('이 아이디어를 삭제할까요? (좋아요·댓글도 함께 삭제됩니다)')) return;
+  await Promise.all([
+    fetch(`${BASE}/posts/${pid}.json`, { method: 'DELETE' }),
+    fetch(`${BASE}/likes/${pid}.json`, { method: 'DELETE' }),
+    fetch(`${BASE}/comments/${pid}.json`, { method: 'DELETE' }),
+  ]);
+  await loadAll();
+};
+
+window.toggleLike = async function(pid) {
+  const url = `${BASE}/likes/${pid}/${student.id}.json`;
+  if (likes[pid] && likes[pid][student.id]) await fetch(url, { method: 'DELETE' });
+  else await fetch(url, { method: 'PUT', body: JSON.stringify({ id: student.id, name: student.name, ts: Date.now() }) });
+  await loadAll();
+};
+
+window.addComment = async function(pid) {
+  const input = document.getElementById('c-' + pid);
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = ''; delete drafts[pid];
+  await fetch(`${BASE}/comments/${pid}.json`, {
+    method: 'POST', body: JSON.stringify({ id: student.id, name: student.name, text, ts: Date.now() }),
+  });
+  await loadAll();
+};
+window.deleteComment = async function(pid, cid) {
+  if (!confirm('의견을 삭제할까요?')) return;
+  await fetch(`${BASE}/comments/${pid}/${cid}.json`, { method: 'DELETE' });
+  await loadAll();
+};
+
+(async function init() {
+  if (!student) return;
+  document.title = `${PLACE.title} — 2026 주민 천체관측회`;
+  document.getElementById('placeTitle').textContent = `${PLACE.icon} ${PLACE.title} 아이디어 게시판`;
+  document.getElementById('writeHint').textContent = `${PLACE.title}(${PLACE.sub})에서 주민들과 함께 하면 좋을 활동 아이디어를 올려주세요.`;
+  document.getElementById('whoLabel').textContent = jmWhoLabel(student);
+  document.getElementById('placeTabs').innerHTML = PLACES.map(p =>
+    `<a href="board.html?place=${p.key}" class="${p.key === PLACE.key ? 'active' : ''}">${p.icon} ${esc(p.title)}</a>`).join('');
+  try {
+    BASE = `${await jmBase()}/boards/${PLACE.key}`;
+    await loadAll();
+    setInterval(loadAll, 8000);
+  } catch (e) {
+    document.getElementById('postList').innerHTML = `<div class="empty-state">불러오기 실패: ${esc(e.message || e)}</div>`;
+  }
+})();
+</script>
+</body>
+</html>

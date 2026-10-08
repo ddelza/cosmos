@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 주민 천체관측회</title>
+<link rel="stylesheet" href="common.css">
+<style>
+.step { display: none; }
+.step.active { display: block; }
+.place-card {
+  display: flex; align-items: center; gap: 14px; background: var(--surface); border-radius: 14px;
+  padding: 16px 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  text-decoration: none; color: var(--text);
+}
+.place-card:active { opacity: 0.85; }
+.place-card .icon { font-size: 1.8rem; }
+.place-card .num { font-size: 0.75rem; color: var(--accent); font-weight: 700; }
+.place-card h3 { margin: 0; font-size: 1rem; }
+.place-card .sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+.place-card .count { margin-left: auto; font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; text-align: right; }
+.place-card.role { border: 1.5px solid var(--accent); }
+.section-label { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin: 18px 4px 8px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <h1>🌙 2026 주민 천체관측회</h1>
+    <p>행사 계획 아이디어 모으기</p>
+  </div>
+
+  <div class="step active" id="step-login">
+    <div class="card">
+      <h2>학생 확인</h2>
+      <p class="hint">학번(4자리)과 이름을 입력해주세요. 예) 2학년 1반 15번 → 2115</p>
+      <label class="field-label" for="inputId">학번 (4자리)</label>
+      <input type="tel" id="inputId" maxlength="4" inputmode="numeric" placeholder="2115">
+      <label class="field-label" for="inputName">이름</label>
+      <input type="text" id="inputName" placeholder="홍길동">
+      <div class="error-msg" id="loginError"></div>
+      <button class="btn" id="loginBtn" onclick="onLogin()">입장하기</button>
+    </div>
+  </div>
+
+  <div class="step" id="step-main">
+    <div class="who-banner">
+      <span id="welcomeLabel"></span>
+      <button onclick="onLogout()">다른 학생으로</button>
+    </div>
+
+    <div class="section-label">0차시 · 준비</div>
+    <a class="place-card role" href="roles.html">
+      <div class="icon">🙋</div>
+      <div>
+        <div class="num">0</div>
+        <h3>역할 분담</h3>
+        <div class="sub">역할을 만들고, 참여하기를 눌러요</div>
+      </div>
+      <div class="count" id="count-roles"></div>
+    </a>
+
+    <div class="section-label">장소별 아이디어 게시판</div>
+    <div id="placeList"></div>
+  </div>
+</div>
+
+<script src="session.js"></script>
+<script>
+const TEACHER_NAME = '김병선';
+
+function showStep(id) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function setLoginError(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg || '';
+  el.classList.toggle('show', !!msg);
+}
+
+function renderPlaces() {
+  document.getElementById('placeList').innerHTML = PLACES.map((p, i) => `
+    <a class="place-card" href="board.html?place=${p.key}">
+      <div class="icon">${p.icon}</div>
+      <div>
+        <div class="num">${i + 1}</div>
+        <h3>${esc(p.title)}</h3>
+        <div class="sub">${esc(p.sub)}</div>
+      </div>
+      <div class="count" id="count-${p.key}"></div>
+    </a>`).join('');
+}
+
+async function loadCounts() {
+  try {
+    const base = await jmBase();
+    const [boards, roles] = await Promise.all([
+      fetch(`${base}/boards.json`).then(r => r.json()),
+      fetch(`${base}/roles.json`).then(r => r.json()),
+    ]);
+    PLACES.forEach(p => {
+      const n = Object.keys(((boards || {})[p.key] || {}).posts || {}).length;
+      const el = document.getElementById('count-' + p.key);
+      if (el) el.textContent = `아이디어 ${n}개`;
+    });
+    document.getElementById('count-roles').textContent = `역할 ${Object.keys(roles || {}).length}개`;
+  } catch (e) { /* 개수 표시는 실패해도 무시 */ }
+}
+
+window.onLogin = async function() {
+  const id = document.getElementById('inputId').value.trim();
+  const name = document.getElementById('inputName').value.trim();
+  setLoginError('');
+  if (!/^\d{4}$/.test(id)) { setLoginError('학번은 4자리 숫자로 입력해주세요.'); return; }
+  if (!name) { setLoginError('이름을 입력해주세요.'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = '확인 중...';
+  try {
+    if (id === TEACHER_ID && name === TEACHER_NAME) {
+      const t = { id, name, isTeacher: true };
+      setJmStudent(t); enterMain(t); return;
+    }
+    const year = await loadYear();
+    const res = await fetch(`${DB_URL}/years/${year}/students/${id}.json`);
+    if (!res.ok) throw new Error('학생 명단을 불러오지 못했습니다.');
+    const rec = await res.json();
+    if (!rec || String(rec.name).trim() !== name) {
+      setLoginError('학번 또는 이름이 일치하지 않습니다. 다시 확인해주세요.');
+      return;
+    }
+    const s = { id, name: rec.name, grade: rec.grade, ban: rec.ban, num: rec.num };
+    setJmStudent(s); enterMain(s);
+  } catch (e) {
+    setLoginError(e.message || '확인 중 오류가 발생했습니다.');
+  } finally {
+    btn.disabled = false; btn.textContent = '입장하기';
+  }
+};
+
+window.onLogout = function() {
+  clearJmStudent();
+  document.getElementById('inputId').value = '';
+  document.getElementById('inputName').value = '';
+  showStep('step-login');
+};
+
+function enterMain(s) {
+  document.getElementById('welcomeLabel').textContent = `✓ ${jmWhoLabel(s)}${s.isTeacher ? '' : '님'}`;
+  renderPlaces();
+  showStep('step-main');
+  loadCounts();
+}
+
+document.getElementById('inputId').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('inputName').focus(); }
+});
+document.getElementById('inputName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); onLogin(); }
+});
+
+const existing = getJmStudent();
+if (existing) enterMain(existing);
+</script>
+</body>
+</html>
