@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0405">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<title>사전신청 · 2026 광수중 주민 천체관측회</title>
+<meta property="og:title" content="사전신청 · 2026 광수중학교 주민 공개 천체관측회">
+<meta property="og:description" content="원하는 관측 시간대를 골라 신청해 주세요">
+<link rel="stylesheet" href="css/site.css?v=20261012a">
+<style>
+.roles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.role { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 10px; text-align: center; cursor: pointer; color: var(--text); font-family: inherit; font-size: 1rem; }
+.role .i { font-size: 1.6rem; display: block; }
+.role[aria-pressed="true"] { border-color: var(--red); background: var(--red-soft); color: var(--text-strong); font-weight: 700; }
+.slots { display: grid; gap: 8px; }
+.slot { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; cursor: pointer; color: var(--text); font-family: inherit; text-align: left; font-size: 1.05rem; }
+.slot[aria-pressed="true"] { border-color: var(--red); background: var(--red-soft); color: var(--text-strong); font-weight: 700; }
+.slot .n { margin-left: auto; font-size: .8rem; color: var(--muted); font-weight: 400; }
+.step-n { display: inline-block; width: 1.6em; height: 1.6em; line-height: 1.6em; text-align: center; border-radius: 99px; background: var(--red-soft); color: var(--text-strong); font-size: .8rem; margin-right: 6px; }
+.consent { font-size: .8rem; color: var(--text); background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; line-height: 1.6; }
+.consent ul { margin: 4px 0; padding-left: 18px; }
+.check { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; font-size: .92rem; color: var(--text-strong); }
+.check input { width: 20px; height: 20px; accent-color: var(--red); flex: none; margin-top: 2px; }
+.done-box h2 { color: var(--red); }
+.inapp { display: none; background: #2a0b0a; border: 1px solid var(--red-deep); border-radius: 10px; padding: 10px 12px; font-size: .84rem; margin-top: 12px; }
+.inapp.show { display: block; }
+.quick .chip { font-size: .78rem; padding: 5px 10px; }
+</style>
+</head>
+<body>
+<main class="wrap narrow" id="app">
+  <h1>사전신청</h1>
+  <p class="sub" id="lead">원하는 관측 시간대를 골라 주세요. 시간대별 인원을 나눠서 망원경 앞 줄을 줄이려고 해요.</p>
+  <div class="inapp" id="inapp">카카오톡 안에서 열려 있어요. 신청이 잘 안 되면 <a href="#" id="openExt">다른 브라우저(크롬·사파리)로 열기</a>를 눌러 주세요.</div>
+  <div class="msg ok" id="already"></div>
+
+  <form id="form" novalidate>
+    <h2><span class="step-n">1</span>어떤 분이신가요?</h2>
+    <div class="roles" id="roles">
+      <button type="button" class="role" data-role="학생" aria-pressed="false"><span class="i">🎒</span>학생</button>
+      <button type="button" class="role" data-role="교사" aria-pressed="false"><span class="i">🧑‍🏫</span>교사</button>
+      <button type="button" class="role" data-role="학부모" aria-pressed="false"><span class="i">👪</span>학부모</button>
+      <button type="button" class="role" data-role="일반주민" aria-pressed="false"><span class="i">🏡</span>일반 주민</button>
+    </div>
+
+    <div id="fields"></div>
+
+    <h2><span class="step-n">3</span>관측 시간대</h2>
+    <div class="slots" id="slots"></div>
+
+    <h2><span class="step-n">4</span>기대되는 천체 또는 하고 싶은 말 <span class="hint-inline" style="font-weight:400;color:var(--muted);font-size:.8rem">(선택)</span></h2>
+    <div class="chips quick" id="quick"></div>
+    <textarea id="message" maxlength="300" rows="3" placeholder="예) 토성 고리를 꼭 보고 싶어요! / 아이가 별을 정말 좋아해요" style="margin-top:8px"></textarea>
+
+    <h2><span class="step-n">5</span>개인정보 수집·이용 동의</h2>
+    <div class="consent">
+      <ul>
+        <li><strong>수집 항목</strong>: 신분, 이름(또는 별칭), 학번(학생), 자녀 이름·관계(학부모), 희망 시간대, 함께 오는 인원, 남기는 말</li>
+        <li><strong>목적</strong>: 시간대별 관측 인원 파악과 행사 안내</li>
+        <li><strong>보유 기간</strong>: 2026년 11월 30일까지 (행사가 연기되면 행사 후 2주 이내) 보관 후 파기</li>
+        <li><strong>보관 위치</strong>: 광수중학교 천체관측동아리 담당 교사의 구글 시트(구글 서버)</li>
+        <li>동의하지 않을 수 있으며, <strong>사전신청을 하지 않아도 당일 행사에 참여할 수 있어요.</strong></li>
+        <li>만 14세 미만 학생은 보호자에게 알리고 신청해 주세요.</li>
+      </ul>
+    </div>
+    <label class="check"><input type="checkbox" id="consent"> 위 내용을 읽었고 개인정보 수집·이용에 동의합니다.</label>
+
+    <div class="msg err" id="err"></div>
+    <button type="submit" class="btn primary block" id="submit" style="margin-top:18px;padding:15px;font-size:1.05rem">신청하기</button>
+    <p class="hint" style="text-align:center">신청 내용을 바꾸거나 취소하려면 광수중학교 과학실(천체관측동아리 담당 선생님)로 알려 주세요.</p>
+  </form>
+  <div id="done" style="display:none"></div>
+</main>
+
+<script src="js/core.js?v=20261012a"></script>
+<script>
+(function () {
+  'use strict';
+  var esc = CN.esc;
+  CN.topbar();
+  var cfg, counts = null, role = null, slot = null;
+  var REG_KEY = 'cn26reg';
+
+  // 인앱 브라우저 안내
+  var ua = navigator.userAgent || '';
+  if (/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(ua)) {
+    document.getElementById('inapp').classList.add('show');
+    document.getElementById('openExt').onclick = function (e) {
+      e.preventDefault();
+      var u = location.href;
+      if (/KAKAOTALK/i.test(ua)) location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(u);
+      else location.href = 'intent://' + u.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+    };
+  }
+
+  try {
+    var prev = JSON.parse(localStorage.getItem(REG_KEY) || 'null');
+    if (prev) { var a = document.getElementById('already'); a.innerHTML = '이 기기에서 <strong>' + esc(prev.who) + '</strong> 님이 <strong>' + esc(prev.slot) + '</strong> 시간대로 신청한 기록이 있어요. 다른 분을 추가로 신청하려면 아래를 다시 작성해 주세요.'; a.classList.add('show'); }
+  } catch (e) {}
+
+  function setPressed(container, el) { container.querySelectorAll('[aria-pressed]').forEach(function (x) { x.setAttribute('aria-pressed', x === el); }); }
+
+  function renderFields() {
+    var f = document.getElementById('fields');
+    if (!role) { f.innerHTML = ''; return; }
+    var h = '<h2><span class="step-n">2</span>' + (role === '학부모' ? '자녀 정보' : '이름') + '</h2>';
+    if (role === '학생') {
+      h += '<label class="field" for="studentNo">학번 (4자리)</label><input type="tel" id="studentNo" maxlength="4" inputmode="numeric" placeholder="예) 2학년 1반 15번 → 2115">' +
+        '<label class="field" for="name">이름</label><input type="text" id="name" maxlength="20" autocomplete="name" placeholder="홍길동">';
+    } else if (role === '교사') {
+      h += '<label class="field" for="name">이름</label><input type="text" id="name" maxlength="20" autocomplete="name" placeholder="홍길동">';
+    } else if (role === '학부모') {
+      h += '<label class="field" for="childName">자녀 이름</label><input type="text" id="childName" maxlength="20" placeholder="광수중학교에 다니는 자녀 이름">' +
+        '<label class="field" for="relation">자녀와의 관계</label><select id="relation"><option value="">선택해 주세요</option><option>어머니</option><option>아버지</option><option>할머니</option><option>할아버지</option><option>형제·자매</option><option value="기타">기타 (직접 입력)</option></select>' +
+        '<input type="text" id="relationEtc" maxlength="20" placeholder="관계를 적어 주세요" style="display:none;margin-top:8px">';
+    } else {
+      h += '<label class="field" for="name">이름 또는 별칭</label><input type="text" id="name" maxlength="30" placeholder="예) 홍길동, 쏘자토스트 사장님">' +
+        '<div class="hint">실명이 아니어도 괜찮아요. 현장에서 불러 드릴 이름이면 돼요.</div>';
+    }
+    h += '<label class="field" for="party">함께 오는 인원 (본인 포함)</label><select id="party">' +
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (n) { return '<option value="' + n + '">' + n + '명' + (n === 10 ? ' 이상' : '') + '</option>'; }).join('') + '</select>';
+    f.innerHTML = h;
+    var rel = document.getElementById('relation');
+    if (rel) rel.onchange = function () { document.getElementById('relationEtc').style.display = rel.value === '기타' ? '' : 'none'; };
+  }
+
+  function renderSlots() {
+    var el = document.getElementById('slots');
+    el.innerHTML = cfg.slots.map(function (s) {
+      var c = counts && counts.slots && counts.slots[s];
+      return '<button type="button" class="slot" data-slot="' + esc(s) + '" aria-pressed="' + (slot === s) + '">🕖 ' + esc(s) +
+        '<span class="n">' + (c ? '현재 ' + c.people + '명' : '') + '</span></button>';
+    }).join('');
+    el.querySelectorAll('[data-slot]').forEach(function (b) { b.onclick = function () { slot = b.dataset.slot; setPressed(el, b); }; });
+  }
+
+  function showErr(msg) { var e = document.getElementById('err'); e.textContent = msg; e.classList.add('show'); e.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+
+  async function collect() {
+    if (!role) throw new Error('신분을 골라 주세요.');
+    var v = function (id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    var p = { role: role, slot: slot, party: v('party') || '1', message: v('message'), consent: document.getElementById('consent').checked ? 'Y' : '' };
+    if (role === '학생') {
+      p.studentNo = v('studentNo'); p.name = v('name');
+      if (!/^\d{4}$/.test(p.studentNo)) throw new Error('학번 4자리를 입력해 주세요. 예) 2학년 1반 15번 → 2115');
+      if (!p.name) throw new Error('이름을 입력해 주세요.');
+      // 학생 명단과 대조(오타 방지)
+      try {
+        var s = await CN.db.get('years/' + CN.ROSTER_YEAR + '/students/' + p.studentNo);
+        if (!s || String(s.name || '').replace(/\s+/g, '') !== p.name.replace(/\s+/g, '')) throw new Error('학번과 이름이 학생 명단과 맞지 않아요. 다시 확인해 주세요.');
+      } catch (e) { if (/명단/.test(e.message)) throw e; /* 명단을 못 불러오면 그냥 진행 */ }
+    } else if (role === '학부모') {
+      p.childName = v('childName');
+      p.relation = v('relation') === '기타' ? v('relationEtc') : v('relation');
+      if (!p.childName) throw new Error('자녀 이름을 입력해 주세요.');
+      if (!p.relation) throw new Error('자녀와의 관계를 골라 주세요.');
+    } else {
+      p.name = v('name');
+      if (!p.name) throw new Error(role === '일반주민' ? '이름 또는 별칭을 입력해 주세요.' : '이름을 입력해 주세요.');
+    }
+    if (!slot) throw new Error('관측 시간대를 골라 주세요.');
+    if (p.consent !== 'Y') throw new Error('개인정보 수집·이용에 동의해 주셔야 신청할 수 있어요. (동의하지 않아도 당일 참여는 가능해요)');
+    return p;
+  }
+
+  function nearestTimes(s) {
+    var start = s.split('~')[0], end = s.split('~')[1];
+    var toMin = function (t) { var x = t.split(':'); return +x[0] * 60 + +x[1]; };
+    return cfg.previewTimes.filter(function (t) { var m = toMin(t); return m >= toMin(start) - 15 && m <= toMin(end); });
+  }
+
+  function showDone(p) {
+    var who = p.role === '학부모' ? p.childName + ' ' + p.relation : p.name;
+    try { localStorage.setItem(REG_KEY, JSON.stringify({ who: who, slot: p.slot, at: Date.now() })); } catch (e) {}
+    var times = nearestTimes(p.slot);
+    document.getElementById('form').style.display = 'none';
+    document.getElementById('already').classList.remove('show');
+    var d = document.getElementById('done');
+    d.style.display = '';
+    d.innerHTML = '<div class="card done-box"><h2>신청이 완료됐어요 🌙</h2><dl class="kv" style="display:grid;grid-template-columns:max-content 1fr;gap:6px 14px">' +
+      '<dt>신분</dt><dd>' + esc(p.role) + '</dd><dt>' + (p.role === '학부모' ? '자녀' : '이름') + '</dt><dd>' + esc(who) + (p.studentNo ? ' (' + esc(p.studentNo) + ')' : '') + '</dd>' +
+      '<dt>시간대</dt><dd>' + esc(CN.dateLabel(cfg.eventDate)) + ' ' + esc(p.slot) + '</dd><dt>인원</dt><dd>' + esc(p.party) + '명</dd></dl>' +
+      '<p class="hint">바꾸거나 취소하려면 광수중학교 과학실(천체관측동아리 담당 선생님)로 알려 주세요.</p></div>' +
+      (times.length ? '<a class="btn primary block" href="sky.html" id="goSky">🔭 ' + esc(times.join(' · ')) + '에 보이는 천체 미리 보기</a>' : '') +
+      '<a class="btn ghost block" href="index.html" style="margin-top:8px">처음 화면으로</a>' +
+      '<button class="btn ghost block" style="margin-top:8px" id="again">다른 분 추가로 신청하기</button>';
+    var go = document.getElementById('goSky');
+    if (go) go.onclick = function () { try { var s = JSON.parse(sessionStorage.getItem('cn26sky') || '{}'); s.time = times[0]; sessionStorage.setItem('cn26sky', JSON.stringify(s)); } catch (e) {} };
+    document.getElementById('again').onclick = function () { location.reload(); };
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.getElementById('form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('submit'), errEl = document.getElementById('err');
+    errEl.classList.remove('show');
+    var p;
+    try { p = await collect(); } catch (er) { showErr(er.message); return; }
+    btn.disabled = true; btn.textContent = '보내는 중…';
+    try {
+      var res = await CN.api('register', p, 30000);
+      if (!res || !res.ok) throw new Error(res && res.error ? res.error : '신청을 저장하지 못했어요.');
+      showDone(p);
+    } catch (er) {
+      var inapp = document.getElementById('inapp').classList.contains('show');
+      showErr(er.message + (inapp ? ' 카카오톡 안에서는 잘 안 될 수 있어요. 위의 「다른 브라우저로 열기」를 눌러 다시 시도해 주세요.' : ' 잠시 후 다시 시도해 주세요.'));
+      btn.disabled = false; btn.textContent = '신청하기';
+    }
+  });
+
+  document.getElementById('roles').querySelectorAll('.role').forEach(function (b) {
+    b.onclick = function () { role = b.dataset.role; setPressed(document.getElementById('roles'), b); renderFields(); };
+  });
+
+  CN.getConfig().then(async function (c) {
+    cfg = c;
+    document.getElementById('lead').textContent = CN.dateLabel(cfg.eventDate) + ' 저녁, 원하는 관측 시간대를 골라 주세요. 시간대별 인원을 나눠서 망원경 앞 줄을 줄이려고 해요.';
+    renderSlots();
+    // 빠른 선택 칩: 관측회 추천 천체 이름
+    fetch('data/catalog.json?v=' + CN.VERSION).then(function (r) { return r.json(); }).then(function (list) {
+      var names = (list || []).filter(function (o) { return o.featured; }).slice(0, 10).map(function (o) { return o.nameKo; });
+      var q = document.getElementById('quick');
+      q.innerHTML = names.map(function (n) { return '<button type="button" class="chip">' + esc(n) + '</button>'; }).join('');
+      q.querySelectorAll('.chip').forEach(function (b) {
+        b.onclick = function () { var t = document.getElementById('message'); t.value = (t.value ? t.value.replace(/\s*$/, ', ') : '') + b.textContent; t.focus(); };
+      });
+    }).catch(function () {});
+    try {
+      counts = await CN.api('counts', {}, 15000);
+      if (counts && counts.ok) {
+        if (!counts.regOpen) {
+          document.getElementById('form').innerHTML = '<div class="card"><h2>사전신청이 마감됐어요</h2><p>당일 현장으로 오셔도 참여할 수 있어요. 시간대별 천체 미리보기로 관측할 천체를 미리 살펴보세요!</p><a class="btn primary block" href="sky.html">🔭 시간대별 천체 미리보기</a></div>';
+          return;
+        }
+        renderSlots();
+      }
+    } catch (e) {}
+    CN.footer({});
+  });
+})();
+</script>
+</body>
+</html>

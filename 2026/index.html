@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0405">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<title>2026 광수중학교 주민 공개 천체관측회</title>
+<meta name="description" content="2026년 11월 3일(화) 저녁, 광수중학교 천체관측동아리 코스모스와 함께 토성과 가을 밤하늘을 관측해요.">
+<meta property="og:title" content="2026 광수중학교 주민 공개 천체관측회">
+<meta property="og:description" content="11월 3일(화) 저녁 · 광수중학교 과학실·3층 데크·옥상 · 사전신청과 시간대별 천체 미리보기">
+<meta property="og:image" content="https://ddelza.github.io/cosmos/2026/img/og.jpg">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="css/site.css?v=20261012a">
+<style>
+.poster-wrap { position: relative; margin: 12px auto 0; max-width: 560px; }
+.poster-img { display: block; width: 100%; border-radius: 16px; border: 1px solid var(--line); }
+.poster-html {
+  aspect-ratio: 3 / 4.2; border-radius: 16px; border: 1px solid var(--line); overflow: hidden; position: relative;
+  background: radial-gradient(ellipse at 50% 120%, #3a0d0b 0%, #120506 55%, #050203 100%);
+  display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 24px;
+}
+.poster-html::before {
+  content: ''; position: absolute; inset: 0; opacity: .9;
+  background:
+    radial-gradient(1.5px 1.5px at 10% 15%, #a8524c 50%, transparent 51%), radial-gradient(1px 1px at 30% 40%, #7a3a36 50%, transparent 51%),
+    radial-gradient(2px 2px at 80% 20%, #c0645b 50%, transparent 51%), radial-gradient(1px 1px at 65% 55%, #7a3a36 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 20% 75%, #a8524c 50%, transparent 51%), radial-gradient(1px 1px at 90% 70%, #7a3a36 50%, transparent 51%),
+    radial-gradient(1px 1px at 45% 12%, #7a3a36 50%, transparent 51%), radial-gradient(1.5px 1.5px at 55% 85%, #a8524c 50%, transparent 51%);
+}
+.poster-html > * { position: relative; }
+.poster-html .k { color: var(--red); letter-spacing: .25em; font-size: .8rem; font-weight: 700; }
+.poster-html .t1 { font-size: 1.05rem; color: var(--text); margin-top: 18px; }
+.poster-html .t2 { font-size: 2.05rem; font-weight: 800; color: var(--text-strong); line-height: 1.2; margin: 6px 0 22px; }
+.poster-html .d { font-size: 1.15rem; color: var(--text-strong); font-weight: 700; }
+.poster-html .p { font-size: .92rem; color: var(--text); margin-top: 6px; }
+.poster-html .saturn { font-size: 3rem; margin-top: 26px; }
+.poster-admin { position: absolute; right: 10px; bottom: 10px; }
+.scroll-hint { text-align: center; color: var(--muted); font-size: .8rem; margin: 10px 0 0; animation: bob 2s infinite; }
+@keyframes bob { 50% { transform: translateY(4px); } }
+.notice { margin-top: 16px; border: 1px solid var(--red); background: #2a0b0a; color: var(--text-strong); border-radius: 12px; padding: 12px 14px; font-weight: 600; white-space: pre-wrap; }
+.info dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 14px; margin: 0; font-size: .94rem; }
+.info dt { color: var(--muted); }
+.info dd { margin: 0; color: var(--text-strong); }
+.cta { display: block; text-align: center; margin: 18px 0 6px; padding: 18px 16px; border-radius: 16px; background: var(--red); color: #1a0505; text-decoration: none; font-weight: 800; font-size: 1.2rem; box-shadow: 0 0 0 4px rgba(224,69,59,.18); }
+.cta small { display: block; font-weight: 600; font-size: .82rem; opacity: .85; margin-top: 2px; }
+.cta.closed { background: var(--surface-2); color: var(--muted); box-shadow: none; border: 1px solid var(--line); }
+.cta-sub { text-align: center; font-size: .78rem; color: var(--muted); }
+.menu { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+.menu a { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 14px; text-decoration: none; color: var(--text); }
+.menu a:hover, .menu a:active { border-color: var(--red-deep); }
+.menu a.wide { grid-column: 1 / -1; }
+.menu .i { font-size: 1.5rem; }
+.menu .t { display: block; font-weight: 700; color: var(--text-strong); margin-top: 4px; }
+.menu .s { display: block; font-size: .78rem; color: var(--muted); margin-top: 2px; }
+.edit-mini { float: right; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="poster-wrap" id="poster"></section>
+  <p class="scroll-hint">아래로 내려 사전신청과 관측 안내를 확인하세요 ↓</p>
+  <div id="notice"></div>
+  <section class="card info" id="info" style="margin-top:16px"></section>
+  <a class="cta" id="cta" href="register.html">사전신청 하기<small id="ctaSub">시간대를 골라 신청해 주세요</small></a>
+  <p class="cta-sub">사전신청을 하지 않아도 당일 참여할 수 있어요. 신청해 주시면 시간대별 인원을 나눠 더 여유롭게 관측할 수 있어요.</p>
+  <nav class="menu">
+    <a class="wide" href="sky.html"><span class="i">🔭</span><span class="t">시간대별 천체 미리보기</span><span class="s">몇 시에 어느 쪽 하늘에서 무엇이 보일까?</span></a>
+    <a class="wide" href="objects.html"><span class="i">🌌</span><span class="t">다양한 천체 둘러보기</span><span class="s">동아리 학생들이 정리한 천체 이야기와 찾는 법</span></a>
+    <a href="page.html?p=dirs"><span class="i">🗺️</span><span class="t">오시는 길</span><span class="s">과학실 찾아오기</span></a>
+    <a href="page.html?p=safety"><span class="i">⚠️</span><span class="t">주의사항</span><span class="s">관측 전에 꼭 읽어 주세요</span></a>
+    <a href="page.html?p=guide"><span class="i">📋</span><span class="t">진행 안내</span><span class="s">과학실 → 데크 → 옥상</span></a>
+    <a href="page.html?p=goods"><span class="i">🎁</span><span class="t">기념품</span><span class="s">미션 완료 선물 미리보기</span></a>
+  </nav>
+</main>
+
+<script src="js/core.js?v=20261012a"></script>
+<script>
+(function () {
+  'use strict';
+  var esc = CN.esc, admin = CN.isAdmin();
+  CN.topbar();
+  var cfg;
+
+  function defaultsInfo(c) {
+    return {
+      when: CN.dateLabel(c.eventDate) + ' 저녁 6시 20분 ~ 9시 40분',
+      where: c.placeText,
+      who: '광수교육공동체와 지역 주민 누구나',
+      host: '광수중학교 천체관측동아리 코스모스',
+    };
+  }
+
+  function renderPoster() {
+    var el = document.getElementById('poster');
+    var p = cfg.eventDate.split('-');
+    var htmlPoster = '<div class="poster-html" id="posterHtml"><div class="k">GWANGSU · COSMOS</div><div class="t1">2026 광수중학교</div><div class="t2">주민 공개<br>천체관측회</div>' +
+      '<div class="d">' + Number(p[1]) + '월 ' + Number(p[2]) + '일(' + CN.dateLabel(cfg.eventDate).slice(-2, -1) + ') 저녁 6시 20분</div><div class="p">광수중학교 과학실 · 3층 데크 · 옥상</div><div class="saturn">🪐</div></div>';
+    var src = cfg.posterFileId ? CN.photoUrl(cfg.posterFileId, 1600) : 'img/poster.jpg?v=' + CN.VERSION;
+    el.innerHTML = '<img class="poster-img no-night" id="posterImg" alt="2026 광수중학교 주민 공개 천체관측회 포스터" src="' + esc(src) + '" style="display:none">' + htmlPoster +
+      (admin ? '<label class="btn small poster-admin">포스터 바꾸기<input type="file" accept="image/*" hidden id="posterFile"></label>' : '');
+    var img = document.getElementById('posterImg');
+    img.onload = function () { img.style.display = 'block'; var h = document.getElementById('posterHtml'); if (h) h.remove(); };
+    img.onerror = function () {
+      if (cfg.posterFileId && !img.dataset.fb) { img.dataset.fb = 1; img.src = 'https://lh3.googleusercontent.com/d/' + encodeURIComponent(cfg.posterFileId) + '=w1600'; return; }
+      if (cfg.posterFileId && img.dataset.fb === '1') { img.dataset.fb = 2; img.src = 'img/poster.jpg?v=' + CN.VERSION; return; }
+      img.remove();
+    };
+    if (admin) document.getElementById('posterFile').onchange = async function () {
+      var f = this.files[0]; if (!f) return;
+      try {
+        var fid = await CN.uploadPhoto('_poster', f, function (s) { CN.toast(s, 60000); });
+        await CN.db.patch(CN.path('config'), { posterFileId: fid, by: CN.adminLabel(), at: Date.now() });
+        cfg.posterFileId = fid; CN.toast('포스터를 바꿨어요'); renderPoster();
+      } catch (e) { CN.toast(e.message, 4000); }
+    };
+  }
+
+  function renderNotice() {
+    var el = document.getElementById('notice');
+    el.innerHTML = (cfg.notice ? '<div class="notice">📢 ' + esc(cfg.notice) + '</div>' : '') +
+      (admin ? '<div style="text-align:right;margin-top:6px"><button class="btn small ghost" id="editNotice">📢 공지 ' + (cfg.notice ? '고치기' : '쓰기') + '</button></div>' : '');
+    if (admin) document.getElementById('editNotice').onclick = function () {
+      var m = CN.modal('<div class="modal-head"><div class="t">공지 배너</div><button class="icon-btn" data-close>닫기</button></div>' +
+        '<p class="sub">메인 화면 포스터 아래에 눈에 띄게 표시돼요. 비우고 저장하면 사라져요. 예) ☔ 비 예보로 11월 5일(목)로 연기합니다.</p>' +
+        '<textarea id="nt" rows="4">' + esc(cfg.notice || '') + '</textarea><div class="ed-actions" style="display:flex;gap:8px;margin-top:12px"><button class="btn primary small" id="ntSave">저장</button></div>', { narrow: true });
+      m.el.querySelector('#ntSave').onclick = async function () {
+        var v = m.el.querySelector('#nt').value.trim();
+        try { await CN.db.patch(CN.path('config'), { notice: v, by: CN.adminLabel(), at: Date.now() }); cfg.notice = v; m.close(); renderNotice(); CN.toast('저장했어요'); }
+        catch (e) { CN.toast(e.message); }
+      };
+    };
+  }
+
+  function renderInfo() {
+    var info = Object.assign(defaultsInfo(cfg), cfg.info || {});
+    var el = document.getElementById('info');
+    el.innerHTML = (admin ? '<button class="btn small ghost edit-mini" id="editInfo">✎</button>' : '') +
+      '<h2 style="margin-top:0">행사 안내</h2><dl>' +
+      '<dt>일시</dt><dd>' + esc(info.when) + '</dd><dt>장소</dt><dd>' + esc(info.where) + '</dd>' +
+      '<dt>대상</dt><dd>' + esc(info.who) + '</dd><dt>주관</dt><dd>' + esc(info.host) + '</dd></dl>' +
+      '<p class="hint" style="margin-top:10px">날씨가 흐리거나 비가 오면 일정이 바뀔 수 있어요. 바뀌면 이 화면 위쪽 공지와 가정통신문으로 알려 드려요.</p>';
+    if (admin) document.getElementById('editInfo').onclick = function () {
+      var f = [['when', '일시'], ['where', '장소'], ['who', '대상'], ['host', '주관']];
+      var m = CN.modal('<div class="modal-head"><div class="t">행사 안내 고치기</div><button class="icon-btn" data-close>닫기</button></div>' +
+        f.map(function (x) { return '<label class="field">' + x[1] + '</label><input type="text" data-k="' + x[0] + '" value="' + esc(info[x[0]]) + '">'; }).join('') +
+        '<p class="hint">행사 날짜 자체(미리보기 계산 기준)는 관리자 메뉴의 「행사 설정」에서 바꿔요.</p><div style="margin-top:12px"><button class="btn primary small" id="infoSave">저장</button></div>', { narrow: true });
+      m.el.querySelector('#infoSave').onclick = async function () {
+        var v = {}; m.el.querySelectorAll('[data-k]').forEach(function (i) { v[i.dataset.k] = i.value.trim(); });
+        try { await CN.db.patch(CN.path('config'), { info: v, by: CN.adminLabel(), at: Date.now() }); cfg.info = v; m.close(); renderInfo(); CN.toast('저장했어요'); }
+        catch (e) { CN.toast(e.message); }
+      };
+    };
+  }
+
+  async function renderCta() {
+    try {
+      var c = await CN.api('counts', {}, 15000);
+      if (!c || !c.ok) return;
+      var cta = document.getElementById('cta'), sub = document.getElementById('ctaSub');
+      if (!c.regOpen) { cta.classList.add('closed'); cta.firstChild.textContent = '사전신청 마감'; sub.textContent = '당일 현장으로 오셔도 참여할 수 있어요'; cta.removeAttribute('href'); return; }
+      if (c.total && c.total.people) sub.textContent = '지금까지 ' + c.total.people + '명이 신청했어요';
+    } catch (e) { /* 집계를 못 불러와도 버튼은 그대로 */ }
+  }
+
+  CN.getConfig().then(function (c) {
+    cfg = c;
+    renderPoster(); renderNotice(); renderInfo(); renderCta();
+    CN.footer({ loginLink: true });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0405">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<title>시간대별 천체 미리보기 · 2026 광수중 주민 천체관측회</title>
+<meta property="og:title" content="시간대별 천체 미리보기 · 2026 광수중 주민 천체관측회">
+<meta property="og:description" content="관측회 날 광수중학교 하늘에서 몇 시에 어떤 천체를 볼 수 있는지 미리 확인해 보세요">
+<link rel="stylesheet" href="css/site.css?v=20261012a">
+<link rel="stylesheet" href="css/objects.css?v=20261012a">
+<style>
+.timebar { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 6px; -webkit-overflow-scrolling: touch; }
+.timebar .chip { font-size: 1rem; padding: 9px 16px; }
+.skystate { margin-top: 10px; }
+.skystate .lbl { font-weight: 700; color: var(--text-strong); }
+.skystate .lbl .badge { margin-left: 6px; }
+.skystate p { margin: 4px 0 0; font-size: .86rem; }
+.ctrl { display: grid; gap: 10px; margin: 14px 0 6px; }
+.alt-row { display: flex; align-items: center; gap: 12px; }
+.alt-row input[type=range] { flex: 1; accent-color: var(--red); }
+.alt-row .v { min-width: 4.6em; text-align: right; font-weight: 700; color: var(--text-strong); }
+.ctrl-row { display: flex; gap: 8px; align-items: center; }
+.ctrl-row select { width: auto; flex: none; padding: 8px 10px; font-size: .88rem; }
+.ctrl-row input[type=search] { flex: 1; padding: 8px 10px; font-size: .92rem; }
+details.grp { border-top: 1px solid var(--line); }
+details.grp > summary { list-style: none; cursor: pointer; padding: 12px 2px; font-weight: 700; color: var(--text-strong); display: flex; align-items: center; gap: 8px; }
+details.grp > summary::-webkit-details-marker { display: none; }
+details.grp > summary .n { color: var(--muted); font-weight: 400; font-size: .84rem; }
+details.grp > summary::after { content: '▾'; margin-left: auto; color: var(--muted); transition: transform .2s; }
+details.grp:not([open]) > summary::after { transform: rotate(-90deg); }
+details.grp.feat > summary { color: var(--red); }
+.rows { display: grid; gap: 6px; padding-bottom: 10px; }
+.row {
+  display: grid; grid-template-columns: 60px 1fr auto; gap: 12px; align-items: center; width: 100%;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px 8px 8px;
+  text-align: left; color: var(--text); font-family: inherit; cursor: pointer;
+}
+.row:hover, .row:active { border-color: var(--red-deep); }
+.row .im { width: 60px; height: 60px; border-radius: 9px; overflow: hidden; background: #050203; }
+.row .im img, .row .im .thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+.row .im .ph-icon { font-size: 1.4rem; }
+.row .nm { font-weight: 700; color: var(--text-strong); font-size: .96rem; line-height: 1.3; }
+.row .nm .ct { font-weight: 400; color: var(--muted); font-size: .76rem; margin-left: 4px; }
+.row .tg { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.row .tg .badge { font-size: .66rem; }
+.pos { display: flex; align-items: center; gap: 8px; text-align: right; }
+.pos .dir { font-weight: 800; color: var(--text-strong); font-size: 1rem; line-height: 1.15; white-space: nowrap; }
+.pos .alt { font-size: .8rem; color: var(--text); white-space: nowrap; }
+.pos .fist { font-size: .68rem; color: var(--muted); white-space: nowrap; }
+.compass { width: 34px; height: 34px; flex: none; }
+.compass .needle { transform-origin: 17px 17px; }
+.legend { font-size: .76rem; color: var(--muted); margin: 6px 2px 0; }
+@media (max-width: 380px) { .row { grid-template-columns: 52px 1fr auto; gap: 8px; } .row .im { width: 52px; height: 52px; } .compass { display: none; } }
+</style>
+</head>
+<body>
+<main class="wrap" id="app">
+  <h1>시간대별 천체 미리보기</h1>
+  <p class="sub" id="where"></p>
+  <div class="timebar" id="times" role="group" aria-label="시각 선택"></div>
+  <div class="card skystate" id="skystate"></div>
+  <div class="ctrl">
+    <div class="alt-row">
+      <label for="minAlt" style="font-size:.86rem;white-space:nowrap">최소 고도</label>
+      <input type="range" id="minAlt" min="0" max="60" step="5" value="20">
+      <span class="v" id="minAltV">20° 이상</span>
+    </div>
+    <div class="hint" style="margin-top:-6px">건물·나무에 가리지 않고 잘 보이려면 20° 이상을 추천해요. 팔을 쭉 뻗은 주먹 하나가 약 10°예요.</div>
+    <div class="chips" id="typeChips"></div>
+    <div class="ctrl-row">
+      <select id="sort" aria-label="정렬">
+        <option value="rec">추천순</option>
+        <option value="alt">높이순</option>
+        <option value="mag">밝기순</option>
+        <option value="az">방향순</option>
+      </select>
+      <input type="search" id="q" placeholder="이름 찾기" autocomplete="off">
+    </div>
+  </div>
+  <div id="list"><div class="loading">하늘을 계산하는 중…</div></div>
+  <p class="legend">방향은 8방위(북·북동·동·남동·남·남서·서·북서)로, 높이는 지평선 0° ~ 머리 꼭대기 90°로 나타냈어요. 위치는 광수중학교에서 계산한 값이에요.</p>
+</main>
+
+<script src="js/core.js?v=20261012a"></script>
+<script src="js/vendor/astronomy.browser.min.js"></script>
+<script src="js/astro.js?v=20261012a"></script>
+<script src="js/catalog.js?v=20261012a"></script>
+<script src="js/object-view.js?v=20261012a"></script>
+<script>
+(function () {
+  'use strict';
+  var esc = CN.esc;
+  CN.topbar();
+  var state, cfg;
+  var pos = {};              // 'HH:MM' → {id: {alt, az}}
+  var ui = { time: null, minAlt: 20, type: 'all', sort: 'rec', q: '' };
+  var TYPE_CHIPS = [['all', '전체'], ['featured', '★ 추천'], ['planet', '🪐 행성'], ['star', '⭐ 별'], ['cluster', '✨ 성단'], ['nebula', '☁️ 성운'], ['galaxy', '🌀 은하'], ['other', '기타']];
+  try { var saved = JSON.parse(sessionStorage.getItem('cn26sky') || 'null'); if (saved) Object.assign(ui, saved); } catch (e) {}
+
+  function remember() { try { sessionStorage.setItem('cn26sky', JSON.stringify({ time: ui.time, minAlt: ui.minAlt, type: ui.type, sort: ui.sort })); } catch (e) {} }
+
+  function skyObjects() {
+    // 해·행성의 위성은 목록에서 제외(위성은 모행성 설명에서 다룸)
+    return state.list.filter(function (o) { return o.id !== 'sun' && !(o.type === 'moon' && o.parent && o.parent !== 'earth'); });
+  }
+
+  function timeDate(t) { return t === 'now' ? new Date() : Astro.kst(cfg.eventDate, t); }
+
+  function compute(t) {
+    if (pos[t] && t !== 'now') return pos[t];
+    var d = timeDate(t), out = {};
+    skyObjects().forEach(function (o) { var p = Astro.position(o, d); if (p) out[o.id] = p; });
+    pos[t] = out;
+    return out;
+  }
+
+  function isEventNight() {
+    var now = new Date(), start = Astro.kst(cfg.eventDate, '17:30'), end = Astro.kst(cfg.eventDate, '23:00');
+    return now >= start && now <= end;
+  }
+
+  function renderTimes() {
+    var times = cfg.previewTimes.slice();
+    if (isEventNight()) times.push('now');
+    if (times.indexOf(ui.time) < 0) ui.time = times[0];
+    var el = document.getElementById('times');
+    el.innerHTML = times.map(function (t) {
+      var on = t === ui.time;
+      return '<button class="chip' + (on ? ' on' : '') + '" data-t="' + t + '" aria-pressed="' + on + '">' + (t === 'now' ? '● 지금' : t) + '</button>';
+    }).join('');
+    el.querySelectorAll('[data-t]').forEach(function (b) {
+      b.onclick = function () { ui.time = b.dataset.t; remember(); renderTimes(); renderSky(); renderList(); };
+    });
+  }
+
+  function renderSky() {
+    var d = timeDate(ui.time), s = Astro.sky(d);
+    var moon = Astro.body('Moon', d), mi = Astro.moonInfo(d);
+    var moonTxt = moon.alt > 0
+      ? '달(' + mi.name + ', 밝은 부분 ' + Math.round(mi.illum * 100) + '%)이 ' + Astro.dir8(moon.az) + '쪽 ' + Math.round(moon.alt) + '° 높이에 있어요.' + (mi.illum > 0.6 ? ' 달빛이 밝아서 희미한 천체는 보기 어려워요.' : '')
+      : '이 시각에 달은 지평선 아래에 있어요' + (mi.rise ? ' (다음 월출 ' + Astro.hhmm(mi.rise) + ')' : '') + '. 달빛 방해가 없어서 희미한 천체를 보기 좋아요.';
+    document.getElementById('skystate').innerHTML =
+      '<div class="lbl">' + (ui.time === 'now' ? '지금 ' + Astro.hhmm(d) : ui.time) + ' 하늘<span class="badge solid">' + esc(s.label) + '</span></div>' +
+      '<p>' + esc(s.desc) + '</p><p class="hint" style="margin-top:6px">🌙 ' + esc(moonTxt) + '</p>';
+  }
+
+  function compassSvg(az) {
+    return '<svg class="compass" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15.5" fill="none" stroke="#3a1a1c"/>' +
+      '<text x="17" y="8" text-anchor="middle" font-size="6" fill="#9a6662">북</text>' +
+      '<g class="needle" transform="rotate(' + az.toFixed(0) + ' 17 17)"><path d="M17 5 L20.5 18 L17 16 L13.5 18 Z" fill="#e0453b"/></g></svg>';
+  }
+
+  function rowHtml(o, p, sky) {
+    var c = (state.content[o.id] || {}).meta || {};
+    var tags = '<span class="badge">' + esc(CN.typeLabel(o)) + '</span>';
+    Object.keys(c.places || {}).forEach(function (k) { if (c.places[k]) tags += '<span class="badge">📍' + esc(CN.PLACES[k]) + '</span>'; });
+    if (p.alt < 20) tags += '<span class="badge" title="지평선 가까워 건물에 가릴 수 있어요">낮음</span>';
+    var faint = (o.type === 'nebula' || o.type === 'galaxy') && (o.mag == null || o.mag > 6);
+    if (faint && (sky.key === 'nautical' || sky.key === 'civil' || sky.key === 'astro')) tags += '<span class="badge" title="하늘이 완전히 어두워진 뒤에 보기 좋아요">어두워진 뒤 추천</span>';
+    return '<button class="row" data-id="' + esc(o.id) + '">' +
+      '<div class="im">' + CN.thumbHtml(state, o, 120) + '</div>' +
+      '<div><div class="nm">' + (CN.isFeatured(state, o) ? '<span style="color:var(--red)">★ </span>' : '') + esc(o.nameKo) + '<span class="ct">' + esc(o.catalog || '') + '</span></div><div class="tg">' + tags + '</div></div>' +
+      '<div class="pos">' + compassSvg(p.az) + '<div><div class="dir">' + esc(Astro.dir8(p.az)) + '쪽</div><div class="alt">높이 ' + Math.round(p.alt) + '°</div><div class="fist">' + esc(Astro.fists(p.alt)) + '</div></div></div>' +
+      '</button>';
+  }
+
+  function brightness(o) { return o.mag != null ? o.mag : (o.magRange ? o.magRange[0] : 99); }
+
+  function renderList() {
+    var t0 = performance.now();
+    var P = compute(ui.time), sky = Astro.sky(timeDate(ui.time));
+    var q = ui.q.toLowerCase().replace(/\s+/g, '');
+    var items = skyObjects().filter(function (o) {
+      var p = P[o.id];
+      if (!p || p.alt < ui.minAlt || p.alt < 0) return false;
+      if (ui.type === 'featured' && !CN.isFeatured(state, o)) return false;
+      if (ui.type !== 'all' && ui.type !== 'featured' && o.type !== ui.type && !(ui.type === 'planet' && o.type === 'moon')) return false;
+      if (q && CN.searchText(o).indexOf(q) < 0) return false;
+      return true;
+    });
+    var list = document.getElementById('list');
+    if (!items.length) {
+      list.innerHTML = '<div class="empty">이 조건에 맞는 천체가 없어요.<br>최소 고도를 낮추거나 다른 시각을 골라 보세요.</div>';
+      return;
+    }
+    var row = function (o) { return rowHtml(o, P[o.id], sky); };
+    var cmp = {
+      alt: function (a, b) { return P[b.id].alt - P[a.id].alt; },
+      mag: function (a, b) { return brightness(a) - brightness(b); },
+      az: function (a, b) { return P[a.id].az - P[b.id].az; },
+      rec: function (a, b) { return brightness(a) - brightness(b); },
+    }[ui.sort];
+    items.sort(cmp);
+
+    var html = '<div class="count">' + (ui.time === 'now' ? '지금' : ui.time) + ' · 고도 ' + ui.minAlt + '° 이상 · ' + items.length + '개</div>';
+    if (ui.sort === 'rec' && ui.type === 'all' && !q) {
+      // 추천 천체는 펼쳐 두고, 나머지는 종류별로 접기
+      var feat = items.filter(function (o) { return CN.isFeatured(state, o); });
+      var rest = items.filter(function (o) { return !CN.isFeatured(state, o); });
+      if (feat.length) html += '<details class="grp feat" open><summary>★ 관측회 추천 <span class="n">' + feat.length + '개</span></summary><p class="hint" style="margin:-6px 2px 8px">동아리가 망원경으로 보여 드릴 천체예요.</p><div class="rows">' + feat.map(row).join('') + '</div></details>';
+      ['planet', 'star', 'cluster', 'nebula', 'galaxy', 'other'].forEach(function (tp) {
+        var g = rest.filter(function (o) { return o.type === tp || (tp === 'planet' && o.type === 'moon'); });
+        if (!g.length) return;
+        var T = CN.TYPES[tp];
+        html += '<details class="grp"' + (!feat.length && tp === 'planet' ? ' open' : '') + '><summary>' + T.icon + ' ' + T.ko + (tp === 'planet' ? '·달' : '') + ' <span class="n">' + g.length + '개</span></summary><div class="rows">' + g.map(row).join('') + '</div></details>';
+      });
+    } else {
+      html += '<div class="rows">' + items.map(row).join('') + '</div>';
+    }
+    list.innerHTML = html;
+    list.querySelectorAll('.row').forEach(function (b) { b.onclick = function () { CN.openObjectModal(state, b.dataset.id); }; });
+    if (window.console && location.hostname === 'localhost') console.log('list render', Math.round(performance.now() - t0) + 'ms');
+  }
+
+  function bindControls() {
+    var r = document.getElementById('minAlt'), v = document.getElementById('minAltV');
+    r.value = ui.minAlt; v.textContent = ui.minAlt + '° 이상';
+    r.addEventListener('input', function () { ui.minAlt = Number(r.value); v.textContent = ui.minAlt + '° 이상'; renderList(); });
+    r.addEventListener('change', remember);
+    var tc = document.getElementById('typeChips');
+    tc.innerHTML = TYPE_CHIPS.map(function (x) { var on = ui.type === x[0]; return '<button class="chip' + (on ? ' on' : '') + '" data-type="' + x[0] + '" aria-pressed="' + on + '">' + x[1] + '</button>'; }).join('');
+    tc.querySelectorAll('[data-type]').forEach(function (b) {
+      b.onclick = function () {
+        ui.type = b.dataset.type; remember();
+        tc.querySelectorAll('[data-type]').forEach(function (x) { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); });
+        renderList();
+      };
+    });
+    var s = document.getElementById('sort');
+    s.value = ui.sort;
+    s.onchange = function () { ui.sort = s.value; remember(); renderList(); };
+    var q = document.getElementById('q'), composing = false, timer;
+    q.addEventListener('compositionstart', function () { composing = true; });
+    q.addEventListener('compositionend', function () { composing = false; ui.q = q.value; renderList(); });
+    q.addEventListener('input', function () { if (composing) return; clearTimeout(timer); timer = setTimeout(function () { ui.q = q.value; renderList(); }, 120); });
+  }
+
+  CN.loadAll(function () { if (!CN.isEditing() && !document.querySelector('.modal-back')) renderList(); }).then(function (s) {
+    state = s; cfg = s.config;
+    document.getElementById('where').textContent = CN.dateLabel(cfg.eventDate) + ' · ' + CN.LOC.name + ' (북위 37.47°, 동경 127.32°)';
+    if (!state.list.length) { document.getElementById('list').innerHTML = '<div class="msg err show">천체 목록을 불러오지 못했어요. 새로고침해 주세요.</div>'; return; }
+    var st = Astro.sunTimes(cfg.eventDate);
+    document.getElementById('where').textContent += ' · 해 지는 시각 ' + Astro.hhmm(st.sunset) + ', 완전히 어두워지는 시각 ' + Astro.hhmm(st.dark);
+    bindControls();
+    renderTimes();
+    renderSky();
+    renderList();
+    CN.footer({ loginLink: true });
+  });
+})();
+</script>
+</body>
+</html>

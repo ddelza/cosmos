@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0405">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<title>안내 · 2026 광수중 주민 천체관측회</title>
+<link rel="stylesheet" href="css/site.css?v=20261012a">
+<link rel="stylesheet" href="css/objects.css?v=20261012a">
+<style>
+.pg-photos { display: grid; gap: 12px; margin-top: 14px; }
+.pg-photos figure { margin: 0; }
+.pg-photos img { width: 100%; border-radius: 12px; display: block; }
+.pg-photos figcaption { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+.default-note { font-size: .74rem; color: var(--warn); border: 1px dashed var(--red-deep); border-radius: 6px; padding: 2px 8px; display: inline-block; margin-bottom: 8px; }
+.maplinks { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+</style>
+</head>
+<body>
+<main class="wrap narrow" id="app"><div class="loading">불러오는 중…</div></main>
+
+<script src="js/core.js?v=20261012a"></script>
+<script>
+(function () {
+  'use strict';
+  var esc = CN.esc, admin = CN.isAdmin();
+  CN.topbar();
+  var PAGES = {
+    dirs: { icon: '🗺️', title: '오시는 길', def:
+      '**광수중학교 본관 3층 과학실**로 와 주세요. 모든 관람객은 과학실에서 안전 안내를 먼저 듣고 관측 장소로 이동해요.\n\n' +
+      '- 주소: 경기도 광주시 퇴촌면 도수길23번길 23 (광수중학교)\n- 정문으로 들어와 본관 중앙 계단으로 3층까지 올라오세요.\n- 주차 공간이 넉넉하지 않아요. 가까운 곳은 걸어서 와 주세요.\n\n밤이라 운동장·계단이 어두워요. 휴대폰 손전등은 발밑만 비춰 주세요.' },
+    safety: { icon: '⚠️', title: '주의사항', def:
+      '관측회 전에 꼭 읽어 주세요.\n\n' +
+      '- **망원경은 직접 움직이지 마세요.** 살짝만 밀려도 천체가 시야 밖으로 벗어나요. 동아리 학생(엔지니어)이 맞춰 드려요.\n' +
+      '- **밝은 빛은 금물!** 손전등·휴대폰 화면은 최대한 어둡게, 다른 사람 얼굴이나 하늘을 비추지 마세요. 눈이 어둠에 익숙해지는 데 20~30분이 걸려요.\n' +
+      '- 옥상과 데크에서는 **뛰지 말고 난간에 기대지 마세요.** 진행 요원의 안내를 따라 주세요.\n' +
+      '- 밤 기온이 낮아요. **따뜻한 외투**를 꼭 챙겨 오세요.\n' +
+      '- 망원경 접안렌즈에 눈을 너무 세게 대지 말고, 안경을 쓴 분은 그대로 보셔도 돼요.\n' +
+      '- 어린이는 보호자와 함께 다녀 주세요.' },
+    guide: { icon: '📋', title: '진행 안내', def:
+      '관람은 **과학실 → 3층 데크 → 옥상** 순서로 진행돼요.\n\n' +
+      '1. **과학실**: 안전 교육을 듣고, 동아리 학생들의 발표와 전시를 둘러봐요.\n' +
+      '2. **3층 데크**: 쌍안경과 망원경으로 토성과 밝은 별을 찾아봐요.\n' +
+      '3. **옥상**: 큰 망원경으로 성단·성운·은하 같은 딥스카이 천체를 관측해요.\n\n' +
+      '장소마다 미션이 있어요. 미션을 마치고 스티커를 모으면 기념품을 드려요(준비 수량 한정).\n\n' +
+      '**시간대별 천체 미리보기**에서 내가 가는 시간에 무엇이 보일지 미리 살펴보세요!' },
+    goods: { icon: '🎁', title: '기념품', def:
+      '세 장소의 미션을 모두 마치면 동아리가 직접 디자인한 기념품을 드려요. (준비 수량이 정해져 있어 일찍 끝날 수 있어요)\n\n기념품 사진은 곧 올라올 예정이에요.' },
+  };
+  var key = CN.qs('p');
+  var P = PAGES[key];
+  var app = document.getElementById('app');
+  if (!P) { app.innerHTML = '<p class="empty">페이지를 찾을 수 없어요.</p><p style="text-align:center"><a href="index.html">처음으로</a></p>'; return; }
+  document.title = P.title + ' · 2026 광수중 주민 천체관측회';
+  var path = CN.path('pages', key);
+  var data = {};
+  var editing = false;
+
+  function photosSorted() {
+    return Object.keys(data.photos || {}).map(function (k) { return Object.assign({ key: k }, data.photos[k]); })
+      .sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+  }
+
+  function render() {
+    var text = data.text || P.def;
+    var h = '<h1>' + P.icon + ' ' + esc(P.title) + '</h1>';
+    if (!data.text && admin) h += '<div class="default-note">기본 안내문이에요 — 편집해서 올해 내용으로 바꿔 주세요</div>';
+    h += '<div class="card prose" id="body">' + CN.md(text) + '</div>';
+    if (key === 'dirs') h += '<div class="maplinks"><a class="btn small" target="_blank" rel="noopener" href="https://map.kakao.com/?q=' + encodeURIComponent('광수중학교') + '">카카오맵에서 보기</a><a class="btn small" target="_blank" rel="noopener" href="https://map.naver.com/p/search/' + encodeURIComponent('광수중학교') + '">네이버 지도에서 보기</a></div>';
+    var ph = photosSorted();
+    if (ph.length) h += '<div class="pg-photos">' + ph.map(function (p) { return '<figure>' + CN.driveImgTag(p.fileId, 1280, 'photo', '', p.caption) + (p.caption ? '<figcaption>' + esc(p.caption) + '</figcaption>' : '') + '</figure>'; }).join('') + '</div>';
+    if (data.by) h += '<div class="by" style="margin-top:8px">✎ ' + esc(data.by) + ' · ' + CN.fmtWhen(data.at) + '</div>';
+    if (admin) h += '<div class="ed-actions"><button class="btn small" id="editText">✎ 글 편집</button><button class="btn small ghost" id="editPhotos">🖼 사진 편집</button></div>';
+    h += '<p style="margin-top:20px"><a href="index.html">← 처음 화면</a></p>';
+    app.innerHTML = h;
+    CN.footer({ loginLink: true });
+    if (admin) {
+      document.getElementById('editText').onclick = editText;
+      document.getElementById('editPhotos').onclick = editPhotos;
+    }
+  }
+
+  function editText() {
+    editing = true;
+    var box = document.getElementById('body');
+    var dk = 'cn26d:page:' + key, draft = null;
+    try { draft = localStorage.getItem(dk); } catch (e) {}
+    var start = draft != null ? draft : (data.text || P.def);
+    box.classList.remove('prose');
+    box.innerHTML = '<textarea rows="14" id="ta">' + esc(start) + '</textarea><div class="hint">빈 줄 = 문단 · "- " 목록 · "1. " 번호 목록 · **굵게**</div>' +
+      '<div class="ed-actions"><button class="btn primary small" id="sv">저장</button><button class="btn ghost small" id="cc">취소</button></div>';
+    var ta = document.getElementById('ta');
+    ta.addEventListener('input', function () { try { localStorage.setItem(dk, ta.value); } catch (e) {} });
+    document.getElementById('cc').onclick = function () { editing = false; render(); };
+    document.getElementById('sv').onclick = async function () {
+      try {
+        var v = { text: ta.value.trim(), by: CN.adminLabel(), at: Date.now() };
+        await CN.db.patch(path, v);
+        Object.assign(data, v);
+        try { localStorage.removeItem(dk); } catch (e) {}
+        editing = false; CN.toast('저장했어요'); render();
+      } catch (e) { CN.toast(e.message); }
+    };
+  }
+
+  function editPhotos() {
+    editing = true;
+    var draw = function () {
+      var ph = photosSorted();
+      app.innerHTML = '<h1>' + P.icon + ' ' + esc(P.title) + ' · 사진 편집</h1><div class="ph-edit">' + ph.map(function (p, i) {
+        return '<div class="ph-item" data-k="' + esc(p.key) + '">' + CN.driveImgTag(p.fileId, 250, 'photo', '', '') +
+          '<div class="ph-fields"><input type="text" data-cap placeholder="사진 설명" value="' + esc(p.caption || '') + '">' +
+          '<div class="ph-btns"><button class="btn small ghost" data-mv="-1"' + (i ? '' : ' disabled') + '>▲</button><button class="btn small ghost" data-mv="1"' + (i < ph.length - 1 ? '' : ' disabled') + '>▼</button><button class="btn small ghost" data-del>삭제</button></div></div></div>';
+      }).join('') + '</div><label class="btn small" style="margin-top:12px">＋ 사진 올리기<input type="file" accept="image/*" multiple hidden id="pf"></label><div class="msg ok" id="st"></div>' +
+        '<div class="ed-actions"><button class="btn primary small" id="fin">편집 마치기</button></div>';
+      app.querySelectorAll('.ph-item').forEach(function (el) {
+        var k = el.dataset.k;
+        el.querySelector('[data-cap]').onchange = async function () { try { await CN.db.patch(path + '/photos/' + k, { caption: this.value.trim() }); data.photos[k].caption = this.value.trim(); CN.toast('저장했어요'); } catch (e) { CN.toast(e.message); } };
+        el.querySelectorAll('[data-mv]').forEach(function (b) {
+          b.onclick = async function () {
+            var arr = photosSorted(), i = arr.findIndex(function (p) { return p.key === k; }), j = i + Number(b.dataset.mv);
+            var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+            var patch = {}; arr.forEach(function (p, n) { patch[p.key + '/order'] = n; data.photos[p.key].order = n; });
+            try { await CN.db.patch(path + '/photos', patch); draw(); } catch (e) { CN.toast(e.message); }
+          };
+        });
+        el.querySelector('[data-del]').onclick = async function () {
+          if (!confirm('이 사진을 지울까요?')) return;
+          var fid = data.photos[k].fileId;
+          try { await CN.db.del(path + '/photos/' + k); delete data.photos[k]; CN.trashPhoto(fid); draw(); } catch (e) { CN.toast(e.message); }
+        };
+      });
+      document.getElementById('pf').onchange = async function () {
+        var files = Array.from(this.files || []), st = document.getElementById('st'), base = photosSorted().length;
+        data.photos = data.photos || {};
+        for (var n = 0; n < files.length; n++) {
+          st.classList.add('show');
+          try {
+            var fid = await CN.uploadPhoto('_pages', files[n], function (s) { st.textContent = (n + 1) + '/' + files.length + ' ' + s; });
+            var k = 'p' + CN.uid(), rec = { fileId: fid, caption: '', order: base + n, by: CN.adminLabel(), at: Date.now() };
+            await CN.db.put(path + '/photos/' + k, rec); data.photos[k] = rec;
+          } catch (e) { st.textContent = e.message; }
+        }
+        st.classList.remove('show'); draw();
+      };
+      document.getElementById('fin').onclick = function () { editing = false; render(); };
+    };
+    draw();
+  }
+
+  CN.db.get(path).then(function (d) { data = d || {}; render(); }).catch(function () { data = {}; render(); });
+})();
+</script>
+</body>
+</html>

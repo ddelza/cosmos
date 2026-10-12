@@ -1,0 +1,89 @@
+/* 천체 목록·상세·편집기 (objects.html, sky.html 팝업 공용) */
+input[type=search] {
+  width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--bg-2); color: var(--text-strong); font-size: 1rem; font-family: inherit; outline: none;
+}
+input[type=search]:focus { border-color: var(--red); }
+.filters { margin-top: 10px; }
+.count { color: var(--muted); font-size: .8rem; margin: 14px 2px 8px; }
+.crumb { font-size: .84rem; margin: 14px 0 4px; color: var(--muted); }
+.crumb a { color: var(--text); text-decoration: none; }
+
+/* 목록 카드 */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.ocard { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; text-decoration: none; color: var(--text); }
+.ocard:active, .ocard:hover { border-color: var(--red-deep); }
+.ocard-img { position: relative; aspect-ratio: 1 / 1; background: #050203; }
+.ocard-img img, .thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ocard-img .feat { position: absolute; top: 6px; left: 6px; background: rgba(10,4,5,.8); color: var(--red); border: 1px solid var(--red-deep); border-radius: 99px; padding: 0 7px; font-size: .78rem; }
+.ocard-body { padding: 8px 10px 10px; }
+.ocard .nm { color: var(--text-strong); font-weight: 700; font-size: .92rem; line-height: 1.3; }
+.ocard .ct { color: var(--muted); font-size: .74rem; margin-top: 2px; }
+.prog { font-size: .7rem; margin-top: 4px; color: var(--muted); }
+.prog.p0 { color: var(--warn); }
+.prog.p4, .prog.p3 { color: var(--ok); }
+.ph-icon { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 2rem; color: var(--muted); background: #070304; }
+.ph-icon.big { aspect-ratio: 16/10; font-size: 3rem; }
+
+/* 상세 */
+.obj { padding-bottom: 8px; }
+.obj-head .cover { border-radius: var(--radius); overflow: hidden; background: #050203; margin-top: 12px; }
+.obj-head .cover img { display: block; width: 100%; max-height: 62vh; object-fit: contain; background: #050203; }
+.obj-head .cap { font-size: .72rem; color: var(--muted); margin-top: 4px; }
+.obj-head h1 { font-size: 1.5rem; margin: 14px 0 6px; }
+.obj-head h1 .cat { font-size: .95rem; color: var(--muted); font-weight: 500; }
+.obj-head .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.obj-head .en { color: var(--muted); font-size: .84rem; margin: 6px 0 8px; }
+.obj section { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 4px; }
+.sec-head { display: flex; align-items: center; gap: 8px; }
+.sec-head h2 { flex: 1; margin: 14px 0 8px; }
+.prose p { margin: 0 0 10px; }
+.prose ul, .prose ol { margin: 0 0 10px; padding-left: 22px; }
+.prose li { margin: 2px 0; }
+.prose strong { color: var(--text-strong); }
+.by { font-size: .72rem; color: var(--muted); }
+.seed-note { display: inline-block; font-size: .72rem; color: var(--warn); border: 1px dashed var(--red-deep); border-radius: 6px; padding: 1px 8px; margin-top: 4px; }
+.empty-sec { color: var(--muted); font-size: .86rem; }
+.hint-inline { color: var(--muted); font-size: .76rem; font-weight: 400; }
+.warn-note { color: #ffb3a8; background: #2a0b0a; border: 1px solid var(--red-deep); border-radius: 10px; padding: 8px 12px; font-size: .86rem; }
+
+dl.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 4px 0 8px; font-size: .9rem; }
+dl.kv dt { color: var(--muted); }
+dl.kv dd { margin: 0; color: var(--text-strong); }
+.lv { display: inline-block; min-width: 2.4em; text-align: center; border: 1px solid var(--red-deep); border-radius: 6px; padding: 0 6px; }
+
+table.tonight { width: 100%; border-collapse: collapse; font-size: .9rem; }
+table.tonight th { text-align: left; color: var(--muted); font-weight: 500; font-size: .76rem; border-bottom: 1px solid var(--line); padding: 4px 6px; }
+table.tonight td { padding: 7px 6px; border-bottom: 1px solid #241012; color: var(--text-strong); }
+.vis { font-size: .74rem; padding: 1px 7px; border-radius: 99px; white-space: nowrap; }
+.vis.ok { background: var(--red-soft); color: var(--text-strong); }
+.vis.low { border: 1px solid var(--red-deep); color: var(--text); }
+.vis.no { color: var(--muted); }
+
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.gallery figure { margin: 0; }
+.gallery img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 10px; display: block; }
+.gallery figcaption { font-size: .72rem; color: var(--muted); margin-top: 3px; }
+
+/* 호핑법: 왼쪽 사진, 오른쪽 설명 (휴대폰은 위아래) */
+ol.hop { list-style: none; padding: 0; margin: 0; counter-reset: none; }
+.hop-step { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; padding: 12px 0; border-bottom: 1px dashed var(--line); }
+.hop-step:last-child { border-bottom: none; }
+.hop-img img { width: 100%; border-radius: 10px; display: block; }
+.hop-img .ph-icon { aspect-ratio: 4/3; border-radius: 10px; font-size: 1.6rem; }
+.hop-img label { margin-top: 6px; }
+.hop-n { font-size: .74rem; color: var(--red); font-weight: 700; margin-bottom: 4px; }
+@media (max-width: 560px) { .hop-step { grid-template-columns: 1fr; gap: 8px; } }
+
+/* 편집기 */
+.ed-preview { border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; margin-top: 8px; min-height: 40px; }
+.ed-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.ph-edit { display: grid; gap: 10px; }
+.ph-item { display: grid; grid-template-columns: 110px 1fr; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
+.ph-item img { width: 110px; height: 110px; object-fit: cover; border-radius: 8px; }
+.ph-fields input { margin-bottom: 6px; padding: 8px 10px; font-size: .88rem; }
+.ph-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.obj-admin { margin-top: 18px; text-align: right; }
+.hist { padding: 10px 12px; }
+.hist-h { font-size: .82rem; }
+.hist-p { font-size: .82rem; color: var(--muted); white-space: pre-wrap; margin: 6px 0; max-height: 7.5em; overflow: hidden; }

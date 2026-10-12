@@ -1,0 +1,2442 @@
+[
+  {
+    "page": 1,
+    "id": "mercury",
+    "titleOnCard": "수성",
+    "category": "행성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "+7.25 ~ -2.48",
+    "distanceLabel": "태양으로부터 거리",
+    "distanceText": "0.31 ~ 0.47 AU",
+    "points": [
+      "태양과 가장 가까운 행성",
+      "해뜨기 직전 새벽, 해진 직후 초저녁에 관측"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 2,
+    "id": "venus",
+    "titleOnCard": "금성",
+    "category": "행성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "-4.92 ~ -2.98",
+    "distanceLabel": "태양으로부터 거리",
+    "distanceText": "0.72 ~ 0.73 AU",
+    "points": [
+      "위치에 따라 다양한 위상 관측 가능",
+      "해뜨기 직전 새벽, 해진 직후 초저녁에 관측"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 3,
+    "id": "mars",
+    "titleOnCard": "화성",
+    "category": "행성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "-3 ~ +1.6",
+    "distanceLabel": "거리",
+    "distanceText": "태양으로부터 1.5 AU",
+    "points": [
+      "화성은 확대해도 빨간 점이긴 하지만",
+      "화성~ 갈끄니까~~~"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 4,
+    "id": "jupiter",
+    "titleOnCard": "목성",
+    "category": "행성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "-2.94 ~ -1.6",
+    "distanceLabel": "태양으로부터 거리",
+    "distanceText": "4.95 ~ 5.46 AU",
+    "points": [
+      "목성 표면의 줄무늬",
+      "목성 주변을 도는 4개의 위성"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 5,
+    "id": "saturn",
+    "titleOnCard": "토성",
+    "category": "행성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "+1.47 ~ -0.24",
+    "distanceLabel": "태양으로부터 거리",
+    "distanceText": "9.02 ~ 10.05 AU",
+    "points": [
+      "토성 주위를 도는 아름다운 고리",
+      "83개의 위성"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 6,
+    "id": "uranus",
+    "titleOnCard": "천왕성",
+    "category": "행성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "+6.03 ~ +5.38",
+    "distanceLabel": "태양으로부터 거리",
+    "distanceText": "18.3 ~ 20.1 AU",
+    "points": [
+      "태양계에서 두번째로 먼 거리.",
+      "망원경으로 보면 고리가 보일지도?"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 7,
+    "id": "neptune",
+    "titleOnCard": "해왕성",
+    "category": "행성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "+7.67 ~ +8.00",
+    "distanceLabel": "태양으로부터 거리",
+    "distanceText": "29.8 ~ 30.3 AU",
+    "points": [
+      "태양계에서 태양으로부터 가장 먼 거리,",
+      "충분한 배율의 망원경이 필요!"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 8,
+    "id": "earth",
+    "titleOnCard": "지구",
+    "category": "특별카드",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "그런건 없다!",
+    "distanceLabel": "태양으로부터 거리",
+    "distanceText": "0.98 ~ 1.02 AU",
+    "points": [
+      "하늘이 아닌 땅을 봐야 보임.",
+      "옆을 봐도 보임. 하지만 하늘은 안보임..."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 9,
+    "id": "sun",
+    "titleOnCard": "태양",
+    "category": "특별카드",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "-26.71",
+    "distanceLabel": "거리",
+    "distanceText": "1 AU (1억 5000만km)",
+    "points": [
+      "거의 유일하게 낮에 볼 수 있는 천체!",
+      "태양 필터를 끼고 흑점을 관찰해보자."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 10,
+    "id": "moon",
+    "titleOnCard": "달",
+    "category": "특별카드",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "-2.5 ~ -12.9",
+    "distanceLabel": "거리",
+    "distanceText": "36만2600~40만5400km",
+    "points": [
+      "약 1달주기로 다양한 위상 관찰 가능",
+      "아름다운 달의 무늬는 운석 충돌의 흔적"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 11,
+    "id": "comet",
+    "titleOnCard": "혜성",
+    "category": "특별카드",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "다양",
+    "distanceLabel": "거리",
+    "distanceText": "변화함",
+    "points": [
+      "긴 타원 궤도를 도는 얼음과 먼지의 천체!",
+      "혜성 종류가 다양하다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 12,
+    "id": "m45",
+    "titleOnCard": "플레이아데스 성단(M45)",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.6",
+    "distanceLabel": "거리",
+    "distanceText": "444광년",
+    "points": [
+      "망원경으로 한번, 쌍안경으로도 한번",
+      "푸른 색 확인해보기"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 13,
+    "id": "ngc869",
+    "titleOnCard": "페르세우스 이중성단(NGC 869, 884)",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "-2.2",
+    "distanceLabel": "거리",
+    "distanceText": "χ: 6800광년 / h: 7600광년",
+    "points": [
+      "아름다운 두 성단의 세레나데"
+    ],
+    "unsure": true
+  },
+  {
+    "page": 14,
+    "id": "m44",
+    "titleOnCard": "프레세페 성단(M44)",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "3.7",
+    "distanceLabel": "거리",
+    "distanceText": "577광년",
+    "points": [
+      "게자리가 보인다면 쌍안경으로도 쉽게 찾음"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 15,
+    "id": "ngc457",
+    "titleOnCard": "올빼미 성단 (NGC 457)",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6",
+    "distanceLabel": "거리",
+    "distanceText": "7900광년",
+    "points": [
+      "올빼미? ET?"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 16,
+    "id": "m35",
+    "titleOnCard": "M35",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "5.3",
+    "distanceLabel": "거리",
+    "distanceText": "2970광년",
+    "points": [
+      "약 300개의 별 무리"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 17,
+    "id": "m37",
+    "titleOnCard": "소금과 후추성단 (M37)",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.2",
+    "distanceLabel": "거리",
+    "distanceText": "4400광년",
+    "points": [
+      "소금은 젊은 별, 후추는 늙은 별"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 18,
+    "id": "mel25",
+    "titleOnCard": "히아데스 성단(C41)",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "0.5",
+    "distanceLabel": "거리",
+    "distanceText": "153광년",
+    "points": [
+      "알데바란이 사랑한 성단",
+      "성단 치고 상당히 가까운 편"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 19,
+    "id": "ngc2477",
+    "titleOnCard": "NGC 2477",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "5.8",
+    "distanceLabel": "거리",
+    "distanceText": "800광년",
+    "points": [
+      "쌍안경으로도 위치 확인가능",
+      "관측 최적시기는 1~3월"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 20,
+    "id": "ngc6530",
+    "titleOnCard": "NGC 6530",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "4.6",
+    "distanceLabel": "거리",
+    "distanceText": "4320광년",
+    "points": [
+      "하늘에서 별들이 태어나는 요람",
+      "추천 관측장비는 저배율 망원경"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 21,
+    "id": "m7",
+    "titleOnCard": "프톨레마이오스 성단 (M7)",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "3.3",
+    "distanceLabel": "거리",
+    "distanceText": "3600광년",
+    "points": [
+      "전갈자리의 보석함",
+      "맨눈으로도 보인다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 22,
+    "id": "m6",
+    "titleOnCard": "나비 성단 (M6)",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "3.3",
+    "distanceLabel": "거리",
+    "distanceText": "1600광년",
+    "points": [
+      "영혼이 밤하늘을 나는 모습",
+      "전체 구조를 관측하는것이 좋다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 23,
+    "id": "ngc2244",
+    "titleOnCard": "장미 성운(NGC 2244)",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "4.8",
+    "distanceLabel": "거리",
+    "distanceText": "5200광년",
+    "points": [
+      "장미성운의 심장",
+      "관측 최적시기는 겨울철 밤하늘"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 24,
+    "id": "m11",
+    "titleOnCard": "야생오리성단 (M11)",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.3",
+    "distanceLabel": "거리",
+    "distanceText": "6200광년",
+    "points": [
+      "날아오르는 오리떼의 모습",
+      "비행편대의 스타트 포메이션"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 25,
+    "id": "m18",
+    "titleOnCard": "M18",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "7.5",
+    "distanceLabel": "거리",
+    "distanceText": "4900광년",
+    "points": [
+      "쌍안경과 작은 망원경으로 잘 보인다.",
+      "젊은 별들의 비밀 모임"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 26,
+    "id": "m21",
+    "titleOnCard": "M21",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.5",
+    "distanceLabel": "거리",
+    "distanceText": "4250광년",
+    "points": [
+      "삼렬성운과 같이 보이는 여름의 별미",
+      "별이 처음 태어나면 가는 하늘의 유치원"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 27,
+    "id": "m23",
+    "titleOnCard": "M23",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.9",
+    "distanceLabel": "거리",
+    "distanceText": "2150광년",
+    "points": [
+      "별이 고르게 퍼져있어 구경하며 상상하기 좋다.",
+      "하늘의 들판이자 곡식창고"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 28,
+    "id": "m25",
+    "titleOnCard": "M25",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "4.6",
+    "distanceLabel": "거리",
+    "distanceText": "2000광년",
+    "points": [
+      "쌍안경으로 가장 멋지게 관측 가능",
+      "하늘의 별이 빛의 축제를 여는 곳"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 29,
+    "id": "m26",
+    "titleOnCard": "M26",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.0",
+    "distanceLabel": "거리",
+    "distanceText": "5160광년",
+    "points": [
+      "은하수 밀집 지역에 위치해있어 배경이 아름답다",
+      "방패 한가운데 별들로 새겨진 마법의 인장"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 30,
+    "id": "m29",
+    "titleOnCard": "M29",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "7.1",
+    "distanceLabel": "거리",
+    "distanceText": "3740광년",
+    "points": [
+      "전체 성단이 항아리 모양처럼 보인다.",
+      "사랑을 맺어주는 은총의 신호"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 31,
+    "id": "m34",
+    "titleOnCard": "M34",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "5.5",
+    "distanceLabel": "거리",
+    "distanceText": "1500광년",
+    "points": [
+      "맨눈으로도 희미한 빛의 구름처럼 보인다.",
+      "별들 속의 희망과 단결의 의미"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 32,
+    "id": "m35",
+    "titleOnCard": "M35",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "5.3",
+    "distanceLabel": "거리",
+    "distanceText": "2970광년",
+    "points": [
+      "옆에 있는 다른 성단과 같이 보는것이 좋다",
+      "별처럼 함께 빛나는 형제자매의 사랑"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 33,
+    "id": "m36",
+    "titleOnCard": "M36",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.3",
+    "distanceLabel": "거리",
+    "distanceText": "4340광년",
+    "points": [
+      "맨눈으로도 희미하게 확인 가능",
+      "신들의 어린 별들이 뛰노는 놀이터"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 34,
+    "id": "m37",
+    "titleOnCard": "M37",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.2",
+    "distanceLabel": "거리",
+    "distanceText": "4500광년",
+    "points": [
+      "붉은색 거성 하나가 중앙에 붉게 빛난다.",
+      "하늘 여왕의 보석 왕관"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 35,
+    "id": "m38",
+    "titleOnCard": "M38",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "7.4",
+    "distanceLabel": "거리",
+    "distanceText": "3480광년",
+    "points": [
+      "별들의 구조가 십자가 모양이다.",
+      "우주적 균형과 질서"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 36,
+    "id": "m39",
+    "titleOnCard": "M39",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "4.6",
+    "distanceLabel": "거리",
+    "distanceText": "824광년",
+    "points": [
+      "백조자리에 있는 산개성단이다.",
+      "태양 밝기의 약 830배 정도나 된다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 37,
+    "id": "m41",
+    "titleOnCard": "M41",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "4.5",
+    "distanceLabel": "거리",
+    "distanceText": "2300광년",
+    "points": [
+      "쌍안경이나 작은 망원경으로도 잘보인다.",
+      "하늘에서 가장 충실한 별 개의 눈물"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 38,
+    "id": "m46",
+    "titleOnCard": "M46",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.0",
+    "distanceLabel": "거리",
+    "distanceText": "5400광년",
+    "points": [
+      "중심부에 안개같은 성운이 인상적이다.",
+      "젊은 전사들의 집합소"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 39,
+    "id": "m47",
+    "titleOnCard": "M47",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "4.2",
+    "distanceLabel": "거리",
+    "distanceText": "1623.5광년",
+    "points": [
+      "광해가 약한 밤에는 육안으로도 확인 가능",
+      "아르고 호의 보물 별무리"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 40,
+    "id": "m48",
+    "titleOnCard": "바다뱀자리의 산개성단 (M48)",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "5.8",
+    "distanceLabel": "거리",
+    "distanceText": "12광년",
+    "points": [
+      "날씨가 좋으면 맨 눈으로 볼 수 있다.",
+      "쌍안경으로는 별들이 타원형의 모습을 볼 수 있다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 41,
+    "id": "m103",
+    "titleOnCard": "M103",
+    "category": "산개성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "7.4",
+    "distanceLabel": "거리",
+    "distanceText": "10,000광년",
+    "points": [
+      "카시오페이아자리에 속해있는 산개성단이다.",
+      "4등급으로 맨눈으로는 볼 수 없다!!"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 42,
+    "id": "ic1805",
+    "titleOnCard": "하트 성운(IC 1805)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "18.3",
+    "distanceLabel": "거리",
+    "distanceText": "7,500광년",
+    "points": [
+      "성운의 모양이 하트 모양이다.",
+      "좋아하는 사람과 보고 고백하면 꽤 낭만적일지도?"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 43,
+    "id": "m20",
+    "titleOnCard": "삼렬 성운(M20)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.3",
+    "distanceLabel": "거리",
+    "distanceText": "5,000",
+    "points": [
+      "세 부분으로 나뉜 모습이다.",
+      "붉은 발광 성운과 청색 반사 성운이 섞여 있다!!"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 44,
+    "id": "m42",
+    "titleOnCard": "오리온 대성운 (M42)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "4",
+    "distanceLabel": "거리",
+    "distanceText": "1344광년",
+    "points": [
+      "눈으로도 보이는 몇 안되는 성운",
+      "쌍안경으로도 꼭 찾아보기"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 45,
+    "id": "m1",
+    "titleOnCard": "게 성운 (M1)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.4",
+    "distanceLabel": "거리",
+    "distanceText": "6500광년",
+    "points": [
+      "초신성 폭발로 생긴 잔해",
+      "우주를 꿰뚫어보는 불사의 존재가 남긴흔적"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 46,
+    "id": "m8",
+    "titleOnCard": "석호 성운 (M8)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.0",
+    "distanceLabel": "거리",
+    "distanceText": "4100광년",
+    "points": [
+      "모두가 사랑하는 여름철 밤하늘의 하이라이트",
+      "용이 잠든 별의호수"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 47,
+    "id": "ngc2024",
+    "titleOnCard": "불꽃 성운(NGC2024)",
+    "category": "성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "2",
+    "distanceLabel": "거리",
+    "distanceText": "1350광년",
+    "points": [
+      "말머리와 떨어지지 않는 의리 대단한 친구",
+      "가끔보면 김치같기도..?"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 48,
+    "id": "ngc3372",
+    "titleOnCard": "용골자리 성운(NGC 3372)",
+    "category": "성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "+1.0",
+    "distanceLabel": "거리",
+    "distanceText": "65 광년",
+    "points": [
+      "용골자리성운은 한국에선 안 보이고 호주로 가야함.",
+      "캥거루랑 같이 별 보기."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 49,
+    "id": "m16",
+    "titleOnCard": "독수리 성운(M16)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "약 6.0~6.5등급",
+    "distanceLabel": "거리",
+    "distanceText": "약 7,000 광년",
+    "points": [
+      "창조의 기둥이라는 유명한 부분이 있다.",
+      "쌍안경이나 작은 망원경으로 보면 더 잘 보인다.",
+      "성운 속에 있는 어린 별들의 모임인 성단!"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 50,
+    "id": "m57",
+    "titleOnCard": "고리 성운(M57)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.8",
+    "distanceLabel": "거리",
+    "distanceText": "2,567광년",
+    "points": [
+      "내 생각에는 얘가 더 썩은 달걀처럼 생김.",
+      "쌍안경이나 파인더로도 찾기 힘듦."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 51,
+    "id": "m27",
+    "titleOnCard": "아령 성운(M27)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "7.4",
+    "distanceLabel": "거리",
+    "distanceText": "1,200광년",
+    "points": [
+      "아령처럼 생기긴 함.",
+      "망원경으로 주변 별보다는 크면서 뿌연 빛구름만 보임."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 52,
+    "id": "m97",
+    "titleOnCard": "올빼미 성운(M97)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "9.9",
+    "distanceLabel": "거리",
+    "distanceText": "2,030광년",
+    "points": [
+      "큰곰자리에 위치한 행성상성운이다.",
+      "태양질량정도의 중심별이 폭발하여 생성된것으로 추측"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 53,
+    "id": "ngc7000",
+    "titleOnCard": "북아메리카 성운(NGC7000)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "4",
+    "distanceLabel": "거리",
+    "distanceText": "2,590광년",
+    "points": [
+      "위치상 플로리다 해안 근처, 바하마르별이라고도 불림.",
+      "성간먼지가 사라지면 백조자리 베타만큼 밝아질수도."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 54,
+    "id": "ic5070",
+    "titleOnCard": "펠리칸 성운(IC 5070)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8",
+    "distanceLabel": "거리",
+    "distanceText": "1,800광년",
+    "points": [
+      "펠리칸 성운은 북아메리카 성운과 이웃해 있음.",
+      "수백만 년이 지나면 펠리칸모양이 아닐수도 있음."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 55,
+    "id": "ic4628",
+    "titleOnCard": "새우 성운(IC 4628)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "?",
+    "distanceLabel": "거리",
+    "distanceText": "6,000광년",
+    "points": [
+      "가짜 혜성 성단 안에 있는 성운 중 하나.",
+      "새우처럼 생김."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 56,
+    "id": "ngc6334",
+    "titleOnCard": "고양이 발 성운(NGC 6334)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "?",
+    "distanceLabel": "거리",
+    "distanceText": "4,370광년",
+    "points": [
+      "별 형성이 일반적인 성운들보다 훨씬 더 빠름.",
+      "고양이 발바닥이나 곰 발바닥 성운이라고도 불림."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 57,
+    "id": "ngc6543",
+    "titleOnCard": "고양이 눈 성운(NGC 6334)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.2",
+    "distanceLabel": "거리",
+    "distanceText": "3,300광년",
+    "points": [
+      "용자리의 중심부에 있다.",
+      "황도의 북극과 거의 일치하는 지점에 위치함."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 58,
+    "id": "ngc6357",
+    "titleOnCard": "전쟁과 평화 성운(NGC 6357)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "?",
+    "distanceLabel": "거리",
+    "distanceText": "3,300광년",
+    "points": [
+      "바닷가재 성운이라고도 불림.",
+      "잘하면 고양이 발 성운이랑 같이 찍힐 수 있음."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 59,
+    "id": "m17",
+    "titleOnCard": "오메가 성운 (M17)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.0",
+    "distanceLabel": "거리",
+    "distanceText": "5500광년",
+    "points": [
+      "관측각도와 장비에 따라 다르게보여 이름이 여러개이다.",
+      "우주의 보석을 밤하늘로 뿜어냈다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 60,
+    "id": "m43",
+    "titleOnCard": "드 모이란 성운 (M43)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "9.0",
+    "distanceLabel": "거리",
+    "distanceText": "1300광년",
+    "points": [
+      "오리온 성운이 너무 밝아 반달이 퍼져있는것 처럼 보인다.",
+      "은은하고도 외로운 반달 모양의 별무리"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 61,
+    "id": "m78",
+    "titleOnCard": "오리온자리의 반사성운 (M78)",
+    "category": "발광성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.3",
+    "distanceLabel": "거리",
+    "distanceText": "5 광년",
+    "points": [
+      "적외선으로 관측하여 분자구름 속에서 최소 192개의 별들을 발견하였다.",
+      "한 젊은 별의 주변을 감싸는데 밝기가 크게 변동한다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 62,
+    "id": "m5",
+    "titleOnCard": "M5",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.65",
+    "distanceLabel": "거리",
+    "distanceText": "24500 광년",
+    "points": [
+      "별의 수가 50만개 이상!",
+      "죽음을 넘어선 영혼들의 별무리"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 63,
+    "id": "m2",
+    "titleOnCard": "M2",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.3",
+    "distanceLabel": "거리",
+    "distanceText": "37,500 광년",
+    "points": [
+      "아주 오래된 별들의 고대도시",
+      "추천장비는 6인치 이상 망원경"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 64,
+    "id": "m3",
+    "titleOnCard": "M3",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.3",
+    "distanceLabel": "거리",
+    "distanceText": "37,500 광년",
+    "points": [
+      "입문용 구상성단",
+      "하늘의 개가 삼킨 별들의 핵"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 65,
+    "id": "m22",
+    "titleOnCard": "M22 (궁수자리 구상성단)",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "5.1",
+    "distanceLabel": "거리",
+    "distanceText": "10,600 광년",
+    "points": [
+      "은하 중심 근처에 위치",
+      "매우 밝고 가까운 구상성단"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 66,
+    "id": "m4",
+    "titleOnCard": "M4",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "5.9",
+    "distanceLabel": "거리",
+    "distanceText": "7200 광년",
+    "points": [
+      "지구에서 가장 가까운 구상성단중 하나",
+      "하늘을 지키는 정령의 눈"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 67,
+    "id": "m9",
+    "titleOnCard": "M9",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.4",
+    "distanceLabel": "거리",
+    "distanceText": "25800 광년",
+    "points": [
+      "최적 관측시기는 6~8월",
+      "우주의 심장 가까이 흐르는 별빛"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 68,
+    "id": "m10",
+    "titleOnCard": "M10",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.4",
+    "distanceLabel": "거리",
+    "distanceText": "14300 광년",
+    "points": [
+      "별빛 폭발같은 인상적인 모습",
+      "시간의 알갱이들이 뭉친 천체"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 69,
+    "id": "m12",
+    "titleOnCard": "M12",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "7.6",
+    "distanceLabel": "거리",
+    "distanceText": "15700 광년",
+    "points": [
+      "작은 망원경에서는 둥근성운 처럼 보이기도한다",
+      "별들의 상처를 간직한 성단"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 70,
+    "id": "m13",
+    "titleOnCard": "헤르쿨레스자리 대성단 (M13)",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "5.8",
+    "distanceLabel": "거리",
+    "distanceText": "25000 광년",
+    "points": [
+      "추천 관측장비는 쌍안경, 4인치이상 망원경",
+      "헤라클레스가 신들과의 싸움에서 승리한 후 얻은 별의 보물 창고"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 71,
+    "id": "m14",
+    "titleOnCard": "M14",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.3",
+    "distanceLabel": "거리",
+    "distanceText": "30300 광년",
+    "points": [
+      "추천 관측시기는 6~8월",
+      "신이 벌을 내린 별들의 감옥"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 72,
+    "id": "m15",
+    "titleOnCard": "M15",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.2",
+    "distanceLabel": "거리",
+    "distanceText": "33000 광년",
+    "points": [
+      "쌍안경으로도 희미한 뿌연 얼룩처럼 보임",
+      "아주 오래된 별들의 무덤이자 재탄생의 현장"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 73,
+    "id": "m19",
+    "titleOnCard": "M19",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "7.5",
+    "distanceLabel": "거리",
+    "distanceText": "28700 광년",
+    "points": [
+      "타원형으로 찌그러진듯한 모습",
+      "은하의 균형을 잡는 축"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 74,
+    "id": "m28",
+    "titleOnCard": "M28",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.8",
+    "distanceLabel": "거리",
+    "distanceText": "18300 광년",
+    "points": [
+      "가까이 있는 M22와 비교하며 보면 좋다",
+      "고통을 참기 위해 흘린 눈물의 별"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 75,
+    "id": "m30",
+    "titleOnCard": "M30",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "7.2",
+    "distanceLabel": "거리",
+    "distanceText": "27100 광년",
+    "points": [
+      "중심부가 특히 밝고 날카로운게 특징",
+      "땅과 물을 잇는 별의 다리"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 76,
+    "id": "m79",
+    "titleOnCard": "M79",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.56",
+    "distanceLabel": "거리",
+    "distanceText": "42,070 광년",
+    "points": [
+      "토끼자리에 있는 구상성단이다",
+      "우리 은하 외부 헤일로에 위치한 구상성단 중 하나이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 77,
+    "id": "m80",
+    "titleOnCard": "M80",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "7.87",
+    "distanceLabel": "거리",
+    "distanceText": "32,600광년",
+    "points": [
+      "푸르고 젊은 거대질량 별들을 발견함,",
+      "아마 다른 천체와 상호작용을 통해 병합한 듯."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 78,
+    "id": "m55",
+    "titleOnCard": "여름 장미별 (M55)",
+    "category": "구상성단",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.3",
+    "distanceLabel": "거리",
+    "distanceText": "48광년",
+    "points": [
+      "약 123억년전에 형성된 것으로 추측된다.",
+      "가장 보기 좋을 때는 6~8월 사이이다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 79,
+    "id": "b33",
+    "titleOnCard": "말머리 성운",
+    "category": "암흑성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "10.00",
+    "distanceLabel": "거리",
+    "distanceText": "1,500 광년",
+    "points": [
+      "빛을 흡수하여 어둡다!",
+      "악마가 깨어나는것 같기도...."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 80,
+    "id": "ic1396",
+    "titleOnCard": "코끼리 코 성운(IC1396)",
+    "category": "암흑성운",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "10.00",
+    "distanceLabel": "거리",
+    "distanceText": "2,400 광년",
+    "points": [
+      "빛을 흡수하여 어둡다!",
+      "악마가 깨어나는것 같기도...."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 81,
+    "id": "m63",
+    "titleOnCard": "해바라기 은하(M63)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "9.3",
+    "distanceLabel": "거리",
+    "distanceText": "37,000,000 광년",
+    "points": [
+      "중심부분이 노란색이고 나선팔의 모습이",
+      "해바라기를 연상시켜서 붙여짐."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 82,
+    "id": "m104",
+    "titleOnCard": "솜브레오 은하(M104)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.98",
+    "distanceLabel": "거리",
+    "distanceText": "65,000 광년",
+    "points": [
+      "멕시코에서 쓰는 모자에서 이름을 따왔다.",
+      "처녀자리의 가장 밝은 별에서 조금 떨어져있다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 83,
+    "id": "m31",
+    "titleOnCard": "안드로메다 은하(M31)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "3.44",
+    "distanceLabel": "거리",
+    "distanceText": "254만 광년",
+    "points": [
+      "우리 은하로부터 가장 가까운 은하",
+      "눈이 좋으면 맨눈으로 보는게 가능할지도?"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 84,
+    "id": "m32",
+    "titleOnCard": "안드로메다의 위성은하(M32)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.08",
+    "distanceLabel": "거리",
+    "distanceText": "249만 광년",
+    "points": [
+      "안드로메다의 밝은 별뭉치 처럼 보인다.",
+      "하늘에서 외롭게 남겨진 궁전의 흔적"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 85,
+    "id": "m33",
+    "titleOnCard": "삼각형 자리은하(M33)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "5.72",
+    "distanceLabel": "거리",
+    "distanceText": "320만 광년",
+    "points": [
+      "이름처럼 단순한 삼각형 모양이다.",
+      "메두사의 별이 비추는 별구름"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 86,
+    "id": "m86",
+    "titleOnCard": "M86",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.9",
+    "distanceLabel": "거리",
+    "distanceText": "6.52억 광년",
+    "points": [
+      "플래시 터트릴때 나오는 빛 같기도?",
+      "검은 옷에 밀가루를 흘렸을때.."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 87,
+    "id": "m51",
+    "titleOnCard": "소용돌이 은하(M51)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.4",
+    "distanceLabel": "거리",
+    "distanceText": "23억 광년",
+    "points": [
+      "두개의 은하가 상호작용한 모습.",
+      "나선 구조가 뚜렷하다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 88,
+    "id": "m81",
+    "titleOnCard": "보데 은하(M81)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.94",
+    "distanceLabel": "거리",
+    "distanceText": "11,800,000광년",
+    "points": [
+      "은하핵에 초대질량 블랙홀이 존재함.",
+      "큰곰자리 쪽에 있음."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 89,
+    "id": "m82",
+    "titleOnCard": "시가 은하(M82)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "6.94",
+    "distanceLabel": "거리",
+    "distanceText": "11,800,000광년",
+    "points": [
+      "당신이 생각하는 담배에서 따온거 맞음.",
+      "근처에 보데은하도 있어서 같이 관측 가능."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 90,
+    "id": "m66",
+    "titleOnCard": "M66",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.9",
+    "distanceLabel": "거리",
+    "distanceText": "36,000,000광년",
+    "points": [
+      "사자라리에 있는 막대나선은하이다.",
+      "은하군 또는 사자자리 세쌍둥이 은하를 이루는 은하 중 하나이다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 91,
+    "id": "m64",
+    "titleOnCard": "검은 눈 은하(M64)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "9.3",
+    "distanceLabel": "거리",
+    "distanceText": "24,000,000광년",
+    "points": [
+      "머리털자리에 있는 정선나선은하이다.",
+      "흔히 말하는 검은 눈 은하라는 명칭 외에도 악마의 눈 은하, 잠자는 숲속의 미녀 은하 등으로 불린다!!"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 92,
+    "id": "m94",
+    "titleOnCard": "고양이 눈 은하(M94)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "9.0",
+    "distanceLabel": "거리",
+    "distanceText": "16,000,000광년",
+    "points": [
+      "최소 1천만년 전부터 계속 별을 생성하는 중.",
+      "쌍안경이나 파인더로도 쉽게 확인하기 힘듦"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 93,
+    "id": "m101",
+    "titleOnCard": "바람개비 은하(M101)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "7.76",
+    "distanceLabel": "거리",
+    "distanceText": "20,900,000광년",
+    "points": [
+      "총 질량은 태양질량의 1조배 정 추정.",
+      "정말 이름 그대로 생김."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 94,
+    "id": "ngc253",
+    "titleOnCard": "조각가자리 은하(NGC253)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "7.1",
+    "distanceLabel": "거리",
+    "distanceText": "11.4M",
+    "points": [
+      "밝은 은하 중 하나로 별 탄생이 활발한 곳.",
+      "북반구에서 고도가 낮아 제한적으로 보임."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 95,
+    "id": "m100",
+    "titleOnCard": "M100",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "9.3",
+    "distanceLabel": "거리",
+    "distanceText": "55,000,000 광년",
+    "points": [
+      "은하 중심에서 폭발적으로 별을 생성 중.",
+      "머리털자리에 위치한 정상나선형 은하."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 96,
+    "id": "m87",
+    "titleOnCard": "처녀자리A 은하(M87)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.63",
+    "distanceLabel": "거리",
+    "distanceText": "53,500,000광년",
+    "points": [
+      "중심 블랙홀에서 뿜어지는 강한 제트가 있다.",
+      "은하 내에 약 12,000개의 구상성단있음."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 97,
+    "id": "m109",
+    "titleOnCard": "M109",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "10.6",
+    "distanceLabel": "거리",
+    "distanceText": "83,500,000광년",
+    "points": [
+      "큰곰자리에 있는 막대나선은하이다.",
+      "'M109 은하군'에서 가장 밝은 은하이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 98,
+    "id": "m108",
+    "titleOnCard": "서핑보드 은하(M108)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "10.7",
+    "distanceLabel": "거리",
+    "distanceText": "45,900,000광년",
+    "points": [
+      "처녀자리 초은하단에 종속된 은하단 중 하나.",
+      "'큰곰자리 은하단'에서 가장 밝고 큰 은하 중 하나."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 99,
+    "id": "m106",
+    "titleOnCard": "M106",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "9.1",
+    "distanceLabel": "거리",
+    "distanceText": "23,700,000광년",
+    "points": [
+      "뒤틀려있는 디스크가 은하 중심을 감싸고 있음.",
+      "쌍안경으로 희미한 타원형의 빛구름만 관측 가능."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 100,
+    "id": "m105",
+    "titleOnCard": "M105",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "9.3",
+    "distanceLabel": "거리",
+    "distanceText": "32,000,000광년",
+    "points": [
+      "'M96 은하군'이라는 소규모 은하군에 속해 있음.",
+      "은하는 맨눈으로는 당연히 볼 수 없다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 101,
+    "id": "m74",
+    "titleOnCard": "M74",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "10",
+    "distanceLabel": "거리",
+    "distanceText": "30,000,000광년",
+    "points": [
+      "물고기자리에 있는 정상나선은하이다.",
+      "여러 개의 작은 은하들이 모인 M74 은하군의 대장 노릇을 한다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 102,
+    "id": "m99",
+    "titleOnCard": "머리털 바람개비 은하(M99)",
+    "category": "은하",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "9.9",
+    "distanceLabel": "거리",
+    "distanceText": "55,700,000광년",
+    "points": [
+      "은하 중심에서 살짝 쏠려있는 등, 처녀자리",
+      "구성은하들과 중력적 상호작용때문에 왜곡이 있음"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 103,
+    "id": "europa",
+    "titleOnCard": "유로파",
+    "category": "위성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "5.29",
+    "distanceLabel": "목성으로부터 거리",
+    "distanceText": "670,900km",
+    "points": [
+      "갈릴레이가 발견한 목성의 4대 위성",
+      "지구외 생명체 존재 가능성이 높다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 104,
+    "id": "triton",
+    "titleOnCard": "트리톤",
+    "category": "위성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "13.5",
+    "distanceLabel": "해왕성으로부터 거리",
+    "distanceText": "354,800 km",
+    "points": [
+      "해왕성의 위성들 가운데 가장 크다!!",
+      "해왕성의 자전방향 반대로 공전하여 에너지를 잃어 해왕성과 가까워지고 있다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 105,
+    "id": "ganymede",
+    "titleOnCard": "가니메데",
+    "category": "위성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "4.61",
+    "distanceLabel": "목성으로부터 거리",
+    "distanceText": "1,070,400km",
+    "points": [
+      "갈릴레이가 발견한 목성의 4대 위성",
+      "현재까지 발견된 태양계위성중 가장크다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 106,
+    "id": "callisto",
+    "titleOnCard": "칼리스토",
+    "category": "위성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "5.65",
+    "distanceLabel": "목성으로부터 거리",
+    "distanceText": "1,882,700km",
+    "points": [
+      "갈릴레이가 발견한 목성의 4대 위성",
+      "천문학자에게 더러운 얼음이라 불린다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 107,
+    "id": "io",
+    "titleOnCard": "이오",
+    "category": "위성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "5.0",
+    "distanceLabel": "목성으로부터 거리",
+    "distanceText": "418874km",
+    "points": [
+      "갈릴레이가 발견한 목성의 4대 위성",
+      "화산활동이 일어난다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 108,
+    "id": "titan",
+    "titleOnCard": "타이탄",
+    "category": "위성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "8.2 ~ 9.0",
+    "distanceLabel": "토성으로부터 거리",
+    "distanceText": "1,221,870km",
+    "points": [
+      "수성보다도 크다",
+      "오렌지색 대기를 가졌다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 109,
+    "id": "enceladus",
+    "titleOnCard": "엔셀라두스",
+    "category": "위성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "11.7",
+    "distanceLabel": "토성으로부터 거리",
+    "distanceText": "237,948km",
+    "points": [
+      "수증기가 뿜어져 나오는 토성의 위성",
+      "빙하 밑 화산이 있을것으로 추측된다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 110,
+    "id": "tethys",
+    "titleOnCard": "테티스",
+    "category": "위성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "10.2",
+    "distanceLabel": "토성으로부터 거리",
+    "distanceText": "294,619km",
+    "points": [
+      "밋밋하고 뭐 없는 대형위성 삼총사중 첫째다",
+      "거대한 얼음덩어리라는 추측이 있다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 111,
+    "id": "dione",
+    "titleOnCard": "디오네",
+    "category": "위성",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "10.4",
+    "distanceLabel": "토성으로부터 거리",
+    "distanceText": "377,396km",
+    "points": [
+      "밋밋하고 뭐 없는 대형위성 삼총사중 둘째다",
+      "생명체가 존재할 가능성이 있다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 112,
+    "id": "procyon",
+    "titleOnCard": "프로키온",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "0.34,10.7",
+    "distanceLabel": "거리",
+    "distanceText": "11.46광년",
+    "points": [
+      "리겔 다음으로 밝게 보인다.",
+      "사실 별이 두개다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 113,
+    "id": "rigel",
+    "titleOnCard": "리겔",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "0.18",
+    "distanceLabel": "거리",
+    "distanceText": "848광년",
+    "points": [
+      "밤하늘에서 7번째로 밝다.",
+      "오리온자리의 알파별 베텔기우스보다 밝다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 114,
+    "id": "vega",
+    "titleOnCard": "베가",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "0",
+    "distanceLabel": "거리",
+    "distanceText": "약 25광년",
+    "points": [
+      "너무 빠르게 돌아서 타원형임.",
+      "겉보기 등급 5위임."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 115,
+    "id": "spica",
+    "titleOnCard": "스피카",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1",
+    "distanceLabel": "거리",
+    "distanceText": "약 250광년",
+    "points": [
+      "처녀자리 별중 내가 짱이라고!",
+      "너무 더워서 시퍼래져 버렸다는 소문이.."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 116,
+    "id": "aldebaran",
+    "titleOnCard": "알데바란",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1",
+    "distanceLabel": "거리",
+    "distanceText": "약 250광년",
+    "points": [
+      "황소자리의 짱",
+      "황소자리의 왼쪽눈이라 눈싸움 쌉가능이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 117,
+    "id": "fomalhaut",
+    "titleOnCard": "포말하우트",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.17",
+    "distanceLabel": "거리",
+    "distanceText": "25.08광년",
+    "points": [
+      "남쪽물고기자리 짱",
+      "사우론의 눈이라는 별명이있다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 118,
+    "id": "regulus",
+    "titleOnCard": "레굴루스",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.36",
+    "distanceLabel": "거리",
+    "distanceText": "77.5광년",
+    "points": [
+      "사자자리 알파별",
+      "해리포터 인물 이름의 유래가 되었다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 119,
+    "id": "albireo",
+    "titleOnCard": "알비레오",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "2.96",
+    "distanceLabel": "거리",
+    "distanceText": "약 364.8, 395.4광년",
+    "points": [
+      "색 반대 쌍둥이",
+      "가까워보이지만 서로 멀리있는 이중인격들"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 120,
+    "id": "mizar",
+    "titleOnCard": "미자르, 알코르",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "2.23, 3.99",
+    "distanceLabel": "거리",
+    "distanceText": "83광년, 82광년",
+    "points": [
+      "쌍안경으로 분해해보기",
+      "망원경으로 분해해보기"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 121,
+    "id": "pollux",
+    "titleOnCard": "폴룩스",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.16",
+    "distanceLabel": "거리",
+    "distanceText": "33.73광년",
+    "points": [
+      "쌍둥이 자리 베타별",
+      "하지만 알파보다 더 세다는 소문이..."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 122,
+    "id": "achernar",
+    "titleOnCard": "아케르나르",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "0.45",
+    "distanceLabel": "거리",
+    "distanceText": "143.81광년",
+    "points": [
+      "납작한 모형 관찰해보기",
+      "에리다누스자리의 알파별이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 123,
+    "id": "arcturus",
+    "titleOnCard": "아크투루스",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "-0.05",
+    "distanceLabel": "거리",
+    "distanceText": "36.7광년",
+    "points": [
+      "봄 밤하늘에서 별자리 중 알파별",
+      "지구에서부터 비교적 가까운 별"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 124,
+    "id": "polaris",
+    "titleOnCard": "북극성",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.98",
+    "distanceLabel": "거리",
+    "distanceText": "약 325 ~ 425광년",
+    "points": [
+      "24시간 1년 내내 거의 움직이지 않는 별",
+      "조난당했을 때를 대비해 찾는 법을 알아두자"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 125,
+    "id": "betelgeuse",
+    "titleOnCard": "베텔게우스",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "0.42",
+    "distanceLabel": "거리",
+    "distanceText": "643광년",
+    "points": [
+      "'그 노래'의 주인공! 붉은 색이 인상적",
+      "이미 폭발해 사라졌을 지도..."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 126,
+    "id": "alpha-centauri",
+    "titleOnCard": "알파 센타우리",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "-0.27",
+    "distanceLabel": "거리",
+    "distanceText": "4.37광년",
+    "points": [
+      "샴쌍둥이",
+      "전체적으로 태양이랑 삐까삐까함"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 127,
+    "id": "antares",
+    "titleOnCard": "안타레스",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.09",
+    "distanceLabel": "거리",
+    "distanceText": "약 555광년",
+    "points": [
+      "진격의 거인 저리가라 할 크기",
+      "태양의 700배 크기;;"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 128,
+    "id": "canopus",
+    "titleOnCard": "카노푸스",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "-0.74",
+    "distanceLabel": "거리",
+    "distanceText": "310광년",
+    "points": [
+      "태양형님보다 두번째로 어두운별이라고!",
+      "마카다미아같이 생긴게 하얗고 보애"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 129,
+    "id": "sirius",
+    "titleOnCard": "시리우스",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "-1.47",
+    "distanceLabel": "거리",
+    "distanceText": "8.59광년",
+    "points": [
+      "밤하늘에서 가장 밝은 별의 위엄",
+      "푸른색 확인해보기"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 130,
+    "id": "capella",
+    "titleOnCard": "카펠라",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "0.08",
+    "distanceLabel": "거리",
+    "distanceText": "42.21광년",
+    "points": [
+      "겨울철 육각형 별 중 하나.",
+      "7월을 제외하면 계속 볼 수 있다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 131,
+    "id": "altair",
+    "titleOnCard": "알타이르",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "0.76",
+    "distanceLabel": "거리",
+    "distanceText": "16.76광년",
+    "points": [
+      "여름철 대삼각형 중 하나.",
+      "견우와 직녀의 이야기의 주인공, 견우다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 132,
+    "id": "markab",
+    "titleOnCard": "마르카브",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "2.49",
+    "distanceLabel": "거리",
+    "distanceText": "139.63광년",
+    "points": [
+      "가을의 대사각형이다.",
+      "페가수스자리에 있는 별이다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 133,
+    "id": "deneb",
+    "titleOnCard": "데네브",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.25",
+    "distanceLabel": "거리",
+    "distanceText": "3229.35광년",
+    "points": [
+      "아직은 젊은 별이지만 초신성폭발 후보.",
+      "얘도 여름의 대삼각형 중 하나임."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 134,
+    "id": "castor",
+    "titleOnCard": "카스토르",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.58",
+    "distanceLabel": "거리",
+    "distanceText": "51.57광년",
+    "points": [
+      "무려 6중성계(항성이 6개!!)이다",
+      "쌍둥이자리 알파별이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 135,
+    "id": "bellatrix",
+    "titleOnCard": "벨라트릭스",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.58",
+    "distanceLabel": "거리",
+    "distanceText": "51.57광년",
+    "points": [
+      "여전사라는 뜻이 있고 해리포터등장인물의 이름이다",
+      "오리온자리 감마별이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 136,
+    "id": "elnath",
+    "titleOnCard": "엘나스",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.65",
+    "distanceLabel": "거리",
+    "distanceText": "131.05광년",
+    "points": [
+      "엘나스가 아랍어로 황소의 뿔을 의미한다.",
+      "황소자리의 베타별이다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 137,
+    "id": "alnair",
+    "titleOnCard": "알나이르",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.73",
+    "distanceLabel": "거리",
+    "distanceText": "101.4광년",
+    "points": [
+      "두루미자리의 알파별이다",
+      "이름을 해석하면 '밝은 것' 이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 138,
+    "id": "alnitak",
+    "titleOnCard": "알니타크",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.74",
+    "distanceLabel": "거리",
+    "distanceText": "817.46광년",
+    "points": [
+      "오리온자리의 제타성(6번째로 밝은 별)이다",
+      "알니탁이라는 이름으로도 불린다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 139,
+    "id": "mirfak",
+    "titleOnCard": "미르파크",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.79",
+    "distanceLabel": "거리",
+    "distanceText": "591.95광년",
+    "points": [
+      "페르세우스자리의 알파별이다",
+      "미르팍이라는 이름으로 불렸다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 140,
+    "id": "dubhe",
+    "titleOnCard": "두베",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.81",
+    "distanceLabel": "거리",
+    "distanceText": "123.65광년",
+    "points": [
+      "큰곰자리의 알파별이다",
+      "북두칠성의 북두일 즉 첫째다(탐랑성)"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 141,
+    "id": "merak",
+    "titleOnCard": "메라크",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "2.37",
+    "distanceLabel": "거리",
+    "distanceText": "79.7광년",
+    "points": [
+      "큰곰자리의 베타별이다",
+      "북두칠성의 북두이 즉 둘째다(거문성)"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 142,
+    "id": "phecda",
+    "titleOnCard": "페크다",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "2.43",
+    "distanceLabel": "거리",
+    "distanceText": "83.2광년",
+    "points": [
+      "큰곰자리의 감마별이다",
+      "북두칠성의 북두삼 즉 셋째다(녹존성)"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 143,
+    "id": "megrez",
+    "titleOnCard": "메그레즈",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "3.31",
+    "distanceLabel": "거리",
+    "distanceText": "80.51광년",
+    "points": [
+      "큰곰자리의 델타별이다",
+      "북두칠성의 북두사 즉 넷째다(문곡성)"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 144,
+    "id": "alioth",
+    "titleOnCard": "알리오스",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.77",
+    "distanceLabel": "거리",
+    "distanceText": "82.55광년",
+    "points": [
+      "큰곰자리의 엡실론이다(하지만 가장밝음)",
+      "북두칠성의 북두오 즉 다섯째다(염정성)"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 145,
+    "id": "mizar",
+    "titleOnCard": "미자르, 알코르",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "2.23, 3.99",
+    "distanceLabel": "거리",
+    "distanceText": "83광년, 82광년",
+    "points": [
+      "큰곰자리의 제타별이다(6번째로 밝은별)",
+      "북두칠성의 북두육 즉 여섯째다(무곡성)"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 146,
+    "id": "alkaid",
+    "titleOnCard": "알카이드",
+    "category": "별",
+    "brightnessLabel": "밝기 등급",
+    "brightnessText": "1.85",
+    "distanceLabel": "거리",
+    "distanceText": "100.69광년",
+    "points": [
+      "큰곰자리의 에타별이다(일곱번째로 밝은별)",
+      "북두칠성의 북두칠 즉 막내다(파군성)"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 147,
+    "id": "stephenson-2-18",
+    "titleOnCard": "스티븐슨(2-18)",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "16.55",
+    "distanceLabel": "거리",
+    "distanceText": "18900 광년",
+    "points": [
+      "방패자리에 위치한 적색극대거성이다.",
+      "빠르게 돌려면 무려 9시간이 걸리고, 시속 900km 여객기로 1바퀴 돈다면 무려 1250년이 걸린다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 148,
+    "id": "godzilla",
+    "titleOnCard": "고지라",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "25.32",
+    "distanceLabel": "거리",
+    "distanceText": "109억 광년",
+    "points": [
+      "극락조자리 별자리에 속해있는 별이다.",
+      "밝은 청색 변광성이다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 149,
+    "id": "alpheratz",
+    "titleOnCard": "알페라츠",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "2.07",
+    "distanceLabel": "거리",
+    "distanceText": "97.07 광년",
+    "points": [
+      "안드로메다자리의 알파별이다",
+      "가을의 대사각형에 포함된다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 150,
+    "id": "saiph",
+    "titleOnCard": "사이프",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "2.07",
+    "distanceLabel": "거리",
+    "distanceText": "720광년",
+    "points": [
+      "오리온자리의 카파별이다(10번째로 밝은별)",
+      "꾀나 밝은 편인데도 오리온자리가 밝은편이라 카파를 부여받았다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 151,
+    "id": "mirach",
+    "titleOnCard": "미라크",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "2.07",
+    "distanceLabel": "거리",
+    "distanceText": "199.35광년",
+    "points": [
+      "안드로메다자리의 베타별이다",
+      "이름은 여자속옷이라는 뜻이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 152,
+    "id": "kochab",
+    "titleOnCard": "코카브",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "2.07",
+    "distanceLabel": "거리",
+    "distanceText": "126.45광년",
+    "points": [
+      "작은곰자리의 베타별이다",
+      "세차운동으로 북극성이 바뀌기전 북극성이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 153,
+    "id": "almach",
+    "titleOnCard": "알마크",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "2.1",
+    "distanceLabel": "거리",
+    "distanceText": "354.9광년",
+    "points": [
+      "안드로메다자리의 감마별이다",
+      "분광쌍성으로 4중성계이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 154,
+    "id": "denebola",
+    "titleOnCard": "데네볼라",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "2.14",
+    "distanceLabel": "거리",
+    "distanceText": "36.17광년",
+    "points": [
+      "사자자리의 베타별이다",
+      "봄의 대삼각형을 이룬다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 155,
+    "id": "sadr",
+    "titleOnCard": "사드르",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "2.23",
+    "distanceLabel": "거리",
+    "distanceText": "1524.13광년",
+    "points": [
+      "백조자리의 감마별이다",
+      "백색초거성이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 156,
+    "id": "schedar",
+    "titleOnCard": "쉐다르",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "2.24",
+    "distanceLabel": "거리",
+    "distanceText": "228.58광년",
+    "points": [
+      "카시오페이아자리의 알파별이다",
+      "황색거성이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 157,
+    "id": "caph",
+    "titleOnCard": "카프",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "2.28",
+    "distanceLabel": "거리",
+    "distanceText": "54.47광년",
+    "points": [
+      "카시오페이아자리의 베타별이다",
+      "백색거성이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 158,
+    "id": "markab",
+    "titleOnCard": "마르카브",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "2.49",
+    "distanceLabel": "거리",
+    "distanceText": "139.63광년",
+    "points": [
+      "페가수스자리의 알파별이다",
+      "말의 인장이라는 뜻이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 159,
+    "id": "kaus-australis",
+    "titleOnCard": "카우스오스트랄리스",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "1.79",
+    "distanceLabel": "거리",
+    "distanceText": "144.65광년",
+    "points": [
+      "궁수자리의 엡실론성이다.",
+      "활의 남쪽이란 뜻이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 160,
+    "id": "alnilam",
+    "titleOnCard": "알닐람",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "1.69",
+    "distanceLabel": "거리",
+    "distanceText": "1342.23광년",
+    "points": [
+      "오리온자리의 엡실론성이다.",
+      "오리온의 허리띠를 구성하고 있다."
+    ],
+    "unsure": false
+  },
+  {
+    "page": 161,
+    "id": "alhena",
+    "titleOnCard": "알레나",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "1.93",
+    "distanceLabel": "거리",
+    "distanceText": "104.8광년",
+    "points": [
+      "쌍둥이자리의 감마성이다.",
+      "알메이산이라는 애칭이 있다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 162,
+    "id": "hamal",
+    "titleOnCard": "하말",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "2.01",
+    "distanceLabel": "거리",
+    "distanceText": "65.92광년",
+    "points": [
+      "양자리의 알파성이다.",
+      "2중성계이다"
+    ],
+    "unsure": false
+  },
+  {
+    "page": 163,
+    "id": "navi",
+    "titleOnCard": "나비",
+    "category": "별",
+    "brightnessLabel": "겉보기 등급",
+    "brightnessText": "2.15",
+    "distanceLabel": "거리",
+    "distanceText": "610광년",
+    "points": [
+      "카시오페아는 쌍성인데, 두 별은 서로의 중심을 204일에 한 번 공전하고 있다."
+    ],
+    "unsure": false
+  }
+]

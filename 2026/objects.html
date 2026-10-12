@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0405">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<title>다양한 천체 둘러보기 · 2026 광수중 주민 천체관측회</title>
+<meta property="og:title" content="다양한 천체 둘러보기 · 2026 광수중 주민 천체관측회">
+<meta property="og:description" content="광수중 천체관측동아리 코스모스가 정리한 천체 이야기와 찾는 법">
+<link rel="stylesheet" href="css/site.css?v=20261012a">
+<link rel="stylesheet" href="css/objects.css?v=20261012a">
+</head>
+<body>
+<main class="wrap" id="app">
+  <div class="loading">불러오는 중…</div>
+</main>
+
+<script src="js/core.js?v=20261012a"></script>
+<script src="js/vendor/astronomy.browser.min.js"></script>
+<script src="js/astro.js?v=20261012a"></script>
+<script src="js/catalog.js?v=20261012a"></script>
+<script src="js/object-view.js?v=20261012a"></script>
+<script>
+(function () {
+  'use strict';
+  var esc = CN.esc, app = document.getElementById('app');
+  CN.topbar();
+  var id = CN.qs('id');
+  var state;
+  var filter = { type: 'all', featured: false, tonight: false, todo: false, q: '' };
+  var tonightMax = null; // id → 행사 시간대 최고 고도
+
+  function computeTonight() {
+    if (tonightMax) return;
+    tonightMax = {};
+    var times = state.config.previewTimes.map(function (hm) { return Astro.kst(state.config.eventDate, hm); });
+    state.list.forEach(function (o) {
+      if (o.id === 'sun') { tonightMax[o.id] = -90; return; }
+      var best = -90;
+      times.forEach(function (t) { var p = Astro.position(o, t); if (p && p.alt > best) best = p.alt; });
+      tonightMax[o.id] = best;
+    });
+  }
+
+  function progress(o) {
+    var c = state.content[o.id] || {};
+    var done = 0;
+    if (c.points && c.points.v) done++;
+    if (c.description && c.description.v) done++;
+    if (c.hopping && Object.keys(c.hopping).length) done++;
+    if (c.photos && Object.keys(c.photos).length) done++;
+    return done;
+  }
+
+  // ----- 목록 -----
+  function renderListShell() {
+    var admin = CN.isAdmin();
+    var types = ['all', 'planet', 'star', 'cluster', 'nebula', 'galaxy', 'moon', 'other'];
+    app.innerHTML =
+      '<h1>다양한 천체 둘러보기</h1>' +
+      '<p class="sub">천체관측동아리 코스모스 학생들이 정리한 천체 이야기와 밤하늘에서 찾는 법이에요. 천체를 누르면 자세히 볼 수 있어요.</p>' +
+      '<input type="search" id="q" placeholder="이름으로 찾기 (예: 안드로메다, M45, 직녀성)" autocomplete="off" style="width:100%">' +
+      '<div class="chips filters" id="typeChips">' + types.map(function (t) {
+        var label = t === 'all' ? '전체' : CN.TYPES[t].icon + ' ' + CN.TYPES[t].ko;
+        return '<button class="chip' + (filter.type === t ? ' on' : '') + '" data-type="' + t + '" aria-pressed="' + (filter.type === t) + '">' + label + '</button>';
+      }).join('') + '</div>' +
+      '<div class="chips filters">' +
+      '<button class="chip" data-toggle="featured" aria-pressed="false">★ 관측회 추천</button>' +
+      '<button class="chip" data-toggle="tonight" aria-pressed="false">' + esc(CN.dateShort(state.config.eventDate)) + ' 밤에 보이는 것만</button>' +
+      (admin ? '<button class="chip" data-toggle="todo" aria-pressed="false">✎ 작성 필요</button>' : '') +
+      '</div>' +
+      '<div class="count" id="count"></div><div class="grid" id="grid"></div>';
+    CN.footer({ loginLink: true });
+
+    var q = document.getElementById('q');
+    var composing = false, timer;
+    q.addEventListener('compositionstart', function () { composing = true; });
+    q.addEventListener('compositionend', function () { composing = false; filter.q = q.value; renderGrid(); });
+    q.addEventListener('input', function () { if (composing) return; clearTimeout(timer); timer = setTimeout(function () { filter.q = q.value; renderGrid(); }, 120); });
+    app.querySelectorAll('[data-type]').forEach(function (b) {
+      b.onclick = function () {
+        filter.type = b.dataset.type;
+        app.querySelectorAll('[data-type]').forEach(function (x) { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); });
+        renderGrid();
+      };
+    });
+    app.querySelectorAll('[data-toggle]').forEach(function (b) {
+      b.onclick = function () {
+        var k = b.dataset.toggle; filter[k] = !filter[k];
+        b.classList.toggle('on', filter[k]); b.setAttribute('aria-pressed', filter[k]);
+        renderGrid();
+      };
+    });
+    renderGrid();
+  }
+
+  function renderGrid() {
+    var admin = CN.isAdmin();
+    if (filter.tonight) computeTonight();
+    var q = filter.q.toLowerCase().replace(/\s+/g, '');
+    var items = state.list.filter(function (o) {
+      if (filter.type !== 'all' && o.type !== filter.type) return false;
+      if (filter.featured && !CN.isFeatured(state, o)) return false;
+      if (filter.tonight && !(tonightMax[o.id] >= 20)) return false;
+      if (filter.todo && progress(o) >= 3) return false;
+      if (q && CN.searchText(o).indexOf(q) < 0) return false;
+      return true;
+    });
+    items.sort(function (a, b) {
+      var fa = CN.isFeatured(state, a) ? 0 : 1, fb = CN.isFeatured(state, b) ? 0 : 1;
+      if (fa !== fb) return fa - fb;
+      var ta = (CN.TYPES[a.type] || CN.TYPES.other).order, tb = (CN.TYPES[b.type] || CN.TYPES.other).order;
+      if (ta !== tb) return ta - tb;
+      var ma = a.mag == null ? (a.magRange ? a.magRange[0] : 99) : a.mag, mb = b.mag == null ? (b.magRange ? b.magRange[0] : 99) : b.mag;
+      return ma - mb;
+    });
+    document.getElementById('count').textContent = items.length + '개';
+    var grid = document.getElementById('grid');
+    if (!items.length) { grid.innerHTML = '<div class="empty">조건에 맞는 천체가 없어요.</div>'; return; }
+    grid.innerHTML = items.map(function (o) {
+      var p = admin ? progress(o) : 0;
+      return '<a class="ocard" href="objects.html?id=' + encodeURIComponent(o.id) + '">' +
+        '<div class="ocard-img">' + CN.thumbHtml(state, o, 250) + (CN.isFeatured(state, o) ? '<span class="feat">★</span>' : '') + '</div>' +
+        '<div class="ocard-body"><div class="nm">' + esc(o.nameKo) + '</div><div class="ct">' + esc(o.catalog || '') + ' · ' + esc(CN.typeLabel(o)) + '</div>' +
+        (admin ? '<div class="prog p' + p + '">작성 ' + p + '/4</div>' : '') + '</div></a>';
+    }).join('');
+  }
+
+  // ----- 상세 -----
+  function renderDetail() {
+    var o = state.byId[id];
+    if (!o) { app.innerHTML = '<p class="empty">천체를 찾을 수 없어요.</p><p style="text-align:center"><a href="objects.html">목록으로</a></p>'; return; }
+    document.title = o.nameKo + ' · 다양한 천체 둘러보기';
+    app.innerHTML = '<nav class="crumb"><a href="objects.html">← 천체 목록</a> · <a href="sky.html">시간대별 미리보기</a></nav><div id="obj"></div>';
+    CN.renderObject(document.getElementById('obj'), state, o, {});
+    CN.footer({ loginLink: true });
+  }
+
+  window.addEventListener('beforeunload', function (e) { if (CN.isEditing()) { e.preventDefault(); e.returnValue = ''; } });
+
+  CN.loadAll(function onDbUpdate(s) {
+    // DB 최신 내용이 늦게 도착: 편집 중이 아니면 다시 그림 (검색창은 건드리지 않음)
+    if (CN.isEditing()) return;
+    if (id) { var box = document.getElementById('obj'); if (box && state.byId[id]) CN.renderObject(box, s, state.byId[id], {}); }
+    else if (document.getElementById('grid')) renderGrid();
+  }).then(function (s) {
+    state = s;
+    if (!state.list.length) { app.innerHTML = '<div class="msg err show">천체 목록을 불러오지 못했어요. 잠시 후 새로고침해 주세요.</div>'; return; }
+    if (id) renderDetail(); else renderListShell();
+  });
+})();
+</script>
+</body>
+</html>

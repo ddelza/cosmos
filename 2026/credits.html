@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0405">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<title>사진 출처 · 2026 광수중 주민 천체관측회</title>
+<link rel="stylesheet" href="css/site.css?v=20261012a">
+<style>
+.cr { display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: .82rem; }
+.cr img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+.cr .n { color: var(--text-strong); font-weight: 700; }
+.cr a { word-break: break-all; }
+</style>
+</head>
+<body>
+<main class="wrap narrow">
+  <h1>사진 출처</h1>
+  <p class="sub">학생이 올린 사진이 없는 천체에는 위키미디어 공용(Wikimedia Commons)의 자유 이용 사진을 기본 사진으로 쓰고 있어요. 별은 색지수로 색을 입힌 그림이에요. 학생들이 올린 사진의 촬영자·출처는 각 천체 페이지에 적혀 있어요.</p>
+  <div id="list"><div class="loading">불러오는 중…</div></div>
+  <p class="hint" style="margin-top:16px">천문 계산: <a href="https://github.com/cosinekitty/astronomy" target="_blank" rel="noopener">Astronomy Engine</a> (MIT 라이선스) · 천체 기본 정보: OpenNGC(CC BY-SA 4.0), HYG 별 데이터베이스(CC BY-SA 4.0), 위키백과</p>
+</main>
+<script src="js/core.js?v=20261012a"></script>
+<script>
+(function () {
+  CN.topbar();
+  Promise.all([
+    fetch('data/credits.json?v=' + CN.VERSION).then(function (r) { return r.json(); }),
+    fetch('data/catalog.json?v=' + CN.VERSION).then(function (r) { return r.json(); }).catch(function () { return []; }),
+  ]).then(function (res) {
+    var cr = res[0] || {}, names = {};
+    (res[1] || []).forEach(function (o) { names[o.id] = o.nameKo; });
+    var ids = Object.keys(cr).sort(function (a, b) { return String(names[a] || a).localeCompare(String(names[b] || b), 'ko'); });
+    document.getElementById('list').innerHTML = ids.map(function (id) {
+      var c = cr[id];
+      return '<div class="cr"><img src="' + CN.esc(c.file) + '" alt="" loading="lazy"><div><div class="n">' + CN.esc(names[id] || id) + '</div>' +
+        CN.esc(c.author || '작가 미상') + ' · ' + (c.licenseUrl ? '<a href="' + CN.esc(c.licenseUrl) + '" target="_blank" rel="noopener">' + CN.esc(c.license || '') + '</a>' : CN.esc(c.license || '')) +
+        ' · <a href="' + CN.esc(c.source) + '" target="_blank" rel="noopener">원본</a></div></div>';
+    }).join('') || '<p class="empty">아직 없어요.</p>';
+    CN.footer({});
+  }).catch(function () { document.getElementById('list').innerHTML = '<p class="empty">출처 목록을 불러오지 못했어요.</p>'; });
+})();
+</script>
+</body>
+</html>

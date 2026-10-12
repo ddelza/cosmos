@@ -1,0 +1,2212 @@
+{
+ "note": "build-catalog.mjs가 --opendata 실행 때 자동 생성. 공개 카탈로그(OpenNGC, Harris 2010, HYG v4.1)에서 이 목록에 쓰인 행만 뽑은 사본.",
+ "created": "2026-10-12",
+ "ngc": {
+  "IC1396": {
+   "type": "Cl+N",
+   "ra": "21:38:57.62",
+   "dec": "+57:29:20.6",
+   "con": "Cep",
+   "majAx": 14,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "IC1805": {
+   "type": "Cl+N",
+   "ra": "02:32:41.51",
+   "dec": "+61:27:24.8",
+   "con": "Cas",
+   "majAx": 60,
+   "b": 7.03,
+   "v": 6.5,
+   "hubble": null
+  },
+  "IC1848": {
+   "type": "Cl+N",
+   "ra": "02:51:10.59",
+   "dec": "+60:24:08.9",
+   "con": "Cas",
+   "majAx": 40,
+   "b": 6.87,
+   "v": 6.5,
+   "hubble": null
+  },
+  "IC4628": {
+   "type": "Neb",
+   "ra": "16:56:58.43",
+   "dec": "-40:27:03.5",
+   "con": "Sco",
+   "majAx": 89.13,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "IC4715": {
+   "type": "*Ass",
+   "ra": "18:16:56.12",
+   "dec": "-18:30:52.4",
+   "con": "Sgr",
+   "majAx": 120,
+   "b": null,
+   "v": 4.5,
+   "hubble": null
+  },
+  "IC4725": {
+   "type": "OCl",
+   "ra": "18:31:46.77",
+   "dec": "-19:06:53.8",
+   "con": "Sgr",
+   "majAx": 14.1,
+   "b": 5.29,
+   "v": 4.6,
+   "hubble": null
+  },
+  "IC5070": {
+   "type": "HII",
+   "ra": "20:51:00.72",
+   "dec": "+44:24:05.4",
+   "con": "Cyg",
+   "majAx": 60,
+   "b": 8,
+   "v": null,
+   "hubble": null
+  },
+  "NGC0205": {
+   "type": "G",
+   "ra": "00:40:22.08",
+   "dec": "+41:41:07.1",
+   "con": "And",
+   "majAx": 16.22,
+   "b": 8.9,
+   "v": 8.15,
+   "hubble": "E"
+  },
+  "NGC0221": {
+   "type": "G",
+   "ra": "00:42:41.83",
+   "dec": "+40:51:55.0",
+   "con": "And",
+   "majAx": 7.74,
+   "b": 8.89,
+   "v": 8.13,
+   "hubble": "E"
+  },
+  "NGC0224": {
+   "type": "G",
+   "ra": "00:42:44.35",
+   "dec": "+41:16:08.6",
+   "con": "And",
+   "majAx": 177.83,
+   "b": 4.29,
+   "v": 3.44,
+   "hubble": "Sb"
+  },
+  "NGC0253": {
+   "type": "G",
+   "ra": "00:47:33.12",
+   "dec": "-25:17:17.6",
+   "con": "Scl",
+   "majAx": 26.79,
+   "b": 7.94,
+   "v": 11.11,
+   "hubble": "SABc"
+  },
+  "NGC0457": {
+   "type": "OCl",
+   "ra": "01:19:32.65",
+   "dec": "+58:17:26.5",
+   "con": "Cas",
+   "majAx": 7.8,
+   "b": 6.97,
+   "v": 6.4,
+   "hubble": null
+  },
+  "NGC0581": {
+   "type": "OCl",
+   "ra": "01:33:21.81",
+   "dec": "+60:39:28.8",
+   "con": "Cas",
+   "majAx": 4.5,
+   "b": 7.72,
+   "v": 7.4,
+   "hubble": null
+  },
+  "NGC0598": {
+   "type": "G",
+   "ra": "01:33:50.89",
+   "dec": "+30:39:36.8",
+   "con": "Tri",
+   "majAx": 62.09,
+   "b": 6.35,
+   "v": 5.79,
+   "hubble": "Sc"
+  },
+  "NGC0628": {
+   "type": "G",
+   "ra": "01:36:41.75",
+   "dec": "+15:47:01.2",
+   "con": "Psc",
+   "majAx": 9.89,
+   "b": 9.71,
+   "v": 9.31,
+   "hubble": "Sc"
+  },
+  "NGC0650": {
+   "type": "PN",
+   "ra": "01:42:19.69",
+   "dec": "+51:34:31.7",
+   "con": "Per",
+   "majAx": 1.12,
+   "b": 12.2,
+   "v": 10.1,
+   "hubble": null
+  },
+  "NGC0663": {
+   "type": "OCl",
+   "ra": "01:46:16.05",
+   "dec": "+61:13:05.5",
+   "con": "Cas",
+   "majAx": 6,
+   "b": 7.78,
+   "v": 7.1,
+   "hubble": null
+  },
+  "NGC0752": {
+   "type": "OCl",
+   "ra": "01:57:34.82",
+   "dec": "+37:50:00.2",
+   "con": "And",
+   "majAx": 39,
+   "b": 6.47,
+   "v": 5.7,
+   "hubble": null
+  },
+  "NGC0891": {
+   "type": "G",
+   "ra": "02:22:33.41",
+   "dec": "+42:20:56.9",
+   "con": "And",
+   "majAx": 13.03,
+   "b": 10.84,
+   "v": 10.01,
+   "hubble": "Sb"
+  },
+  "NGC1039": {
+   "type": "OCl",
+   "ra": "02:42:07.40",
+   "dec": "+42:44:46.1",
+   "con": "Per",
+   "majAx": 22.5,
+   "b": 5.37,
+   "v": 5.2,
+   "hubble": null
+  },
+  "NGC1068": {
+   "type": "G",
+   "ra": "02:42:40.71",
+   "dec": "-00:00:47.8",
+   "con": "Cet",
+   "majAx": 6.11,
+   "b": 9.74,
+   "v": 9.29,
+   "hubble": "Sb"
+  },
+  "NGC1499": {
+   "type": "Neb",
+   "ra": "04:03:14.42",
+   "dec": "+36:22:02.9",
+   "con": "Per",
+   "majAx": 160,
+   "b": 5,
+   "v": null,
+   "hubble": null
+  },
+  "NGC1904": {
+   "type": "GCl",
+   "ra": "05:24:10.59",
+   "dec": "-24:31:27.2",
+   "con": "Lep",
+   "majAx": 7.2,
+   "b": null,
+   "v": 8.16,
+   "hubble": null
+  },
+  "NGC1912": {
+   "type": "OCl",
+   "ra": "05:28:42.49",
+   "dec": "+35:51:17.7",
+   "con": "Aur",
+   "majAx": 9.6,
+   "b": 6.69,
+   "v": 6.4,
+   "hubble": null
+  },
+  "NGC1952": {
+   "type": "SNR",
+   "ra": "05:34:31.97",
+   "dec": "+22:00:52.1",
+   "con": "Tau",
+   "majAx": 8,
+   "b": null,
+   "v": 8.4,
+   "hubble": null
+  },
+  "NGC1960": {
+   "type": "OCl",
+   "ra": "05:36:17.74",
+   "dec": "+34:08:26.7",
+   "con": "Aur",
+   "majAx": 7.2,
+   "b": 6.09,
+   "v": 6,
+   "hubble": null
+  },
+  "NGC1976": {
+   "type": "Cl+N",
+   "ra": "05:35:16.48",
+   "dec": "-05:23:22.8",
+   "con": "Ori",
+   "majAx": 90,
+   "b": 4,
+   "v": 4,
+   "hubble": null
+  },
+  "NGC1982": {
+   "type": "HII",
+   "ra": "05:35:31.38",
+   "dec": "-05:16:02.9",
+   "con": "Ori",
+   "majAx": 20,
+   "b": 9,
+   "v": 9,
+   "hubble": null
+  },
+  "NGC2024": {
+   "type": "Neb",
+   "ra": "05:41:42.57",
+   "dec": "-01:51:22.6",
+   "con": "Ori",
+   "majAx": 30,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "NGC2068": {
+   "type": "RfN",
+   "ra": "05:46:45.82",
+   "dec": "+00:04:45.5",
+   "con": "Ori",
+   "majAx": 4.5,
+   "b": 8,
+   "v": 8,
+   "hubble": null
+  },
+  "NGC2099": {
+   "type": "OCl",
+   "ra": "05:52:18.35",
+   "dec": "+32:33:10.8",
+   "con": "Aur",
+   "majAx": 11.4,
+   "b": 6.19,
+   "v": 5.6,
+   "hubble": null
+  },
+  "NGC2168": {
+   "type": "OCl",
+   "ra": "06:09:05.06",
+   "dec": "+24:20:19.1",
+   "con": "Gem",
+   "majAx": 24,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "NGC2239": {
+   "type": "Cl+N",
+   "ra": "06:31:55.56",
+   "dec": "+04:56:34.6",
+   "con": "Mon",
+   "majAx": 9.3,
+   "b": 5.26,
+   "v": 4.8,
+   "hubble": null
+  },
+  "NGC2287": {
+   "type": "OCl",
+   "ra": "06:45:59.94",
+   "dec": "-20:45:15.2",
+   "con": "CMa",
+   "majAx": 12,
+   "b": 4.89,
+   "v": 4.5,
+   "hubble": null
+  },
+  "NGC2323": {
+   "type": "OCl",
+   "ra": "07:02:40.47",
+   "dec": "-08:21:50.5",
+   "con": "Mon",
+   "majAx": 14.1,
+   "b": 6.27,
+   "v": 5.9,
+   "hubble": null
+  },
+  "NGC2392": {
+   "type": "PN",
+   "ra": "07:29:10.76",
+   "dec": "+20:54:42.6",
+   "con": "Gem",
+   "majAx": 0.86,
+   "b": 10.12,
+   "v": 9.61,
+   "hubble": null
+  },
+  "NGC2422": {
+   "type": "OCl",
+   "ra": "07:36:35.02",
+   "dec": "-14:28:57.4",
+   "con": "Pup",
+   "majAx": 19.8,
+   "b": 4.42,
+   "v": 4.4,
+   "hubble": null
+  },
+  "NGC2437": {
+   "type": "OCl",
+   "ra": "07:41:46.82",
+   "dec": "-14:48:36.0",
+   "con": "Pup",
+   "majAx": 21,
+   "b": 6.33,
+   "v": 6.1,
+   "hubble": null
+  },
+  "NGC2447": {
+   "type": "OCl",
+   "ra": "07:44:29.23",
+   "dec": "-23:51:11.1",
+   "con": "Pup",
+   "majAx": 15,
+   "b": 6.57,
+   "v": 6.2,
+   "hubble": null
+  },
+  "NGC2477": {
+   "type": "OCl",
+   "ra": "07:52:09.78",
+   "dec": "-38:31:59.7",
+   "con": "Pup",
+   "majAx": 18.6,
+   "b": 6.64,
+   "v": 5.8,
+   "hubble": null
+  },
+  "NGC2548": {
+   "type": "OCl",
+   "ra": "08:13:43.18",
+   "dec": "-05:45:01.6",
+   "con": "Hya",
+   "majAx": 28.2,
+   "b": 6.11,
+   "v": 5.8,
+   "hubble": null
+  },
+  "NGC2632": {
+   "type": "OCl",
+   "ra": "08:40:22.20",
+   "dec": "+19:40:19.4",
+   "con": "Cnc",
+   "majAx": 108.6,
+   "b": 3.46,
+   "v": 3.1,
+   "hubble": null
+  },
+  "NGC2682": {
+   "type": "OCl",
+   "ra": "08:51:20.13",
+   "dec": "+11:48:43.0",
+   "con": "Cnc",
+   "majAx": 33,
+   "b": 7.6,
+   "v": 6.9,
+   "hubble": null
+  },
+  "NGC3031": {
+   "type": "G",
+   "ra": "09:55:33.17",
+   "dec": "+69:03:55.1",
+   "con": "UMa",
+   "majAx": 21.63,
+   "b": 7.79,
+   "v": 6.92,
+   "hubble": "Sab"
+  },
+  "NGC3034": {
+   "type": "G",
+   "ra": "09:55:52.73",
+   "dec": "+69:40:45.8",
+   "con": "UMa",
+   "majAx": 10.99,
+   "b": 8.94,
+   "v": 8.3,
+   "hubble": "S?"
+  },
+  "NGC3351": {
+   "type": "G",
+   "ra": "10:43:57.70",
+   "dec": "+11:42:13.7",
+   "con": "Leo",
+   "majAx": 7.23,
+   "b": 10.58,
+   "v": 9.77,
+   "hubble": "Sb"
+  },
+  "NGC3368": {
+   "type": "G",
+   "ra": "10:46:45.74",
+   "dec": "+11:49:11.8",
+   "con": "Leo",
+   "majAx": 8.26,
+   "b": 10.08,
+   "v": 9.21,
+   "hubble": "Sab"
+  },
+  "NGC3372": {
+   "type": "HII",
+   "ra": "10:45:08.53",
+   "dec": "-59:52:00.1",
+   "con": "Car",
+   "majAx": 120,
+   "b": 3,
+   "v": null,
+   "hubble": null
+  },
+  "NGC3379": {
+   "type": "G",
+   "ra": "10:47:49.59",
+   "dec": "+12:34:53.8",
+   "con": "Leo",
+   "majAx": 4.89,
+   "b": 10.23,
+   "v": 9.27,
+   "hubble": "E"
+  },
+  "NGC3556": {
+   "type": "G",
+   "ra": "11:11:30.97",
+   "dec": "+55:40:26.8",
+   "con": "UMa",
+   "majAx": 3.98,
+   "b": 10.7,
+   "v": 10.05,
+   "hubble": "Sc"
+  },
+  "NGC3587": {
+   "type": "PN",
+   "ra": "11:14:47.71",
+   "dec": "+55:01:08.5",
+   "con": "UMa",
+   "majAx": 3.58,
+   "b": 11.6,
+   "v": 9.9,
+   "hubble": null
+  },
+  "NGC3623": {
+   "type": "G",
+   "ra": "11:18:55.92",
+   "dec": "+13:05:32.5",
+   "con": "Leo",
+   "majAx": 7.64,
+   "b": 10.14,
+   "v": 9.32,
+   "hubble": "Sa"
+  },
+  "NGC3627": {
+   "type": "G",
+   "ra": "11:20:14.96",
+   "dec": "+12:59:29.5",
+   "con": "Leo",
+   "majAx": 10.28,
+   "b": 9.73,
+   "v": 8.92,
+   "hubble": "Sb"
+  },
+  "NGC3992": {
+   "type": "G",
+   "ra": "11:57:35.98",
+   "dec": "+53:22:28.3",
+   "con": "UMa",
+   "majAx": 8.07,
+   "b": 10.48,
+   "v": 9.88,
+   "hubble": "Sbc"
+  },
+  "NGC4192": {
+   "type": "G",
+   "ra": "12:13:48.29",
+   "dec": "+14:54:01.2",
+   "con": "Com",
+   "majAx": 11.04,
+   "b": 10.82,
+   "v": 10.84,
+   "hubble": "SABb"
+  },
+  "NGC4254": {
+   "type": "G",
+   "ra": "12:18:49.60",
+   "dec": "+14:24:59.4",
+   "con": "Com",
+   "majAx": 5.04,
+   "b": 10.4,
+   "v": 9.84,
+   "hubble": "Sc"
+  },
+  "NGC4258": {
+   "type": "G",
+   "ra": "12:18:57.50",
+   "dec": "+47:18:14.3",
+   "con": "CVn",
+   "majAx": 16.98,
+   "b": 9.12,
+   "v": 9.29,
+   "hubble": "Sbc"
+  },
+  "NGC4303": {
+   "type": "G",
+   "ra": "12:21:54.90",
+   "dec": "+04:28:25.1",
+   "con": "Vir",
+   "majAx": 6.89,
+   "b": 10.16,
+   "v": 10.25,
+   "hubble": "Sbc"
+  },
+  "NGC4321": {
+   "type": "G",
+   "ra": "12:22:54.83",
+   "dec": "+15:49:18.5",
+   "con": "Com",
+   "majAx": 6.1,
+   "b": 10.01,
+   "v": 9.47,
+   "hubble": "SABb"
+  },
+  "NGC4374": {
+   "type": "G",
+   "ra": "12:25:03.74",
+   "dec": "+12:53:13.1",
+   "con": "Vir",
+   "majAx": 7.41,
+   "b": 10.01,
+   "v": 9.79,
+   "hubble": "E"
+  },
+  "NGC4382": {
+   "type": "G",
+   "ra": "12:25:24.11",
+   "dec": "+18:11:29.4",
+   "con": "Com",
+   "majAx": 6.95,
+   "b": 9.94,
+   "v": 9.05,
+   "hubble": "S0-a"
+  },
+  "NGC4406": {
+   "type": "G",
+   "ra": "12:26:11.74",
+   "dec": "+12:56:46.4",
+   "con": "Vir",
+   "majAx": 11.53,
+   "b": 9.74,
+   "v": 8.86,
+   "hubble": "E"
+  },
+  "NGC4472": {
+   "type": "G",
+   "ra": "12:29:46.76",
+   "dec": "+08:00:01.7",
+   "con": "Vir",
+   "majAx": 10.21,
+   "b": 9.35,
+   "v": 8.28,
+   "hubble": "E"
+  },
+  "NGC4486": {
+   "type": "G",
+   "ra": "12:30:49.42",
+   "dec": "+12:23:28.0",
+   "con": "Vir",
+   "majAx": 7.11,
+   "b": 9.65,
+   "v": 9,
+   "hubble": "E"
+  },
+  "NGC4501": {
+   "type": "G",
+   "ra": "12:31:59.16",
+   "dec": "+14:25:13.4",
+   "con": "Com",
+   "majAx": 8.65,
+   "b": 10.24,
+   "v": 10.33,
+   "hubble": "Sb"
+  },
+  "NGC4548": {
+   "type": "G",
+   "ra": "12:35:26.45",
+   "dec": "+14:29:46.8",
+   "con": "Com",
+   "majAx": 5.55,
+   "b": 10.94,
+   "v": 10.96,
+   "hubble": "Sb"
+  },
+  "NGC4552": {
+   "type": "G",
+   "ra": "12:35:39.81",
+   "dec": "+12:33:22.8",
+   "con": "Vir",
+   "majAx": 8.13,
+   "b": 10.68,
+   "v": 10.08,
+   "hubble": "E"
+  },
+  "NGC4565": {
+   "type": "G",
+   "ra": "12:36:20.78",
+   "dec": "+25:59:15.6",
+   "con": "Com",
+   "majAx": 16.75,
+   "b": 10.05,
+   "v": 10.86,
+   "hubble": "Sb"
+  },
+  "NGC4569": {
+   "type": "G",
+   "ra": "12:36:49.79",
+   "dec": "+13:09:46.6",
+   "con": "Vir",
+   "majAx": 9.12,
+   "b": 10.18,
+   "v": 9.54,
+   "hubble": "Sab"
+  },
+  "NGC4579": {
+   "type": "G",
+   "ra": "12:37:43.52",
+   "dec": "+11:49:05.5",
+   "con": "Vir",
+   "majAx": 5.01,
+   "b": 10.44,
+   "v": 10.3,
+   "hubble": "Sb"
+  },
+  "NGC4590": {
+   "type": "GCl",
+   "ra": "12:39:28.01",
+   "dec": "-26:44:34.9",
+   "con": "Hya",
+   "majAx": 6.6,
+   "b": null,
+   "v": 7.96,
+   "hubble": null
+  },
+  "NGC4594": {
+   "type": "G",
+   "ra": "12:39:59.43",
+   "dec": "-11:37:23.0",
+   "con": "Vir",
+   "majAx": 8.45,
+   "b": 9.15,
+   "v": 8.59,
+   "hubble": "Sa"
+  },
+  "NGC4621": {
+   "type": "G",
+   "ra": "12:42:02.24",
+   "dec": "+11:38:49.3",
+   "con": "Vir",
+   "majAx": 4.55,
+   "b": 10.57,
+   "v": 9.56,
+   "hubble": "E"
+  },
+  "NGC4649": {
+   "type": "G",
+   "ra": "12:43:39.98",
+   "dec": "+11:33:09.7",
+   "con": "Vir",
+   "majAx": 6.78,
+   "b": 9.79,
+   "v": 8.79,
+   "hubble": "E"
+  },
+  "NGC4736": {
+   "type": "G",
+   "ra": "12:50:53.06",
+   "dec": "+41:07:13.6",
+   "con": "CVn",
+   "majAx": 7.74,
+   "b": 8.71,
+   "v": 8.24,
+   "hubble": "SABa"
+  },
+  "NGC4826": {
+   "type": "G",
+   "ra": "12:56:43.64",
+   "dec": "+21:40:58.7",
+   "con": "Com",
+   "majAx": 10.52,
+   "b": 9.27,
+   "v": 8.52,
+   "hubble": "SABa"
+  },
+  "NGC5024": {
+   "type": "GCl",
+   "ra": "13:12:55.23",
+   "dec": "+18:10:08.8",
+   "con": "Com",
+   "majAx": 9,
+   "b": null,
+   "v": 7.79,
+   "hubble": null
+  },
+  "NGC5055": {
+   "type": "G",
+   "ra": "13:15:49.33",
+   "dec": "+42:01:45.4",
+   "con": "CVn",
+   "majAx": 11.83,
+   "b": 9.32,
+   "v": 8.61,
+   "hubble": "Sbc"
+  },
+  "NGC5139": {
+   "type": "GCl",
+   "ra": "13:26:45.89",
+   "dec": "-47:28:36.7",
+   "con": "Cen",
+   "majAx": 27,
+   "b": 6.12,
+   "v": 5.33,
+   "hubble": null
+  },
+  "NGC5194": {
+   "type": "G",
+   "ra": "13:29:52.71",
+   "dec": "+47:11:42.6",
+   "con": "CVn",
+   "majAx": 13.71,
+   "b": 8.61,
+   "v": 8.36,
+   "hubble": "SABb"
+  },
+  "NGC5236": {
+   "type": "G",
+   "ra": "13:37:00.95",
+   "dec": "-29:51:55.5",
+   "con": "Hya",
+   "majAx": 13.61,
+   "b": 7.82,
+   "v": 7.21,
+   "hubble": "Sc"
+  },
+  "NGC5272": {
+   "type": "GCl",
+   "ra": "13:42:11.23",
+   "dec": "+28:22:31.6",
+   "con": "CVn",
+   "majAx": 16.2,
+   "b": null,
+   "v": 6.39,
+   "hubble": null
+  },
+  "NGC5457": {
+   "type": "G",
+   "ra": "14:03:12.54",
+   "dec": "+54:20:56.2",
+   "con": "UMa",
+   "majAx": 23.99,
+   "b": 8.36,
+   "v": 7.9,
+   "hubble": "SABc"
+  },
+  "NGC5866": {
+   "type": "G",
+   "ra": "15:06:29.50",
+   "dec": "+55:45:47.6",
+   "con": "Dra",
+   "majAx": 6.31,
+   "b": 10.74,
+   "v": 9.89,
+   "hubble": "S0-a"
+  },
+  "NGC5904": {
+   "type": "GCl",
+   "ra": "15:18:33.75",
+   "dec": "+02:04:57.7",
+   "con": "Se1",
+   "majAx": 15,
+   "b": null,
+   "v": 5.95,
+   "hubble": null
+  },
+  "NGC6093": {
+   "type": "GCl",
+   "ra": "16:17:02.51",
+   "dec": "-22:58:30.4",
+   "con": "Sco",
+   "majAx": 5.7,
+   "b": null,
+   "v": 7.3,
+   "hubble": null
+  },
+  "NGC6121": {
+   "type": "GCl",
+   "ra": "16:23:35.40",
+   "dec": "-26:31:31.9",
+   "con": "Sco",
+   "majAx": 28.2,
+   "b": null,
+   "v": 5.4,
+   "hubble": null
+  },
+  "NGC6171": {
+   "type": "GCl",
+   "ra": "16:32:31.92",
+   "dec": "-13:03:13.1",
+   "con": "Oph",
+   "majAx": 7.8,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "NGC6205": {
+   "type": "GCl",
+   "ra": "16:41:41.63",
+   "dec": "+36:27:40.7",
+   "con": "Her",
+   "majAx": 16.5,
+   "b": null,
+   "v": 5.8,
+   "hubble": null
+  },
+  "NGC6218": {
+   "type": "GCl",
+   "ra": "16:47:14.52",
+   "dec": "-01:56:52.2",
+   "con": "Oph",
+   "majAx": 11.1,
+   "b": null,
+   "v": 6.07,
+   "hubble": null
+  },
+  "NGC6254": {
+   "type": "GCl",
+   "ra": "16:57:08.99",
+   "dec": "-04:05:57.6",
+   "con": "Oph",
+   "majAx": 9.3,
+   "b": null,
+   "v": 4.98,
+   "hubble": null
+  },
+  "NGC6266": {
+   "type": "GCl",
+   "ra": "17:01:12.60",
+   "dec": "-30:06:44.5",
+   "con": "Oph",
+   "majAx": 7.8,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "NGC6273": {
+   "type": "GCl",
+   "ra": "17:02:37.68",
+   "dec": "-26:16:04.6",
+   "con": "Oph",
+   "majAx": 7.5,
+   "b": 8.45,
+   "v": 5.57,
+   "hubble": null
+  },
+  "NGC6333": {
+   "type": "GCl",
+   "ra": "17:19:11.78",
+   "dec": "-18:30:58.5",
+   "con": "Oph",
+   "majAx": 6.9,
+   "b": 9.36,
+   "v": 8.42,
+   "hubble": null
+  },
+  "NGC6334": {
+   "type": "SNR",
+   "ra": "17:20:49.70",
+   "dec": "-36:06:09.8",
+   "con": "Sco",
+   "majAx": 8.4,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "NGC6341": {
+   "type": "GCl",
+   "ra": "17:17:07.27",
+   "dec": "+43:08:11.5",
+   "con": "Her",
+   "majAx": 14.4,
+   "b": null,
+   "v": 6.52,
+   "hubble": null
+  },
+  "NGC6357": {
+   "type": "Cl+N",
+   "ra": "17:24:43.57",
+   "dec": "-34:12:04.8",
+   "con": "Sco",
+   "majAx": 3.9,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "NGC6402": {
+   "type": "GCl",
+   "ra": "17:37:36.16",
+   "dec": "-03:14:45.3",
+   "con": "Oph",
+   "majAx": 9.9,
+   "b": 9.55,
+   "v": 5.73,
+   "hubble": null
+  },
+  "NGC6405": {
+   "type": "OCl",
+   "ra": "17:40:20.75",
+   "dec": "-32:15:15.0",
+   "con": "Sco",
+   "majAx": 15.6,
+   "b": 4.48,
+   "v": 4.2,
+   "hubble": null
+  },
+  "NGC6475": {
+   "type": "OCl",
+   "ra": "17:53:51.18",
+   "dec": "-34:47:34.2",
+   "con": "Sco",
+   "majAx": 22.2,
+   "b": 3.45,
+   "v": 3.3,
+   "hubble": null
+  },
+  "NGC6494": {
+   "type": "OCl",
+   "ra": "17:57:04.77",
+   "dec": "-18:59:07.2",
+   "con": "Sgr",
+   "majAx": 16.8,
+   "b": 6.03,
+   "v": 5.5,
+   "hubble": null
+  },
+  "NGC6514": {
+   "type": "Neb",
+   "ra": "18:02:42.11",
+   "dec": "-22:58:18.8",
+   "con": "Sgr",
+   "majAx": 28,
+   "b": 6.3,
+   "v": 8.5,
+   "hubble": null
+  },
+  "NGC6523": {
+   "type": "Neb",
+   "ra": "18:03:41.27",
+   "dec": "-24:22:48.6",
+   "con": "Sgr",
+   "majAx": 45,
+   "b": 5,
+   "v": 5.8,
+   "hubble": null
+  },
+  "NGC6530": {
+   "type": "Cl+N",
+   "ra": "18:04:31.03",
+   "dec": "-24:21:29.0",
+   "con": "Sgr",
+   "majAx": 6,
+   "b": 4.74,
+   "v": 4.6,
+   "hubble": null
+  },
+  "NGC6531": {
+   "type": "OCl",
+   "ra": "18:04:13.45",
+   "dec": "-22:29:24.2",
+   "con": "Sgr",
+   "majAx": 6,
+   "b": null,
+   "v": 5.9,
+   "hubble": null
+  },
+  "NGC6543": {
+   "type": "PN",
+   "ra": "17:58:33.39",
+   "dec": "+66:37:59.5",
+   "con": "Dra",
+   "majAx": 0.9,
+   "b": 9.79,
+   "v": 9.01,
+   "hubble": null
+  },
+  "NGC6611": {
+   "type": "Neb",
+   "ra": "18:18:48.17",
+   "dec": "-13:48:26.0",
+   "con": "Se2",
+   "majAx": 120,
+   "b": 6.58,
+   "v": 6,
+   "hubble": null
+  },
+  "NGC6613": {
+   "type": "OCl",
+   "ra": "18:19:58.49",
+   "dec": "-17:06:07.1",
+   "con": "Sgr",
+   "majAx": 6,
+   "b": 7.24,
+   "v": 6.9,
+   "hubble": null
+  },
+  "NGC6618": {
+   "type": "Neb",
+   "ra": "18:20:47.11",
+   "dec": "-16:10:17.5",
+   "con": "Sgr",
+   "majAx": 12.6,
+   "b": 6,
+   "v": 7,
+   "hubble": null
+  },
+  "NGC6626": {
+   "type": "GCl",
+   "ra": "18:24:32.89",
+   "dec": "-24:52:11.4",
+   "con": "Sgr",
+   "majAx": 5.1,
+   "b": null,
+   "v": 6.9,
+   "hubble": null
+  },
+  "NGC6637": {
+   "type": "GCl",
+   "ra": "18:31:23.23",
+   "dec": "-32:20:52.7",
+   "con": "Sgr",
+   "majAx": 5.7,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "NGC6656": {
+   "type": "GCl",
+   "ra": "18:36:24.20",
+   "dec": "-23:54:12.3",
+   "con": "Sgr",
+   "majAx": 12.6,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "NGC6681": {
+   "type": "GCl",
+   "ra": "18:43:12.64",
+   "dec": "-32:17:30.8",
+   "con": "Sgr",
+   "majAx": 6.6,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "NGC6694": {
+   "type": "OCl",
+   "ra": "18:45:18.66",
+   "dec": "-09:23:01.0",
+   "con": "Sct",
+   "majAx": 6,
+   "b": 8,
+   "v": 8.87,
+   "hubble": null
+  },
+  "NGC6705": {
+   "type": "OCl",
+   "ra": "18:51:05.99",
+   "dec": "-06:16:12.1",
+   "con": "Sct",
+   "majAx": 9,
+   "b": 6.32,
+   "v": 5.8,
+   "hubble": null
+  },
+  "NGC6715": {
+   "type": "GCl",
+   "ra": "18:55:03.27",
+   "dec": "-30:28:42.6",
+   "con": "Sgr",
+   "majAx": 5.1,
+   "b": null,
+   "v": 7.7,
+   "hubble": null
+  },
+  "NGC6720": {
+   "type": "PN",
+   "ra": "18:53:35.01",
+   "dec": "+33:01:42.9",
+   "con": "Lyr",
+   "majAx": 1.27,
+   "b": 9.7,
+   "v": 8.8,
+   "hubble": null
+  },
+  "NGC6779": {
+   "type": "GCl",
+   "ra": "19:16:35.51",
+   "dec": "+30:11:04.2",
+   "con": "Lyr",
+   "majAx": 5.8,
+   "b": null,
+   "v": 8.4,
+   "hubble": null
+  },
+  "NGC6809": {
+   "type": "GCl",
+   "ra": "19:39:59.40",
+   "dec": "-30:57:43.5",
+   "con": "Sgr",
+   "majAx": 12,
+   "b": null,
+   "v": 6.49,
+   "hubble": null
+  },
+  "NGC6826": {
+   "type": "PN",
+   "ra": "19:44:48.11",
+   "dec": "+50:31:30.1",
+   "con": "Cyg",
+   "majAx": 0.42,
+   "b": 10.02,
+   "v": 9.44,
+   "hubble": null
+  },
+  "NGC6838": {
+   "type": "GCl",
+   "ra": "19:53:46.11",
+   "dec": "+18:46:42.2",
+   "con": "Sge",
+   "majAx": 6.9,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "NGC6853": {
+   "type": "PN",
+   "ra": "19:59:36.38",
+   "dec": "+22:43:15.7",
+   "con": "Vul",
+   "majAx": 6.7,
+   "b": 7.6,
+   "v": 7.4,
+   "hubble": null
+  },
+  "NGC6864": {
+   "type": "GCl",
+   "ra": "20:06:04.84",
+   "dec": "-21:55:20.0",
+   "con": "Sgr",
+   "majAx": 3.6,
+   "b": null,
+   "v": 8.26,
+   "hubble": null
+  },
+  "NGC6913": {
+   "type": "OCl",
+   "ra": "20:23:57.77",
+   "dec": "+38:30:27.6",
+   "con": "Cyg",
+   "majAx": 3.6,
+   "b": 7.3,
+   "v": 6.6,
+   "hubble": null
+  },
+  "NGC6960": {
+   "type": "SNR",
+   "ra": "20:45:58.18",
+   "dec": "+30:35:42.5",
+   "con": "Cyg",
+   "majAx": 210,
+   "b": 7,
+   "v": null,
+   "hubble": null
+  },
+  "NGC6981": {
+   "type": "GCl",
+   "ra": "20:53:27.91",
+   "dec": "-12:32:13.4",
+   "con": "Aqr",
+   "majAx": 4.5,
+   "b": null,
+   "v": 8.96,
+   "hubble": null
+  },
+  "NGC6994": {
+   "type": "Other",
+   "ra": "20:58:55.97",
+   "dec": "-12:38:07.8",
+   "con": "Aqr",
+   "majAx": null,
+   "b": null,
+   "v": 8.9,
+   "hubble": null
+  },
+  "NGC7000": {
+   "type": "HII",
+   "ra": "20:59:17.14",
+   "dec": "+44:31:43.6",
+   "con": "Cyg",
+   "majAx": 120,
+   "b": 4,
+   "v": null,
+   "hubble": null
+  },
+  "NGC7009": {
+   "type": "PN",
+   "ra": "21:04:10.79",
+   "dec": "-11:21:47.7",
+   "con": "Aqr",
+   "majAx": 0.7,
+   "b": 8.3,
+   "v": 8,
+   "hubble": null
+  },
+  "NGC7078": {
+   "type": "GCl",
+   "ra": "21:29:58.38",
+   "dec": "+12:10:00.6",
+   "con": "Peg",
+   "majAx": 11.1,
+   "b": 3,
+   "v": 6.3,
+   "hubble": null
+  },
+  "NGC7089": {
+   "type": "GCl",
+   "ra": "21:33:27.01",
+   "dec": "-00:49:23.9",
+   "con": "Aqr",
+   "majAx": 8.4,
+   "b": null,
+   "v": 6.25,
+   "hubble": null
+  },
+  "NGC7092": {
+   "type": "OCl",
+   "ra": "21:31:48.32",
+   "dec": "+48:26:17.4",
+   "con": "Cyg",
+   "majAx": 19.5,
+   "b": 4.66,
+   "v": 4.6,
+   "hubble": null
+  },
+  "NGC7099": {
+   "type": "GCl",
+   "ra": "21:40:22.02",
+   "dec": "-23:10:44.7",
+   "con": "Cap",
+   "majAx": 9,
+   "b": null,
+   "v": 7.1,
+   "hubble": null
+  },
+  "NGC7293": {
+   "type": "PN",
+   "ra": "22:29:38.57",
+   "dec": "-20:50:14.4",
+   "con": "Aqr",
+   "majAx": 16.33,
+   "b": 7.5,
+   "v": 7.3,
+   "hubble": null
+  },
+  "NGC7654": {
+   "type": "OCl",
+   "ra": "23:24:48.40",
+   "dec": "+61:35:35.4",
+   "con": "Cas",
+   "majAx": 9.9,
+   "b": null,
+   "v": 6.9,
+   "hubble": null
+  },
+  "NGC7662": {
+   "type": "PN",
+   "ra": "23:25:53.90",
+   "dec": "+42:32:05.8",
+   "con": "And",
+   "majAx": 0.28,
+   "b": 9.2,
+   "v": 8.3,
+   "hubble": null
+  },
+  "NGC7789": {
+   "type": "OCl",
+   "ra": "23:57:24.06",
+   "dec": "+56:42:29.8",
+   "con": "Cas",
+   "majAx": 14.4,
+   "b": 7.68,
+   "v": 6.7,
+   "hubble": null
+  },
+  "B033": {
+   "type": "DrkN",
+   "ra": "05:40:59.0",
+   "dec": "-02:27:30",
+   "con": "Ori",
+   "majAx": 6,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "C014": {
+   "type": "*Ass",
+   "ra": "02:20:42.0",
+   "dec": "+57:08:15",
+   "con": "Per",
+   "majAx": 50,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "C041": {
+   "type": "OCl",
+   "ra": "04:26:54.0",
+   "dec": "+15:52:00",
+   "con": "Tau",
+   "majAx": 329,
+   "b": null,
+   "v": null,
+   "hubble": null
+  },
+  "Cl399": {
+   "type": "*Ass",
+   "ra": "19:25:24.0",
+   "dec": "+20:11:00",
+   "con": "Vul",
+   "majAx": 70,
+   "b": 3.93,
+   "v": 3.6,
+   "hubble": null
+  },
+  "M040": {
+   "type": "**",
+   "ra": "12:22:16.1",
+   "dec": "+58:05:04",
+   "con": "UMa",
+   "majAx": null,
+   "b": null,
+   "v": 8,
+   "hubble": null
+  },
+  "Mel022": {
+   "type": "OCl",
+   "ra": "03:47:28.6",
+   "dec": "+24:06:19",
+   "con": "Tau",
+   "majAx": 150,
+   "b": null,
+   "v": 1.2,
+   "hubble": null
+  }
+ },
+ "harris": {
+  "NGC 1904": {
+   "vt": 7.73
+  },
+  "NGC 4590": {
+   "vt": 7.84
+  },
+  "NGC 5024": {
+   "vt": 7.61
+  },
+  "NGC 5139": {
+   "vt": 3.68
+  },
+  "NGC 5272": {
+   "vt": 6.19
+  },
+  "NGC 5904": {
+   "vt": 5.65
+  },
+  "NGC 6093": {
+   "vt": 7.33
+  },
+  "NGC 6121": {
+   "vt": 5.63
+  },
+  "NGC 6171": {
+   "vt": 7.93
+  },
+  "NGC 6205": {
+   "vt": 5.78
+  },
+  "NGC 6218": {
+   "vt": 6.7
+  },
+  "NGC 6254": {
+   "vt": 6.6
+  },
+  "NGC 6266": {
+   "vt": 6.45
+  },
+  "NGC 6273": {
+   "vt": 6.77
+  },
+  "NGC 6341": {
+   "vt": 6.44
+  },
+  "NGC 6333": {
+   "vt": 7.72
+  },
+  "NGC 6402": {
+   "vt": 7.59
+  },
+  "NGC 6626": {
+   "vt": 6.79
+  },
+  "NGC 6637": {
+   "vt": 7.64
+  },
+  "NGC 6656": {
+   "vt": 5.1
+  },
+  "NGC 6681": {
+   "vt": 7.87
+  },
+  "NGC 6715": {
+   "vt": 7.6
+  },
+  "NGC 6779": {
+   "vt": 8.27
+  },
+  "NGC 6809": {
+   "vt": 6.32
+  },
+  "NGC 6838": {
+   "vt": 8.19
+  },
+  "NGC 6864": {
+   "vt": 8.52
+  },
+  "NGC 6981": {
+   "vt": 9.27
+  },
+  "NGC 7078": {
+   "vt": 6.2
+  },
+  "NGC 7089": {
+   "vt": 6.47
+  },
+  "NGC 7099": {
+   "vt": 7.19
+  }
+ },
+ "hyg": {
+  "HIP 677": {
+   "ra": 0.139791,
+   "dec": 29.090432,
+   "distPc": 29.7442,
+   "mag": 2.07,
+   "absmag": -0.297,
+   "spect": "B9p",
+   "ci": -0.038,
+   "con": "And",
+   "proper": "Alpheratz"
+  },
+  "HIP 746": {
+   "ra": 0.152887,
+   "dec": 59.14978,
+   "distPc": 16.7842,
+   "mag": 2.28,
+   "absmag": 1.155,
+   "spect": "F2III-IV",
+   "ci": 0.38,
+   "con": "Cas",
+   "proper": "Caph"
+  },
+  "HIP 3179": {
+   "ra": 0.675116,
+   "dec": 56.537331,
+   "distPc": 69.979,
+   "mag": 2.24,
+   "absmag": -1.985,
+   "spect": "K0II-IIIvar",
+   "ci": 1.17,
+   "con": "Cas",
+   "proper": "Schedar"
+  },
+  "HIP 4427": {
+   "ra": 0.945143,
+   "dec": 60.71674,
+   "distPc": 168.3502,
+   "mag": 2.15,
+   "absmag": -3.981,
+   "spect": "B0IV:evar",
+   "ci": -0.046,
+   "con": "Cas",
+   "proper": "Cih"
+  },
+  "HIP 5447": {
+   "ra": 1.162194,
+   "dec": 35.620558,
+   "distPc": 60.5327,
+   "mag": 2.07,
+   "absmag": -1.84,
+   "spect": "M0IIIvar",
+   "ci": 1.576,
+   "con": "And",
+   "proper": "Mirach"
+  },
+  "HIP 7588": {
+   "ra": 1.628556,
+   "dec": -57.236757,
+   "distPc": 42.7533,
+   "mag": 0.45,
+   "absmag": -2.705,
+   "spect": "B3Vp",
+   "ci": -0.158,
+   "con": "Eri",
+   "proper": "Achernar"
+  },
+  "HIP 9640": {
+   "ra": 2.064984,
+   "dec": 42.329725,
+   "distPc": 120.4819,
+   "mag": 2.1,
+   "absmag": -3.305,
+   "spect": "B8V",
+   "ci": 1.37,
+   "con": "And",
+   "proper": "Almach"
+  },
+  "HIP 9884": {
+   "ra": 2.119555,
+   "dec": 23.462423,
+   "distPc": 20.1776,
+   "mag": 2.01,
+   "absmag": 0.486,
+   "spect": "K2III",
+   "ci": 1.151,
+   "con": "Ari",
+   "proper": "Hamal"
+  },
+  "HIP 11767": {
+   "ra": 2.52975,
+   "dec": 89.264109,
+   "distPc": 132.626,
+   "mag": 1.97,
+   "absmag": -3.643,
+   "spect": "F7:Ib-IIv SB",
+   "ci": 0.636,
+   "con": "UMi",
+   "proper": "Polaris"
+  },
+  "HIP 15863": {
+   "ra": 3.405378,
+   "dec": 49.86118,
+   "distPc": 155.2795,
+   "mag": 1.79,
+   "absmag": -4.166,
+   "spect": "F5Ib",
+   "ci": 0.481,
+   "con": "Per",
+   "proper": "Mirfak"
+  },
+  "HIP 18505": {
+   "ra": 3.957067,
+   "dec": 63.072264,
+   "distPc": 110.6195,
+   "mag": 4.95,
+   "absmag": -0.269,
+   "spect": "B9.5V",
+   "ci": -0.074,
+   "con": "Cam",
+   "proper": ""
+  },
+  "HIP 21421": {
+   "ra": 4.598677,
+   "dec": 16.509301,
+   "distPc": 20.4332,
+   "mag": 0.87,
+   "absmag": -0.682,
+   "spect": "K5III",
+   "ci": 1.538,
+   "con": "Tau",
+   "proper": "Aldebaran"
+  },
+  "HIP 24436": {
+   "ra": 5.242298,
+   "dec": -8.20164,
+   "distPc": 264.5503,
+   "mag": 0.18,
+   "absmag": -6.933,
+   "spect": "B8Ia",
+   "ci": -0.03,
+   "con": "Ori",
+   "proper": "Rigel"
+  },
+  "HIP 24608": {
+   "ra": 5.27815,
+   "dec": 45.997991,
+   "distPc": 13.1234,
+   "mag": 0.08,
+   "absmag": -0.51,
+   "spect": "M1: comp",
+   "ci": 0.795,
+   "con": "Aur",
+   "proper": "Capella"
+  },
+  "HIP 25336": {
+   "ra": 5.418851,
+   "dec": 6.349702,
+   "distPc": 77.3994,
+   "mag": 1.64,
+   "absmag": -2.804,
+   "spect": "B2III",
+   "ci": -0.224,
+   "con": "Ori",
+   "proper": "Bellatrix"
+  },
+  "HIP 25428": {
+   "ra": 5.438198,
+   "dec": 28.60745,
+   "distPc": 41.0509,
+   "mag": 1.65,
+   "absmag": -1.417,
+   "spect": "B7III",
+   "ci": -0.13,
+   "con": "Tau",
+   "proper": "Elnath"
+  },
+  "HIP 26311": {
+   "ra": 5.603559,
+   "dec": -1.20192,
+   "distPc": 606.0606,
+   "mag": 1.69,
+   "absmag": -7.223,
+   "spect": "B0Ia",
+   "ci": -0.184,
+   "con": "Ori",
+   "proper": "Alnilam"
+  },
+  "HIP 26727": {
+   "ra": 5.679313,
+   "dec": -1.942572,
+   "distPc": 225.7336,
+   "mag": 1.74,
+   "absmag": -5.028,
+   "spect": "O9.5Ib SB",
+   "ci": -0.199,
+   "con": "Ori",
+   "proper": "Alnitak"
+  },
+  "HIP 27366": {
+   "ra": 5.795941,
+   "dec": -9.669605,
+   "distPc": 198.4127,
+   "mag": 2.07,
+   "absmag": -4.418,
+   "spect": "B0.5Iavar",
+   "ci": -0.168,
+   "con": "Ori",
+   "proper": "Saiph"
+  },
+  "HIP 27989": {
+   "ra": 5.919529,
+   "dec": 7.407063,
+   "distPc": 152.6718,
+   "mag": 0.45,
+   "absmag": -5.469,
+   "spect": "M2Ib",
+   "ci": 1.5,
+   "con": "Ori",
+   "proper": "Betelgeuse"
+  },
+  "HIP 28360": {
+   "ra": 5.992149,
+   "dec": 44.947433,
+   "distPc": 24.8694,
+   "mag": 1.9,
+   "absmag": -0.078,
+   "spect": "A2V",
+   "ci": 0.077,
+   "con": "Aur",
+   "proper": "Menkalinan"
+  },
+  "HIP 30324": {
+   "ra": 6.378329,
+   "dec": -17.955918,
+   "distPc": 151.0574,
+   "mag": 1.98,
+   "absmag": -3.916,
+   "spect": "B1II/III",
+   "ci": -0.24,
+   "con": "CMa",
+   "proper": "Mirzam"
+  },
+  "HIP 30438": {
+   "ra": 6.399195,
+   "dec": -52.69566,
+   "distPc": 94.7867,
+   "mag": -0.62,
+   "absmag": -5.504,
+   "spect": "F0Ib",
+   "ci": 0.164,
+   "con": "Car",
+   "proper": "Canopus"
+  },
+  "HIP 31681": {
+   "ra": 6.628528,
+   "dec": 16.399252,
+   "distPc": 33.5121,
+   "mag": 1.93,
+   "absmag": -0.696,
+   "spect": "A0IV",
+   "ci": 0.001,
+   "con": "Gem",
+   "proper": "Alhena"
+  },
+  "HIP 32349": {
+   "ra": 6.752481,
+   "dec": -16.716116,
+   "distPc": 2.6371,
+   "mag": -1.44,
+   "absmag": 1.454,
+   "spect": "A0m...",
+   "ci": 0.009,
+   "con": "CMa",
+   "proper": "Sirius"
+  },
+  "HIP 33579": {
+   "ra": 6.977097,
+   "dec": -28.972084,
+   "distPc": 124.2236,
+   "mag": 1.5,
+   "absmag": -3.971,
+   "spect": "B2II",
+   "ci": -0.211,
+   "con": "CMa",
+   "proper": "Adhara"
+  },
+  "HIP 34444": {
+   "ra": 7.139857,
+   "dec": -26.3932,
+   "distPc": 492.6108,
+   "mag": 1.83,
+   "absmag": -6.633,
+   "spect": "F8Ia",
+   "ci": 0.671,
+   "con": "CMa",
+   "proper": "Wezen"
+  },
+  "HIP 36850": {
+   "ra": 7.576634,
+   "dec": 31.888276,
+   "distPc": 15.5958,
+   "mag": 1.58,
+   "absmag": 0.615,
+   "spect": "A2Vm",
+   "ci": 0.034,
+   "con": "Gem",
+   "proper": "Castor"
+  },
+  "HIP 37279": {
+   "ra": 7.655033,
+   "dec": 5.224993,
+   "distPc": 3.5142,
+   "mag": 0.4,
+   "absmag": 2.671,
+   "spect": "F5IV-V",
+   "ci": 0.432,
+   "con": "CMi",
+   "proper": "Procyon"
+  },
+  "HIP 37826": {
+   "ra": 7.755277,
+   "dec": 28.026199,
+   "distPc": 10.3584,
+   "mag": 1.16,
+   "absmag": 1.084,
+   "spect": "K0IIIvar",
+   "ci": 0.991,
+   "con": "Gem",
+   "proper": "Pollux"
+  },
+  "HIP 39953": {
+   "ra": 8.158876,
+   "dec": -47.336588,
+   "distPc": 342.4658,
+   "mag": 1.75,
+   "absmag": -5.923,
+   "spect": "WC8 + O9I",
+   "ci": -0.145,
+   "con": "Vel",
+   "proper": ""
+  },
+  "HIP 46390": {
+   "ra": 9.45979,
+   "dec": -8.658603,
+   "distPc": 55.2792,
+   "mag": 1.99,
+   "absmag": -1.723,
+   "spect": "K3III",
+   "ci": 1.44,
+   "con": "Hya",
+   "proper": "Alphard"
+  },
+  "HIP 49669": {
+   "ra": 10.139532,
+   "dec": 11.967207,
+   "distPc": 24.3132,
+   "mag": 1.36,
+   "absmag": -0.569,
+   "spect": "B7V",
+   "ci": -0.087,
+   "con": "Leo",
+   "proper": "Regulus"
+  },
+  "HIP 53910": {
+   "ra": 11.030677,
+   "dec": 56.382427,
+   "distPc": 24.4499,
+   "mag": 2.34,
+   "absmag": 0.399,
+   "spect": "A1V",
+   "ci": 0.033,
+   "con": "UMa",
+   "proper": "Merak"
+  },
+  "HIP 54061": {
+   "ra": 11.062155,
+   "dec": 61.751033,
+   "distPc": 37.679,
+   "mag": 1.81,
+   "absmag": -1.07,
+   "spect": "F7V comp",
+   "ci": 1.061,
+   "con": "UMa",
+   "proper": "Dubhe"
+  },
+  "HIP 57632": {
+   "ra": 11.817663,
+   "dec": 14.57206,
+   "distPc": 10.9999,
+   "mag": 2.14,
+   "absmag": 1.933,
+   "spect": "A3Vvar",
+   "ci": 0.09,
+   "con": "Leo",
+   "proper": "Denebola"
+  },
+  "HIP 58001": {
+   "ra": 11.897168,
+   "dec": 53.69476,
+   "distPc": 25.5037,
+   "mag": 2.41,
+   "absmag": 0.377,
+   "spect": "A0V SB",
+   "ci": 0.044,
+   "con": "UMa",
+   "proper": "Phecda"
+  },
+  "HIP 59774": {
+   "ra": 12.257086,
+   "dec": 57.032617,
+   "distPc": 24.6853,
+   "mag": 3.32,
+   "absmag": 1.358,
+   "spect": "A3Vvar",
+   "ci": 0.077,
+   "con": "UMa",
+   "proper": "Megrez"
+  },
+  "HIP 62956": {
+   "ra": 12.900472,
+   "dec": 55.959821,
+   "distPc": 25.31,
+   "mag": 1.76,
+   "absmag": -0.256,
+   "spect": "A0p",
+   "ci": -0.022,
+   "con": "UMa",
+   "proper": "Alioth"
+  },
+  "HIP 65378": {
+   "ra": 13.398747,
+   "dec": 54.925362,
+   "distPc": 26.3089,
+   "mag": 2.23,
+   "absmag": 0.129,
+   "spect": "A2V",
+   "ci": 0.057,
+   "con": "UMa",
+   "proper": "Mizar"
+  },
+  "HIP 65474": {
+   "ra": 13.419883,
+   "dec": -11.161322,
+   "distPc": 76.5697,
+   "mag": 0.98,
+   "absmag": -3.44,
+   "spect": "B1V",
+   "ci": -0.235,
+   "con": "Vir",
+   "proper": "Spica"
+  },
+  "HIP 65477": {
+   "ra": 13.420413,
+   "dec": 54.987958,
+   "distPc": 25.0564,
+   "mag": 3.99,
+   "absmag": 1.995,
+   "spect": "A5V SB",
+   "ci": 0.169,
+   "con": "UMa",
+   "proper": "Alcor"
+  },
+  "HIP 67301": {
+   "ra": 13.792354,
+   "dec": 49.313265,
+   "distPc": 31.8674,
+   "mag": 1.85,
+   "absmag": -0.667,
+   "spect": "B3V SB",
+   "ci": -0.099,
+   "con": "UMa",
+   "proper": "Alkaid"
+  },
+  "HIP 69673": {
+   "ra": 14.26103,
+   "dec": 19.18241,
+   "distPc": 11.2575,
+   "mag": -0.05,
+   "absmag": -0.307,
+   "spect": "K2IIIp",
+   "ci": 1.239,
+   "con": "Boo",
+   "proper": "Arcturus"
+  },
+  "HIP 71681": {
+   "ra": 14.660346,
+   "dec": -60.8383,
+   "distPc": 1.3248,
+   "mag": 1.35,
+   "absmag": 5.739,
+   "spect": "K1V",
+   "ci": 0.9,
+   "con": "Cen",
+   "proper": "Toliman"
+  },
+  "HIP 71683": {
+   "ra": 14.660765,
+   "dec": -60.833976,
+   "distPc": 1.3248,
+   "mag": -0.01,
+   "absmag": 4.379,
+   "spect": "G2V",
+   "ci": 0.71,
+   "con": "Cen",
+   "proper": "Rigil Kentaurus"
+  },
+  "HIP 72607": {
+   "ra": 14.845105,
+   "dec": 74.155505,
+   "distPc": 40.1445,
+   "mag": 2.07,
+   "absmag": -0.948,
+   "spect": "K4IIIvar",
+   "ci": 1.465,
+   "con": "UMi",
+   "proper": "Kochab"
+  },
+  "HIP 80763": {
+   "ra": 16.490128,
+   "dec": -26.432002,
+   "distPc": 169.7793,
+   "mag": 1.06,
+   "absmag": -5.089,
+   "spect": "M1Ib + B2.5V",
+   "ci": 1.865,
+   "con": "Sco",
+   "proper": "Antares"
+  },
+  "HIP 85927": {
+   "ra": 17.560145,
+   "dec": -37.103821,
+   "distPc": 175.1313,
+   "mag": 1.62,
+   "absmag": -4.597,
+   "spect": "B1.5IV+...",
+   "ci": -0.231,
+   "con": "Sco",
+   "proper": "Shaula"
+  },
+  "HIP 86228": {
+   "ra": 17.62198,
+   "dec": -42.997824,
+   "distPc": 92.081,
+   "mag": 1.86,
+   "absmag": -2.961,
+   "spect": "F1II",
+   "ci": 0.406,
+   "con": "Sco",
+   "proper": "Sargas"
+  },
+  "HIP 90185": {
+   "ra": 18.402868,
+   "dec": -34.384616,
+   "distPc": 43.9367,
+   "mag": 1.79,
+   "absmag": -1.424,
+   "spect": "B9.5III",
+   "ci": -0.031,
+   "con": "Sgr",
+   "proper": "Kaus Australis"
+  },
+  "HIP 91262": {
+   "ra": 18.61564,
+   "dec": 38.783692,
+   "distPc": 7.6787,
+   "mag": 0.03,
+   "absmag": 0.604,
+   "spect": "A0Vvar",
+   "ci": -0.001,
+   "con": "Lyr",
+   "proper": "Vega"
+  },
+  "HIP 95947": {
+   "ra": 19.512023,
+   "dec": 27.959681,
+   "distPc": 133.1558,
+   "mag": 3.05,
+   "absmag": -2.572,
+   "spect": "K3II+...",
+   "ci": 1.088,
+   "con": "Cyg",
+   "proper": "Albireo"
+  },
+  "HIP 95951": {
+   "ra": 19.51261,
+   "dec": 27.965276,
+   "distPc": 122.549,
+   "mag": 5.12,
+   "absmag": -0.322,
+   "spect": "B8V",
+   "ci": -0.095,
+   "con": "Cyg",
+   "proper": "Albireo B"
+  },
+  "HIP 97649": {
+   "ra": 19.846388,
+   "dec": 8.868322,
+   "distPc": 5.1295,
+   "mag": 0.76,
+   "absmag": 2.21,
+   "spect": "A7IV-V",
+   "ci": 0.221,
+   "con": "Aql",
+   "proper": "Altair"
+  },
+  "HIP 100453": {
+   "ra": 20.370473,
+   "dec": 40.256679,
+   "distPc": 561.7978,
+   "mag": 2.23,
+   "absmag": -6.518,
+   "spect": "F8Ib",
+   "ci": 0.673,
+   "con": "Cyg",
+   "proper": "Sadr"
+  },
+  "HIP 102098": {
+   "ra": 20.690532,
+   "dec": 45.280338,
+   "distPc": 432.9004,
+   "mag": 1.25,
+   "absmag": -6.932,
+   "spect": "A2Ia",
+   "ci": 0.092,
+   "con": "Cyg",
+   "proper": "Deneb"
+  },
+  "HIP 109268": {
+   "ra": 22.137209,
+   "dec": -46.960975,
+   "distPc": 30.9693,
+   "mag": 1.73,
+   "absmag": -0.725,
+   "spect": "B7IV",
+   "ci": -0.07,
+   "con": "Gru",
+   "proper": "Alnair"
+  },
+  "HIP 113368": {
+   "ra": 22.960838,
+   "dec": -29.622236,
+   "distPc": 7.7036,
+   "mag": 1.17,
+   "absmag": 1.737,
+   "spect": "A3V",
+   "ci": 0.145,
+   "con": "PsA",
+   "proper": "Fomalhaut"
+  },
+  "HIP 113963": {
+   "ra": 23.079348,
+   "dec": 15.205264,
+   "distPc": 40.8831,
+   "mag": 2.49,
+   "absmag": -0.568,
+   "spect": "B9.5III",
+   "ci": -0.002,
+   "con": "Peg",
+   "proper": "Markab"
+  },
+  "HD 60178": {
+   "ra": 7.576827,
+   "dec": 31.89052,
+   "distPc": 15.8053,
+   "mag": 2.85,
+   "absmag": 1.856,
+   "spect": "A m",
+   "ci": null,
+   "con": "Gem",
+   "proper": "Castor B"
+  },
+  "HD 116657": {
+   "ra": 13.398996,
+   "dec": 54.920471,
+   "distPc": 24.1546,
+   "mag": 3.95,
+   "absmag": 2.035,
+   "spect": "A1 m",
+   "ci": 0.13,
+   "con": "UMa",
+   "proper": ""
+  }
+ }
+}
