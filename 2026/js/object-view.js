@@ -51,7 +51,7 @@
     return x;
   }
 
-  function basicRows(state, o0, c) {
+  function basicRows(state, o0, c, opts) {
     var o = withBasic(o0, c.basic);
     var edited = function (k) { return c.basic && c.basic[k] != null && c.basic[k] !== '' ? ' <span class="badge" title="AI 입력값: ' + esc(o0[k] == null ? '없음' : o0[k]) + '">수정됨</span>' : ''; };
     var rows = [];
@@ -65,9 +65,9 @@
       if (o.magRange) add('밝기 등급 (범위)', CN.fmtMag(o.magRange[0]) + ' ~ ' + CN.fmtMag(o.magRange[1]));
       if (o.distanceAU) add('태양으로부터 거리', (Math.round(o.distanceAU[0] * 100) / 100) + ' ~ ' + (Math.round(o.distanceAU[1] * 100) / 100) + ' AU');
       if (o.body && window.Astro) {
-        var t0 = Astro.kst(state.config.eventDate, '20:30'), p = Astro.planetNow(o.body, t0);
-        add(CN.dateShort(state.config.eventDate) + ' 밤 밝기', CN.fmtMag(p.mag) + ' <span class="hint-inline">(계산)</span>');
-        add(CN.dateShort(state.config.eventDate) + ' 지구로부터 거리', (Math.round(p.geoAU * 100) / 100) + ' AU ≈ ' + CN.fmtKm(p.geoAU * 149597870.7) + ' <span class="hint-inline">(계산)</span>');
+        var t0 = refDate(state, opts), p = Astro.planetNow(o.body, t0);
+        add(refLabel(state, opts) + ' 밤 밝기', CN.fmtMag(p.mag) + ' <span class="hint-inline">(계산)</span>');
+        add(refLabel(state, opts) + ' 지구로부터 거리', (Math.round(p.geoAU * 100) / 100) + ' AU ≈ ' + CN.fmtKm(p.geoAU * 149597870.7) + ' <span class="hint-inline">(계산)</span>');
       }
       if (o.diameterKm) add('지름', CN.fmtKm(o.diameterKm), 'diameterKm');
       if (o.moons != null) add('위성 수', o.moons + '개', 'moons');
@@ -80,8 +80,8 @@
       if (o.distanceKm) add(CN.josa(from, '으로', '로') + '부터 거리', o.distanceKm[0] === o.distanceKm[1] ? CN.fmtKm(o.distanceKm[0]) : CN.fmtKm(o.distanceKm[0]) + ' ~ ' + CN.fmtKm(o.distanceKm[1]));
       if (o.diameterKm) add('지름', CN.fmtKm(o.diameterKm), 'diameterKm');
       if (o.id === 'moon' && window.Astro) {
-        var mi = Astro.moonInfo(Astro.kst(state.config.eventDate, '20:30'));
-        add(CN.dateShort(state.config.eventDate) + ' 달', esc(mi.name) + ' · 밝은 부분 ' + Math.round(mi.illum * 100) + '% · 월령 약 ' + Math.round(mi.age) + '일 <span class="hint-inline">(계산)</span>');
+        var mi = Astro.moonInfo(refDate(state, opts));
+        add(refLabel(state, opts) + ' 달', esc(mi.name) + ' · 밝은 부분 ' + Math.round(mi.illum * 100) + '% · 월령 약 ' + Math.round(mi.age) + '일 <span class="hint-inline">(계산)</span>');
       }
     } else {
       if (o.components && o.components.length) {
@@ -107,23 +107,31 @@
   }
 
   // ===== 그날 밤 위치 =====
-  function tonightHtml(state, o) {
+  // opts.sky = { title, times: [{label, date}], highlight: 번호, refDate } — 없으면 행사 날 미리보기 시각
+  function skyTimes(state, opts) {
+    if (opts && opts.sky) return opts.sky.times;
+    return state.config.previewTimes.map(function (hm) { return { label: hm, date: Astro.kst(state.config.eventDate, hm) }; });
+  }
+  function refDate(state, opts) { return opts && opts.sky && opts.sky.refDate ? opts.sky.refDate : Astro.kst(state.config.eventDate, '20:30'); }
+  function refLabel(state, opts) { return opts && opts.sky && opts.sky.dayLabel ? opts.sky.dayLabel : CN.dateShort(state.config.eventDate); }
+
+  function tonightHtml(state, o, opts) {
     if (!window.Astro) return '';
-    var cfg = state.config;
     if (o.id === 'sun') return '<p class="sub">해는 밤에는 볼 수 없어요. 절대로 망원경이나 쌍안경으로 해를 직접 보면 안 돼요!</p>';
     var parent = o.type === 'moon' && o.parent && o.parent !== 'earth' ? state.byId[o.parent] : null;
-    var rows = cfg.previewTimes.map(function (hm) {
-      var p = Astro.position(o, Astro.kst(cfg.eventDate, hm));
+    var hl = opts && opts.sky ? opts.sky.highlight : -1;
+    var rows = skyTimes(state, opts).map(function (t, i) {
+      var hm = t.label, p = Astro.position(o, t.date);
       if (!p) return '';
       var st = p.alt >= 20 ? '<span class="vis ok">잘 보임</span>' : p.alt >= 0 ? '<span class="vis low">낮음</span>' : '<span class="vis no">지평선 아래</span>';
-      return '<tr><td>' + hm + '</td><td>' + (p.alt >= 0 ? esc(Astro.dir8(p.az)) + '쪽 <span class="hint-inline">' + Math.round(p.az) + '°</span>' : '—') +
+      return '<tr' + (i === hl ? ' class="hl"' : '') + '><td>' + esc(hm) + '</td><td>' + (p.alt >= 0 ? esc(Astro.dir8(p.az)) + '쪽 <span class="hint-inline">' + Math.round(p.az) + '°</span>' : '—') +
         '</td><td>' + (p.alt >= 0 ? Math.round(p.alt) + '°' : '—') + '</td><td>' + st + '</td></tr>';
     }).join('');
     var note = '';
     if (o.dec != null) {
       var ma = Astro.maxAlt(o.dec);
-      note = ma < 0 ? '<p class="warn-note">남쪽 하늘 아주 낮은 곳에 있어서 <strong>우리나라(광수중)에서는 볼 수 없는 천체</strong>예요.</p>'
-        : ma < 20 ? '<p class="hint">광수중에서 가장 높이 떠도 ' + Math.round(ma) + '°라서 남쪽 지평선 가까이에서만 보여요.</p>' : '';
+      note = ma < 0 ? '<p class="warn-note">' + (o.dec < Astro.lat ? '남쪽' : '북쪽') + ' 하늘 아주 낮은 곳에 있어서 <strong>' + esc(Astro.locName || '이곳') + '에서는 볼 수 없는 천체</strong>예요.</p>'
+        : ma < 20 ? '<p class="hint">' + esc(Astro.locName || '이곳') + '에서 가장 높이 떠도 ' + Math.round(ma) + '°라서 ' + (o.dec < Astro.lat ? '남쪽' : '북쪽') + ' 지평선 가까이에서만 보여요.</p>' : '';
     }
     if (parent) note += '<p class="hint">' + esc(CN.josa(o.nameKo, '은', '는')) + ' ' + esc(parent.nameKo) + ' 바로 옆에 있어요. 위치는 ' + esc(parent.nameKo) + ' 기준이고, 망원경이 있어야 보여요.</p>';
     return '<table class="tonight"><thead><tr><th>시각</th><th>방향</th><th>높이</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>' + note;
@@ -148,7 +156,7 @@
     var t = CN.TYPES[o.type] || CN.TYPES.other;
     var meta = c.meta || {};
     var featured = CN.isFeatured(state, o);
-    var defaultImg = state.credits[o.id] ? 'img/objects/' + o.id + '.jpg' : (o.type === 'star' ? CN.starImg(o.bv, o.mag) : '');
+    var defaultImg = state.credits[o.id] ? CN.asset('img/objects/' + o.id + '.jpg') : (o.type === 'star' ? CN.starImg(o.bv, o.mag) : '');
 
     var h = '';
     // 머리
@@ -164,7 +172,7 @@
       Object.keys(meta.places || {}).filter(function (k) { return meta.places[k]; }).map(function (k) { return '<span class="badge">📍 ' + esc(CN.PLACES[k]) + '</span>'; }).join('') + '</div>';
     var sub = [o.nameEn, o.altCatalog].concat(o.aliasesKo || []).filter(Boolean);
     if (sub.length) h += '<p class="en">' + esc(sub.join(' · ')) + '</p>';
-    if (opts.popup) h += '<a class="btn small ghost" href="objects.html?id=' + encodeURIComponent(o.id) + '">전체 페이지로 보기 →</a>';
+    if (opts.popup) h += '<a class="btn small ghost" href="' + CN.esc(opts.fullHref ? opts.fullHref(o) : CN.asset('objects.html?id=' + encodeURIComponent(o.id))) + '">전체 페이지로 보기 →</a>';
     h += '</header>';
 
     // 사진 모음
@@ -178,7 +186,7 @@
     }
 
     // 그날 밤 위치
-    h += '<section data-sec="tonight">' + sectionHead(esc(CN.dateShort(state.config.eventDate)) + ' 밤, 광수중에서') + '<div class="sec-body">' + tonightHtml(state, o) + '</div></section>';
+    h += '<section data-sec="tonight">' + sectionHead(esc(opts.sky ? opts.sky.title : CN.dateShort(state.config.eventDate) + ' 밤, 광수중에서')) + '<div class="sec-body">' + tonightHtml(state, o, opts) + (opts.sky && opts.sky.note ? '<p class="hint">' + esc(opts.sky.note) + '</p>' : '') + '</div></section>';
 
     // 텍스트 섹션 + 호핑법
     var order = ['points', 'hopping', 'description', 'story'];
@@ -212,7 +220,7 @@
     }
 
     // 기본 정보
-    var rows = basicRows(state, o, c);
+    var rows = basicRows(state, o, c, opts);
     h += '<section data-sec="basic">' + sectionHead('기본 정보', 'basic', admin) + '<div class="sec-body"><dl class="kv">' +
       rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('') + '</dl>' +
       '<p class="hint">기본 정보는 AI가 공개 천문 자료(OpenNGC, HYG 별 목록, 위키백과 등)를 바탕으로 입력했어요. 틀린 곳이 있으면 동아리에 알려 주세요.</p></div></section>';
@@ -577,14 +585,14 @@
   }
 
   // 팝업으로 열기 (시간대별 미리보기에서 사용)
-  CN.openObjectModal = function (state, id) {
+  CN.openObjectModal = function (state, id, extra) {
     var o = state.byId[id];
     if (!o) return;
     var m = CN.modal('<div class="modal-head"><div class="t">' + esc(o.nameKo) + '</div><button class="icon-btn" data-close>닫기</button></div><div data-obj></div>', {
       beforeClose: function () { return !CN.isEditing() || confirm('편집 중인 내용이 있어요. 닫을까요? (쓰던 글은 이 기기에 임시저장돼 있어요)'); },
       onClose: function () { editingCount = 0; },
     });
-    CN.renderObject(m.el.querySelector('[data-obj]'), state, o, { popup: true });
+    CN.renderObject(m.el.querySelector('[data-obj]'), state, o, Object.assign({ popup: true }, extra || {}));
     return m;
   };
 })();

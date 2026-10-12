@@ -5,7 +5,7 @@
   var CN = window.CN = {};
 
   // ===== 설정 =====
-  CN.VERSION = '20261013b';
+  CN.VERSION = '20261013c';
   CN.DB_URL = 'https://gwangsu-on-default-rtdb.firebaseio.com';
   CN.ROOT = 'years/2026/cosmosNight';          // 행사·천체 아카이브 데이터 (연도 바뀌어도 이 경로 고정)
   CN.ROSTER_YEAR = 2026;                        // 학생·교사 명단 연도
@@ -21,6 +21,9 @@
     addressText: '경기도 광주시 퇴촌면 도수길23번길 23',
   };
   CN.LOC = { lat: 37.47304, lon: 127.3196, elev: 50, name: '광수중학교' };
+  // 다른 폴더의 페이지(예: cosmos/nightly.html)가 이 코드를 쓸 때: 페이지에서 window.CN_BASE = '2026/'
+  CN.BASE = window.CN_BASE || '';
+  CN.asset = function (p) { return /^(data:|https?:|\/)/.test(p) ? p : CN.BASE + p; };
 
   // ===== 문자열 =====
   CN.esc = function (s) {
@@ -327,12 +330,13 @@
   function applyNight(on) { document.documentElement.classList.toggle('night-photos', !!on); }
   try { applyNight(localStorage.getItem(NIGHT_KEY) === '1'); } catch (e) {}
 
-  CN.topbar = function () {
+  CN.topbar = function (opts) {
+    opts = opts || {};
     var bar = document.createElement('header');
     bar.className = 'topbar';
     var night = document.documentElement.classList.contains('night-photos');
     bar.innerHTML =
-      '<a class="home" href="index.html">🌙 2026 주민관측회<small>광수중</small></a><span class="spacer"></span>' +
+      '<a class="home" href="' + CN.esc(opts.href || CN.asset('index.html')) + '">🌙 ' + CN.esc(opts.title || '2026 주민관측회') + '<small>' + CN.esc(opts.small || '광수중') + '</small></a><span class="spacer"></span>' +
       (CN.isAdmin() ? '<span class="admin-chip" title="관리자 모드">✎ ' + CN.esc(CN.adminLabel()) + '</span>' : '') +
       '<button class="icon-btn" id="nightBtn" aria-pressed="' + night + '" title="사진까지 붉게 보기 — 관측 중 눈의 암적응 보호">사진 붉게</button>';
     document.body.insertBefore(bar, document.body.firstChild);
@@ -349,9 +353,9 @@
     f.className = 'foot';
     var admin = CN.isAdmin();
     f.innerHTML =
-      '광수중학교 천체관측동아리 코스모스 · <a href="credits.html">사진 출처</a>' +
+      '광수중학교 천체관측동아리 코스모스 · <a href="' + CN.asset('credits.html') + '">사진 출처</a>' +
       (admin
-        ? '<div style="margin-top:8px"><a href="admin.html">관리자 메뉴</a> · <button class="admin-login-link" id="logoutBtn">로그아웃</button></div>'
+        ? '<div style="margin-top:8px"><a href="' + CN.asset('admin.html') + '">관리자 메뉴</a> · <button class="admin-login-link" id="logoutBtn">로그아웃</button></div>'
         : (opts && opts.loginLink ? '<div><button class="admin-login-link" id="loginLink">관리자 로그인</button></div>' : ''));
     (document.querySelector('.wrap') || document.body).appendChild(f);
     var lo = f.querySelector('#logoutBtn'); if (lo) lo.onclick = CN.logout;
@@ -407,7 +411,7 @@
   CN.photoUrl = function (fileId, w) {
     w = w || 400;
     var s = CN.staticPhotos[fileId];
-    if (s) return w > 500 ? s.full : s.thumb;
+    if (s) return CN.asset(w > 500 ? s.full : s.thumb);
     return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) + '&sz=w' + w;
   };
   // <img onerror> 대체 사슬: 드라이브 썸네일 → lh3 → (3초 뒤) 드라이브 다시 → 기본 이미지

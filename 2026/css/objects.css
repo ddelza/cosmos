@@ -87,3 +87,5 @@ ol.hop { list-style: none; padding: 0; margin: 0; counter-reset: none; }
 .hist { padding: 10px 12px; }
 .hist-h { font-size: .82rem; }
 .hist-p { font-size: .82rem; color: var(--muted); white-space: pre-wrap; margin: 6px 0; max-height: 7.5em; overflow: hidden; }
+table.tonight tr.hl td { background: var(--red-soft); }
+table.tonight tr.hl td:first-child { color: var(--red); font-weight: 700; }

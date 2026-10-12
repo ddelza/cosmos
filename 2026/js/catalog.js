@@ -31,11 +31,11 @@
   CN.loadAll = async function (onUpdate) {
     if (cache) return cache;
     var res = await Promise.all([
-      getJson('data/catalog.json', []),
-      getJson('data/credits.json', {}),
-      getJson('data/seed.json', {}),
-      getJson('data/content.json', {}),
-      getJson('img/uploads/manifest.json', {}),
+      getJson(CN.asset('data/catalog.json'), []),
+      getJson(CN.asset('data/credits.json'), {}),
+      getJson(CN.asset('data/seed.json'), {}),
+      getJson(CN.asset('data/content.json'), {}),
+      getJson(CN.asset('img/uploads/manifest.json'), {}),
       CN.getConfig(),
     ]);
     var list = res[0] || [];
@@ -88,7 +88,7 @@
   CN.thumbHtml = function (state, o, w) {
     w = w || 250;
     var photos = CN.sortedPhotos((state.content[o.id] || {}).photos);
-    var fallback = state.credits[o.id] ? 'img/objects/' + o.id + '.jpg' : (o.type === 'star' ? CN.starImg(o.bv, o.mag) : '');
+    var fallback = state.credits[o.id] ? CN.asset('img/objects/' + o.id + '.jpg') : (o.type === 'star' ? CN.starImg(o.bv, o.mag) : '');
     if (photos.length) return CN.driveImgTag(photos[0].fileId, w, 'photo thumb', fallback, o.nameKo);
     if (fallback) return '<img class="photo thumb' + (o.type === 'star' ? ' no-night-dim' : '') + '" loading="lazy" decoding="async" src="' + CN.esc(fallback) + '" alt="' + CN.esc(o.nameKo) + '">';
     return '<div class="thumb ph-icon">' + (CN.TYPES[o.type] || CN.TYPES.other).icon + '</div>';

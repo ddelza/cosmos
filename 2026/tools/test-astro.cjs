@@ -66,5 +66,20 @@ eq('8방위 359°', Astro.dir8(359), '북'); eq('8방위 180°', Astro.dir8(180)
 eq('주먹 46°', Astro.fists(46), '주먹 4개 반'); eq('주먹 7°', Astro.fists(7), '주먹 반 개'); eq('주먹 20°', Astro.fists(20), '주먹 2개');
 const p = Astro.planetNow('Saturn', t2030);
 console.log('토성 밝기', p.mag.toFixed(2), '지구로부터', p.geoAU.toFixed(2), 'AU');
+
+// nightly.html용: 밤 구간(일몰~일출)과 위치 바꾸기
+const nw1 = Astro.nightWindow(new Date('2026-11-03T20:30:00+09:00'));
+const nw2 = Astro.nightWindow(new Date('2026-11-04T02:00:00+09:00'));
+eq('밤 구간 일몰 17:30', Astro.hhmm(nw1.sunset), '17:30');
+eq('새벽 2시도 같은 밤', Astro.hhmm(nw2.sunset), '17:30');
+console.log('일출', Astro.hhmm(nw1.sunrise), '/ 천문박명', Astro.hhmm(nw1.dark), '~', Astro.hhmm(nw1.dawn));
+eq('일출은 다음 날 아침', nw1.sunrise > nw1.sunset && nw1.sunrise - nw1.sunset < 16 * 3600e3, true);
+Astro.setLocation(-33.87, 151.21, 30, '시드니');
+const crux = Astro.fixed(12.4433, -63.0991, new Date('2026-11-04T04:00:00+09:00')); // 아크룩스
+console.log('시드니 아크룩스 고도', crux.alt.toFixed(1));
+eq('시드니에서 남쪽 천체 maxAlt>0', Astro.maxAlt(-63.1) > 0, true);
+Astro.setLocation(37.47304, 127.3196, 50, '광수중학교');
+eq('광수중 복귀 후 아크룩스 maxAlt<0', Astro.maxAlt(-63.1) < 0, true);
+near('광수중 복귀 후 토성 다시 46.1°', Astro.body('Saturn', t2030).alt, 46.1, 0.3);
 console.log(fail ? `\n실패 ${fail}건` : '\n모두 통과');
 process.exit(fail ? 1 : 0);

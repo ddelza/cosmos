@@ -12,6 +12,14 @@
   var Astro = {
     observer: observer,
     lat: LOC.lat,
+    lon: LOC.lon,
+    locName: LOC.name || '광수중학교',
+
+    // 관측 위치 바꾸기 (nightly.html)
+    setLocation: function (lat, lon, elev, name) {
+      observer = new A.Observer(lat, lon, elev || 0);
+      this.observer = observer; this.lat = lat; this.lon = lon; this.locName = name || '';
+    },
 
     // 'YYYY-MM-DD' + 'HH:MM' (한국 표준시) → Date
     kst: function (dateStr, hhmm) { return new Date(dateStr + 'T' + hhmm + ':00+09:00'); },
@@ -102,7 +110,23 @@
     },
 
     // 위도에서 볼 수 있는 최고 고도(남중 고도) — 0 미만이면 이 위도에선 안 뜸
-    maxAlt: function (decDeg) { return 90 - Math.abs(LOC.lat - decDeg); },
+    maxAlt: function (decDeg) { return 90 - Math.abs(this.lat - decDeg); },
+
+    // base 시각이 들어 있는 밤(또는 그 다음 밤)의 일몰·박명·일출 — 기기 시간대 기준이 아니라 절대 시각(Date)
+    // 해가 안 지거나 안 뜨는 곳(극지방)은 null 반환 항목이 생김
+    nightWindow: function (base) {
+      var start = new Date(base.getTime());
+      // 오전(정오 전)이면 전날 밤으로 봄
+      var noon = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 12, 0, 0);
+      if (start < noon) noon = new Date(noon.getTime() - 864e5);
+      var t = A.MakeTime(noon);
+      var set = A.SearchRiseSet('Sun', observer, -1, t, 1.2);
+      var from = set ? set.date : new Date(noon.getTime() + 6 * 3600e3);
+      var rise = A.SearchRiseSet('Sun', observer, +1, A.MakeTime(from), 1.2);
+      var dark = A.SearchAltitude('Sun', observer, -1, t, 1.2, -18);
+      var dawn = dark ? A.SearchAltitude('Sun', observer, +1, A.MakeTime(dark.date), 1.2, -18) : null;
+      return { noon: noon, sunset: set && set.date, sunrise: rise && rise.date, dark: dark && dark.date, dawn: dawn && dawn.date };
+    },
 
     // 한국 시각 HH:MM
     hhmm: function (d) {
