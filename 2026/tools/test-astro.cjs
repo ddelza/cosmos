@@ -81,5 +81,14 @@ eq('시드니에서 남쪽 천체 maxAlt>0', Astro.maxAlt(-63.1) > 0, true);
 Astro.setLocation(37.47304, 127.3196, 50, '광수중학교');
 eq('광수중 복귀 후 아크룩스 maxAlt<0', Astro.maxAlt(-63.1) < 0, true);
 near('광수중 복귀 후 토성 다시 46.1°', Astro.body('Saturn', t2030).alt, 46.1, 0.3);
+
+// 천정 근처(70° 이상), 방향순 정렬(남서→서→북서→북→북동→동→남동→남)
+eq('주먹 69°', Astro.fists(69), '주먹 7개');
+eq('주먹 70°', Astro.fists(70), '천정 근처');
+eq('주먹 88°', Astro.fists(88), '천정 근처');
+const order = [225, 270, 315, 0, 45, 90, 135, 180].map((az) => Astro.dirKey(az));
+eq('방향순 키가 남서→…→남 순서로 증가', order.every((v, i) => i === 0 || v > order[i - 1]), true);
+eq('남서 구간 시작(203°)이 맨 앞', Astro.dirKey(203) < Astro.dirKey(250), true);
+eq('남 구간 끝(202°)이 맨 뒤', Astro.dirKey(202) > Astro.dirKey(180), true);
 console.log(fail ? `\n실패 ${fail}건` : '\n모두 통과');
 process.exit(fail ? 1 : 0);

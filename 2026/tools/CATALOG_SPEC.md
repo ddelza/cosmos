@@ -50,3 +50,19 @@
 - 키가 해당 없으면 **생략**(null 남발 금지, 단 ra/dec/mag는 고정 천체에 반드시 있음).
 - 숫자는 숫자로(문자열 X). 거리 1,000만 광년은 10000000.
 - "verify" 같은 작업용 필드는 최종 파일에 남기지 않는다.
+
+## data/constellations.json (별자리 88개, 2026-10-13 추가)
+`tools/constellation-stats.mjs`(IAU 경계를 astronomy-engine `Constellation()`으로 0.25° 격자 표본) → `tools/build-constellations.mjs`로 생성. catalog.js가 catalog.json 뒤에 붙여서 한 목록으로 씀.
+
+| 필드 | 설명 |
+|---|---|
+| id | `con-` + IAU 약자 소문자 (`con-ori`, `con-uma`) |
+| nameKo / nameEn / catalog | 한국천문학회 이름 / 라틴어 이름 / IAU 약자 |
+| type / subtype | `constellation` / `주극성(항상 보임)`·`봄철 별자리`·`여름철 별자리`·`가을철 별자리`·`겨울철 별자리`·`전몰성(한국에서 안 보임)` |
+| ra / dec | 별자리 넓이 가중 중심 (위치 계산용) |
+| visibility | `circumpolar` / `season` / `never` |
+| seoul | `{circPct, neverPct, decMin, decMax, areaDeg2}` 서울(37.57°N) 기준 |
+| visNote | 일부만 주극·일부만 떠오름·계절 조정 설명 |
+| aliasesKo, asterisms | 검색용 다른 이름, 성군 설명(예: 큰곰자리 → 북두칠성) |
+
+분류 기준(지도교사 합의): 넓이 80% 이상 주극 → 주극성 / 북쪽 끝 최고 고도 10° 미만 → 전몰성 / 나머지는 중심 적경 3·9·15·21시 경계로 계절, 페르세우스=가을·게=봄으로 조정.

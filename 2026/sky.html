@@ -8,8 +8,8 @@
 <title>시간대별 천체 미리보기 · 2026 광수중 주민 천체관측회</title>
 <meta property="og:title" content="시간대별 천체 미리보기 · 2026 광수중 주민 천체관측회">
 <meta property="og:description" content="관측회 날 광수중학교 하늘에서 몇 시에 어떤 천체를 볼 수 있는지 미리 확인해 보세요">
-<link rel="stylesheet" href="css/site.css?v=20261013c">
-<link rel="stylesheet" href="css/objects.css?v=20261013c">
+<link rel="stylesheet" href="css/site.css?v=20261013d">
+<link rel="stylesheet" href="css/objects.css?v=20261013d">
 <style>
 .timebar { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 6px; -webkit-overflow-scrolling: touch; }
 .timebar .chip { font-size: 1rem; padding: 9px 16px; }
@@ -74,7 +74,7 @@ details.grp.feat > summary { color: var(--red); }
         <option value="rec">추천순</option>
         <option value="alt">높이순</option>
         <option value="mag">밝기순</option>
-        <option value="az">방향순</option>
+        <option value="az">방향순 (남서→서→북→동→남)</option>
       </select>
       <input type="search" id="q" placeholder="이름 찾기" autocomplete="off">
     </div>
@@ -83,11 +83,11 @@ details.grp.feat > summary { color: var(--red); }
   <p class="legend">방향은 8방위(북·북동·동·남동·남·남서·서·북서)로, 높이는 지평선 0° ~ 머리 꼭대기 90°로 나타냈어요. 위치는 광수중학교에서 계산한 값이에요.</p>
 </main>
 
-<script src="js/core.js?v=20261013c"></script>
+<script src="js/core.js?v=20261013d"></script>
 <script src="js/vendor/astronomy.browser.min.js"></script>
-<script src="js/astro.js?v=20261013c"></script>
-<script src="js/catalog.js?v=20261013c"></script>
-<script src="js/object-view.js?v=20261013c"></script>
+<script src="js/astro.js?v=20261013d"></script>
+<script src="js/catalog.js?v=20261013d"></script>
+<script src="js/object-view.js?v=20261013d"></script>
 <script>
 (function () {
   'use strict';
@@ -95,11 +95,14 @@ details.grp.feat > summary { color: var(--red); }
   CN.topbar();
   var state, cfg;
   var pos = {};              // 'HH:MM' → {id: {alt, az}}
-  var ui = { time: null, minAlt: 20, type: 'all', sort: 'rec', q: '' };
-  var TYPE_CHIPS = [['all', '전체'], ['featured', '★ 추천'], ['planet', '🪐 행성'], ['star', '⭐ 별'], ['cluster', '✨ 성단'], ['nebula', '☁️ 성운'], ['galaxy', '🌀 은하'], ['other', '기타']];
-  try { var saved = JSON.parse(sessionStorage.getItem('cn26sky') || 'null'); if (saved) Object.assign(ui, saved); } catch (e) {}
+  var ui = { time: null, minAlt: 20, types: [], sort: 'rec', q: '' };
+  var TYPE_CHIPS = [['all', '전체'], ['featured', '★ 추천'], ['planet', '🪐 행성·달'], ['star', '⭐ 별'], ['cluster', '✨ 성단'], ['nebula', '☁️ 성운'], ['galaxy', '🌀 은하'], ['constellation', '✦ 별자리'], ['other', '기타']];
+  try {
+    var saved = JSON.parse(sessionStorage.getItem('cn26sky') || 'null');
+    if (saved) { ['time', 'minAlt', 'sort'].forEach(function (k) { if (saved[k] !== undefined) ui[k] = saved[k]; }); if (Array.isArray(saved.types)) ui.types = saved.types; }
+  } catch (e) {}
 
-  function remember() { try { sessionStorage.setItem('cn26sky', JSON.stringify({ time: ui.time, minAlt: ui.minAlt, type: ui.type, sort: ui.sort })); } catch (e) {} }
+  function remember() { try { sessionStorage.setItem('cn26sky', JSON.stringify({ time: ui.time, minAlt: ui.minAlt, types: ui.types, sort: ui.sort })); } catch (e) {} }
 
   function skyObjects() {
     // 해·행성의 위성은 목록에서 제외(위성은 모행성 설명에서 다룸)
@@ -175,8 +178,7 @@ details.grp.feat > summary { color: var(--red); }
     var items = skyObjects().filter(function (o) {
       var p = P[o.id];
       if (!p || p.alt < ui.minAlt || p.alt < 0) return false;
-      if (ui.type === 'featured' && !CN.isFeatured(state, o)) return false;
-      if (ui.type !== 'all' && ui.type !== 'featured' && o.type !== ui.type && !(ui.type === 'planet' && o.type === 'moon')) return false;
+      if (!CN.typeFilter.match(state, o, ui.types, true)) return false;
       if (q && CN.searchText(o).indexOf(q) < 0) return false;
       return true;
     });
@@ -189,18 +191,18 @@ details.grp.feat > summary { color: var(--red); }
     var cmp = {
       alt: function (a, b) { return P[b.id].alt - P[a.id].alt; },
       mag: function (a, b) { return brightness(a) - brightness(b); },
-      az: function (a, b) { return P[a.id].az - P[b.id].az; },
+      az: function (a, b) { return Astro.dirKey(P[a.id].az) - Astro.dirKey(P[b.id].az); },
       rec: function (a, b) { return brightness(a) - brightness(b); },
     }[ui.sort];
     items.sort(cmp);
 
     var html = '<div class="count">' + (ui.time === 'now' ? '지금' : ui.time) + ' · 고도 ' + ui.minAlt + '° 이상 · ' + items.length + '개</div>';
-    if (ui.sort === 'rec' && ui.type === 'all' && !q) {
+    if (ui.sort === 'rec' && !ui.types.length && !q) {
       // 추천 천체는 펼쳐 두고, 나머지는 종류별로 접기
       var feat = items.filter(function (o) { return CN.isFeatured(state, o); });
       var rest = items.filter(function (o) { return !CN.isFeatured(state, o); });
       if (feat.length) html += '<details class="grp feat" open><summary>★ 관측회 추천 <span class="n">' + feat.length + '개</span></summary><p class="hint" style="margin:-6px 2px 8px">동아리가 망원경으로 보여 드릴 천체예요.</p><div class="rows">' + feat.map(row).join('') + '</div></details>';
-      ['planet', 'star', 'cluster', 'nebula', 'galaxy', 'other'].forEach(function (tp) {
+      ['planet', 'star', 'cluster', 'nebula', 'galaxy', 'other', 'constellation'].forEach(function (tp) {
         var g = rest.filter(function (o) { return o.type === tp || (tp === 'planet' && o.type === 'moon'); });
         if (!g.length) return;
         var T = CN.TYPES[tp];
@@ -219,15 +221,7 @@ details.grp.feat > summary { color: var(--red); }
     r.value = ui.minAlt; v.textContent = ui.minAlt + '° 이상';
     r.addEventListener('input', function () { ui.minAlt = Number(r.value); v.textContent = ui.minAlt + '° 이상'; renderList(); });
     r.addEventListener('change', remember);
-    var tc = document.getElementById('typeChips');
-    tc.innerHTML = TYPE_CHIPS.map(function (x) { var on = ui.type === x[0]; return '<button class="chip' + (on ? ' on' : '') + '" data-type="' + x[0] + '" aria-pressed="' + on + '">' + x[1] + '</button>'; }).join('');
-    tc.querySelectorAll('[data-type]').forEach(function (b) {
-      b.onclick = function () {
-        ui.type = b.dataset.type; remember();
-        tc.querySelectorAll('[data-type]').forEach(function (x) { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); });
-        renderList();
-      };
-    });
+    CN.typeFilter.render(document.getElementById('typeChips'), TYPE_CHIPS, ui.types, function (t) { ui.types = t; remember(); renderList(); });
     var s = document.getElementById('sort');
     s.value = ui.sort;
     s.onchange = function () { ui.sort = s.value; remember(); renderList(); };

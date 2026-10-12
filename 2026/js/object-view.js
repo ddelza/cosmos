@@ -43,7 +43,16 @@
     nebula: ['subtype', 'constellationKo', 'mag', 'distanceLy', 'sizeArcmin'],
     galaxy: ['subtype', 'constellationKo', 'mag', 'distanceLy', 'sizeArcmin'],
     other: ['subtype', 'constellationKo', 'mag', 'distanceLy', 'sizeArcmin'],
+    constellation: ['subtype'],
   };
+
+  var CON_CRITERIA =
+    '<details class="crit"><summary>분류 기준 보기</summary><div class="crit-body">' +
+    '<p>별자리 경계는 국제천문연맹(IAU)의 88개 별자리 경계를 쓰고, <strong>서울(북위 37.57°)</strong>에서 보이는 정도로 나눴어요.</p><ul>' +
+    '<li><strong>주극성(항상 보임)</strong>: 별자리 넓이의 80% 이상이 서울에서 지평선 아래로 지지 않는 별자리 (서울에서는 적위 +52.4°보다 북쪽이 지지 않아요)</li>' +
+    '<li><strong>전몰성(한국에서 안 보임)</strong>: 별자리의 북쪽 끝이 서울에서 가장 높이 떠도 10°가 안 되는 별자리 (건물·산에 가려 사실상 보이지 않아요)</li>' +
+    '<li><strong>계절 별자리</strong>: 나머지는 별자리 중심이 초저녁 남쪽 하늘 높이 오는 계절로 나눴어요 — 중심 적경 3~9시 겨울, 9~15시 봄, 15~21시 여름, 21~3시 가을. 경계에 걸친 <strong>페르세우스자리(가을)</strong>, <strong>게자리(봄)</strong>는 흔히 쓰는 분류를 따랐어요.</li>' +
+    '<li>일부만 항상 보이거나 일부만 떠오르는 별자리는 「서울에서」 칸에 따로 적었어요.</li></ul></div></details>';
 
   function withBasic(o, basic) {
     var x = Object.assign({}, o);
@@ -58,6 +67,15 @@
     var add = function (label, val, k) { if (val !== '' && val != null) rows.push([label, val + (k ? edited(k) : '')]); };
     var t = CN.TYPES[o.type] || CN.TYPES.other;
     add('분류', esc(t.ko + (o.subtype && o.subtype !== t.ko ? ' · ' + o.subtype : '')), 'subtype');
+    if (o.type === 'constellation') {
+      add('국제 약자', esc(o.catalog) + ' · ' + esc(o.nameEn));
+      add('서울에서', esc(o.subtype) + (o.visNote ? '<br><span class="hint-inline">' + esc(o.visNote) + '</span>' : ''));
+      (o.asterisms || []).forEach(function (x) { add(esc(x.name), esc(x.text)); });
+      var inside = state.list.filter(function (x) { return x.type !== 'constellation' && x.constellationKo === o.nameKo; })
+        .sort(function (a, b) { return (a.mag == null ? 99 : a.mag) - (b.mag == null ? 99 : b.mag); });
+      if (inside.length) add('이 별자리의 천체', '<span class="rel">' + inside.map(function (x) { return '<a href="#" data-related="' + esc(x.id) + '">' + esc(x.nameKo) + '</a>'; }).join('') + '</span>');
+      return rows;
+    }
     if (o.constellationKo) add('별자리', esc(o.constellationKo), 'constellationKo');
     if (o.ra != null) { add('적경 (J2000)', CN.fmtRA(o.ra)); add('적위 (J2000)', CN.fmtDec(o.dec)); }
 
@@ -128,7 +146,9 @@
         '</td><td>' + (p.alt >= 0 ? Math.round(p.alt) + '°' : '—') + '</td><td>' + st + '</td></tr>';
     }).join('');
     var note = '';
-    if (o.dec != null) {
+    if (o.type === 'constellation') {
+      note = '<p class="hint">위치는 별자리 중심 기준이에요.</p>' + (o.visibility === 'never' ? '<p class="warn-note"><strong>우리나라에서는 볼 수 없는 별자리</strong>예요.</p>' : '');
+    } else if (o.dec != null) {
       var ma = Astro.maxAlt(o.dec);
       note = ma < 0 ? '<p class="warn-note">' + (o.dec < Astro.lat ? '남쪽' : '북쪽') + ' 하늘 아주 낮은 곳에 있어서 <strong>' + esc(Astro.locName || '이곳') + '에서는 볼 수 없는 천체</strong>예요.</p>'
         : ma < 20 ? '<p class="hint">' + esc(Astro.locName || '이곳') + '에서 가장 높이 떠도 ' + Math.round(ma) + '°라서 ' + (o.dec < Astro.lat ? '남쪽' : '북쪽') + ' 지평선 가까이에서만 보여요.</p>' : '';
@@ -223,7 +243,7 @@
     var rows = basicRows(state, o, c, opts);
     h += '<section data-sec="basic">' + sectionHead('기본 정보', 'basic', admin) + '<div class="sec-body"><dl class="kv">' +
       rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('') + '</dl>' +
-      '<p class="hint">기본 정보는 AI가 공개 천문 자료(OpenNGC, HYG 별 목록, 위키백과 등)를 바탕으로 입력했어요. 틀린 곳이 있으면 동아리에 알려 주세요.</p></div></section>';
+      (o.type === 'constellation' ? CON_CRITERIA : '<p class="hint">기본 정보는 AI가 공개 천문 자료(OpenNGC, HYG 별 목록, 위키백과 등)를 바탕으로 입력했어요. 틀린 곳이 있으면 동아리에 알려 주세요.</p>') + '</div></section>';
 
     if (admin) h += '<div class="obj-admin"><button class="btn small ghost" data-history>🕘 수정 기록 보기</button></div>';
 
@@ -251,6 +271,13 @@
     });
     var hb = root.querySelector('[data-history]');
     if (hb) hb.onclick = function () { openHistory(state, o, root, opts); };
+    root.querySelectorAll('[data-related]').forEach(function (a) {
+      a.onclick = function (e) {
+        e.preventDefault();
+        if (opts.openRelated) opts.openRelated(a.dataset.related);
+        else location.href = CN.asset('objects.html?id=' + encodeURIComponent(a.dataset.related));
+      };
+    });
   }
 
   function ensureContent(state, id) { if (!state.content[id]) state.content[id] = {}; return state.content[id]; }
@@ -592,7 +619,9 @@
       beforeClose: function () { return !CN.isEditing() || confirm('편집 중인 내용이 있어요. 닫을까요? (쓰던 글은 이 기기에 임시저장돼 있어요)'); },
       onClose: function () { editingCount = 0; },
     });
-    CN.renderObject(m.el.querySelector('[data-obj]'), state, o, Object.assign({ popup: true }, extra || {}));
+    var x = Object.assign({}, extra || {});
+    if (!x.openRelated) x.openRelated = function (rid) { CN.openObjectModal(state, rid, extra); };
+    CN.renderObject(m.el.querySelector('[data-obj]'), state, o, Object.assign({ popup: true }, x));
     return m;
   };
 })();

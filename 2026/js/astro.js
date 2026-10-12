@@ -27,8 +27,12 @@
     // 8방위: 북(337.5°~22.5°) · 북동 · 동 · 남동 · 남 · 남서 · 서 · 북서
     dir8: function (az) { return DIRS[Math.round((((az % 360) + 360) % 360) / 45) % 8]; },
 
-    // 팔을 뻗은 주먹 하나 ≈ 10°
+    // 방향순 정렬 키: 남서 → 서 → 북서 → 북 → 북동 → 동 → 남동 → 남 (남서 구간 시작 202.5°부터)
+    dirKey: function (az) { return (((az - 202.5) % 360) + 360) % 360; },
+
+    // 팔을 뻗은 주먹 하나 ≈ 10° (70° 이상은 '천정 근처')
     fists: function (alt) {
+      if (alt >= 70) return '천정 근처';
       var n = Math.round(alt / 5) / 2; // 0.5 단위
       if (n < 0.5) return '지평선 바로 위';
       var whole = Math.floor(n), half = n - whole >= 0.5;

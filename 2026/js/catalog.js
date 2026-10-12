@@ -11,6 +11,38 @@
     nebula:  { ko: '성운', icon: '☁️', order: 4 },
     galaxy:  { ko: '은하', icon: '🌀', order: 5 },
     other:   { ko: '기타', icon: '•', order: 6 },
+    constellation: { ko: '별자리', icon: '✦', order: 7 },
+  };
+
+  // 종류 칩: '전체'는 혼자, 나머지는 여러 개 함께 선택 (★추천은 다른 종류와 '그리고'로 겹침)
+  CN.typeFilter = {
+    toggle: function (types, t) {
+      if (t === 'all') return [];
+      var i = types.indexOf(t), next = types.slice();
+      if (i >= 0) next.splice(i, 1); else next.push(t);
+      return next;
+    },
+    // planetWithMoon: '행성' 칩이 달·위성까지 포함하는 화면(미리보기)
+    match: function (state, o, types, planetWithMoon) {
+      if (!types || !types.length) return true;
+      if (types.indexOf('featured') >= 0 && !CN.isFeatured(state, o)) return false;
+      var ts = types.filter(function (t) { return t !== 'featured'; });
+      if (!ts.length) return true;
+      return ts.some(function (t) { return t === o.type || (planetWithMoon && t === 'planet' && o.type === 'moon'); });
+    },
+    // chips: [[값, 표시]] — 컨테이너에 그리고 바뀌면 onChange(types)
+    render: function (el, chips, types, onChange) {
+      var draw = function () {
+        el.innerHTML = chips.map(function (x) {
+          var on = x[0] === 'all' ? !types.length : types.indexOf(x[0]) >= 0;
+          return '<button class="chip' + (on ? ' on' : '') + '" data-type="' + x[0] + '" aria-pressed="' + on + '">' + x[1] + '</button>';
+        }).join('');
+        el.querySelectorAll('[data-type]').forEach(function (b) {
+          b.onclick = function () { types = CN.typeFilter.toggle(types, b.dataset.type); draw(); onChange(types); };
+        });
+      };
+      draw();
+    },
   };
   CN.SECTIONS = { points: '관측포인트', description: '설명', story: '관련 이야기' };
   CN.PLACES = { lab: '과학실', deck: '3층 데크', roof: '옥상' };
@@ -37,8 +69,9 @@
       getJson(CN.asset('data/content.json'), {}),
       getJson(CN.asset('img/uploads/manifest.json'), {}),
       CN.getConfig(),
+      getJson(CN.asset('data/constellations.json'), []),
     ]);
-    var list = res[0] || [];
+    var list = (res[0] || []).concat(res[6] || []);
     var byId = {};
     list.forEach(function (o) { byId[o.id] = o; });
     CN.staticPhotos = res[4] || {};

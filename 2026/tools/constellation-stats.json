@@ -1,0 +1,882 @@
+[
+ {
+  "abbr": "Scl",
+  "areaDeg2": 475,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 0.47,
+  "decCenter": -32.2,
+  "decMin": -39.3,
+  "decMax": -24.8
+ },
+ {
+  "abbr": "Psc",
+  "areaDeg2": 891,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 0.64,
+  "decCenter": 11,
+  "decMin": -6.3,
+  "decMax": 33.8
+ },
+ {
+  "abbr": "And",
+  "areaDeg2": 724,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 0.67,
+  "decCenter": 40.5,
+  "decMin": 21.8,
+  "decMax": 53.3
+ },
+ {
+  "abbr": "Phe",
+  "areaDeg2": 469,
+  "circPct": 0,
+  "neverPct": 19,
+  "raCenterH": 0.78,
+  "decCenter": -47.8,
+  "decMin": -57.8,
+  "decMax": -39.3
+ },
+ {
+  "abbr": "Cas",
+  "areaDeg2": 598,
+  "circPct": 87,
+  "neverPct": 0,
+  "raCenterH": 1.02,
+  "decCenter": 62.6,
+  "decMin": 46.8,
+  "decMax": 77.8
+ },
+ {
+  "abbr": "Cet",
+  "areaDeg2": 1234,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 1.62,
+  "decCenter": -8.9,
+  "decMin": -24.8,
+  "decMax": 10.5
+ },
+ {
+  "abbr": "Tri",
+  "areaDeg2": 131,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 2.14,
+  "decCenter": 32.1,
+  "decMin": 25.5,
+  "decMax": 37.3
+ },
+ {
+  "abbr": "Hyi",
+  "areaDeg2": 243,
+  "circPct": 0,
+  "neverPct": 100,
+  "raCenterH": 2.38,
+  "decCenter": -71.6,
+  "decMin": -82,
+  "decMax": -57.8
+ },
+ {
+  "abbr": "Ari",
+  "areaDeg2": 440,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 2.66,
+  "decCenter": 20.1,
+  "decMin": 10.3,
+  "decMax": 31.3
+ },
+ {
+  "abbr": "For",
+  "areaDeg2": 398,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 2.77,
+  "decCenter": -31.5,
+  "decMin": -39.5,
+  "decMax": -23.8
+ },
+ {
+  "abbr": "Hor",
+  "areaDeg2": 250,
+  "circPct": 0,
+  "neverPct": 49,
+  "raCenterH": 3.3,
+  "decCenter": -53.3,
+  "decMin": -67,
+  "decMax": -39.8
+ },
+ {
+  "abbr": "Per",
+  "areaDeg2": 615,
+  "circPct": 14,
+  "neverPct": 0,
+  "raCenterH": 3.54,
+  "decCenter": 44.5,
+  "decMin": 31,
+  "decMax": 59
+ },
+ {
+  "abbr": "Eri",
+  "areaDeg2": 1138,
+  "circPct": 0,
+  "neverPct": 3,
+  "raCenterH": 3.8,
+  "decCenter": -21,
+  "decMin": -58,
+  "decMax": 0.5
+ },
+ {
+  "abbr": "Ret",
+  "areaDeg2": 114,
+  "circPct": 0,
+  "neverPct": 100,
+  "raCenterH": 3.89,
+  "decCenter": -60.8,
+  "decMin": -67.3,
+  "decMax": -52.8
+ },
+ {
+  "abbr": "Tau",
+  "areaDeg2": 798,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 4.41,
+  "decCenter": 17.1,
+  "decMin": -1.3,
+  "decMax": 31
+ },
+ {
+  "abbr": "Cae",
+  "areaDeg2": 125,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 4.75,
+  "decCenter": -38,
+  "decMin": -48.8,
+  "decMax": -27
+ },
+ {
+  "abbr": "Dor",
+  "areaDeg2": 179,
+  "circPct": 0,
+  "neverPct": 90,
+  "raCenterH": 5.03,
+  "decCenter": -61.3,
+  "decMin": -70,
+  "decMax": -48.8
+ },
+ {
+  "abbr": "Men",
+  "areaDeg2": 153,
+  "circPct": 0,
+  "neverPct": 100,
+  "raCenterH": 5.48,
+  "decCenter": -77.5,
+  "decMin": -85.3,
+  "decMax": -69.8
+ },
+ {
+  "abbr": "Lep",
+  "areaDeg2": 290,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 5.57,
+  "decCenter": -19.1,
+  "decMin": -27.3,
+  "decMax": -10.8
+ },
+ {
+  "abbr": "Pic",
+  "areaDeg2": 247,
+  "circPct": 0,
+  "neverPct": 46,
+  "raCenterH": 5.58,
+  "decCenter": -52.5,
+  "decMin": -64.3,
+  "decMax": -42.8
+ },
+ {
+  "abbr": "Ori",
+  "areaDeg2": 594,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 5.59,
+  "decCenter": 5.2,
+  "decMin": -11,
+  "decMax": 22.8
+ },
+ {
+  "abbr": "Cam",
+  "areaDeg2": 757,
+  "circPct": 100,
+  "neverPct": 0,
+  "raCenterH": 5.69,
+  "decCenter": 70.8,
+  "decMin": 52.8,
+  "decMax": 86
+ },
+ {
+  "abbr": "Col",
+  "areaDeg2": 270,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 5.79,
+  "decCenter": -35.6,
+  "decMin": -43,
+  "decMax": -27
+ },
+ {
+  "abbr": "Aur",
+  "areaDeg2": 657,
+  "circPct": 6,
+  "neverPct": 0,
+  "raCenterH": 5.94,
+  "decCenter": 41.1,
+  "decMin": 28,
+  "decMax": 56.3
+ },
+ {
+  "abbr": "CMa",
+  "areaDeg2": 380,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 6.83,
+  "decCenter": -21.9,
+  "decMin": -33.3,
+  "decMax": -11
+ },
+ {
+  "abbr": "Mon",
+  "areaDeg2": 482,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 7.02,
+  "decCenter": -2.7,
+  "decMin": -11.3,
+  "decMax": 12
+ },
+ {
+  "abbr": "Gem",
+  "areaDeg2": 514,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 7.15,
+  "decCenter": 23.4,
+  "decMin": 9.8,
+  "decMax": 35.5
+ },
+ {
+  "abbr": "CMi",
+  "areaDeg2": 183,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 7.63,
+  "decCenter": 5.9,
+  "decMin": -0.3,
+  "decMax": 13.3
+ },
+ {
+  "abbr": "Pup",
+  "areaDeg2": 674,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 7.66,
+  "decCenter": -33.3,
+  "decMin": -51,
+  "decMax": -11.3
+ },
+ {
+  "abbr": "Vol",
+  "areaDeg2": 141,
+  "circPct": 0,
+  "neverPct": 100,
+  "raCenterH": 7.8,
+  "decCenter": -69.7,
+  "decMin": -75.5,
+  "decMax": -64
+ },
+ {
+  "abbr": "Lyn",
+  "areaDeg2": 546,
+  "circPct": 27,
+  "neverPct": 0,
+  "raCenterH": 8.09,
+  "decCenter": 46.8,
+  "decMin": 33,
+  "decMax": 62
+ },
+ {
+  "abbr": "Cnc",
+  "areaDeg2": 506,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 8.68,
+  "decCenter": 19.2,
+  "decMin": 6.5,
+  "decMax": 33.3
+ },
+ {
+  "abbr": "Car",
+  "areaDeg2": 494,
+  "circPct": 0,
+  "neverPct": 94,
+  "raCenterH": 8.78,
+  "decCenter": -63.1,
+  "decMin": -75.8,
+  "decMax": -50.8
+ },
+ {
+  "abbr": "Pyx",
+  "areaDeg2": 221,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 8.91,
+  "decCenter": -28.5,
+  "decMin": -37.3,
+  "decMax": -17.5
+ },
+ {
+  "abbr": "Vel",
+  "areaDeg2": 500,
+  "circPct": 0,
+  "neverPct": 20,
+  "raCenterH": 9.61,
+  "decCenter": -48.1,
+  "decMin": -57.3,
+  "decMax": -37.3
+ },
+ {
+  "abbr": "Ant",
+  "areaDeg2": 241,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 10.13,
+  "decCenter": -34,
+  "decMin": -40.5,
+  "decMax": -24.5
+ },
+ {
+  "abbr": "Sex",
+  "areaDeg2": 313,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 10.27,
+  "decCenter": -2.6,
+  "decMin": -11.8,
+  "decMax": 6.5
+ },
+ {
+  "abbr": "LMi",
+  "areaDeg2": 232,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 10.36,
+  "decCenter": 33.5,
+  "decMin": 22.8,
+  "decMax": 41.5
+ },
+ {
+  "abbr": "Hya",
+  "areaDeg2": 1299,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 10.44,
+  "decCenter": -19,
+  "decMin": -35.8,
+  "decMax": 6.8
+ },
+ {
+  "abbr": "Cha",
+  "areaDeg2": 131,
+  "circPct": 0,
+  "neverPct": 100,
+  "raCenterH": 10.67,
+  "decCenter": -80.2,
+  "decMin": -83.3,
+  "decMax": -75.3
+ },
+ {
+  "abbr": "Leo",
+  "areaDeg2": 944,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 10.7,
+  "decCenter": 15,
+  "decMin": -6.8,
+  "decMax": 33
+ },
+ {
+  "abbr": "UMa",
+  "areaDeg2": 1279,
+  "circPct": 54,
+  "neverPct": 0,
+  "raCenterH": 11.04,
+  "decCenter": 54.4,
+  "decMin": 28.3,
+  "decMax": 73.3
+ },
+ {
+  "abbr": "Crt",
+  "areaDeg2": 281,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 11.4,
+  "decCenter": -15.8,
+  "decMin": -25.3,
+  "decMax": -6.8
+ },
+ {
+  "abbr": "Crv",
+  "areaDeg2": 186,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 12.42,
+  "decCenter": -18.2,
+  "decMin": -25.3,
+  "decMax": -11.8
+ },
+ {
+  "abbr": "Cru",
+  "areaDeg2": 69,
+  "circPct": 0,
+  "neverPct": 100,
+  "raCenterH": 12.45,
+  "decCenter": -60.1,
+  "decMin": -64.8,
+  "decMax": -55.8
+ },
+ {
+  "abbr": "Mus",
+  "areaDeg2": 138,
+  "circPct": 0,
+  "neverPct": 100,
+  "raCenterH": 12.57,
+  "decCenter": -70.1,
+  "decMin": -75.8,
+  "decMax": -64.8
+ },
+ {
+  "abbr": "Com",
+  "areaDeg2": 389,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 12.75,
+  "decCenter": 22.3,
+  "decMin": 13.3,
+  "decMax": 33.3
+ },
+ {
+  "abbr": "Cen",
+  "areaDeg2": 1059,
+  "circPct": 0,
+  "neverPct": 24,
+  "raCenterH": 13.1,
+  "decCenter": -46.1,
+  "decMin": -64.8,
+  "decMax": -30
+ },
+ {
+  "abbr": "CVn",
+  "areaDeg2": 466,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 13.16,
+  "decCenter": 40.3,
+  "decMin": 27.8,
+  "decMax": 52.3
+ },
+ {
+  "abbr": "Vir",
+  "areaDeg2": 1296,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 13.29,
+  "decCenter": -2.7,
+  "decMin": -22.8,
+  "decMax": 14.3
+ },
+ {
+  "abbr": "Boo",
+  "areaDeg2": 908,
+  "circPct": 3,
+  "neverPct": 0,
+  "raCenterH": 14.59,
+  "decCenter": 29.3,
+  "decMin": 7.3,
+  "decMax": 55
+ },
+ {
+  "abbr": "Cir",
+  "areaDeg2": 93,
+  "circPct": 0,
+  "neverPct": 100,
+  "raCenterH": 14.82,
+  "decCenter": -63.2,
+  "decMin": -70.5,
+  "decMax": -55.5
+ },
+ {
+  "abbr": "UMi",
+  "areaDeg2": 256,
+  "circPct": 100,
+  "neverPct": 0,
+  "raCenterH": 15.04,
+  "decCenter": 76.7,
+  "decMin": 65.5,
+  "decMax": 90
+ },
+ {
+  "abbr": "Lib",
+  "areaDeg2": 538,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 15.23,
+  "decCenter": -15.3,
+  "decMin": -30,
+  "decMax": -0.5
+ },
+ {
+  "abbr": "Lup",
+  "areaDeg2": 333,
+  "circPct": 0,
+  "neverPct": 9,
+  "raCenterH": 15.31,
+  "decCenter": -42.4,
+  "decMin": -55.5,
+  "decMax": -29.8
+ },
+ {
+  "abbr": "CrB",
+  "areaDeg2": 179,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 15.88,
+  "decCenter": 32.2,
+  "decMin": 25.5,
+  "decMax": 39.8
+ },
+ {
+  "abbr": "TrA",
+  "areaDeg2": 110,
+  "circPct": 0,
+  "neverPct": 100,
+  "raCenterH": 16.06,
+  "decCenter": -65.8,
+  "decMin": -70.5,
+  "decMax": -60.3
+ },
+ {
+  "abbr": "Nor",
+  "areaDeg2": 165,
+  "circPct": 0,
+  "neverPct": 45,
+  "raCenterH": 16.08,
+  "decCenter": -51.6,
+  "decMin": -60.5,
+  "decMax": -42.3
+ },
+ {
+  "abbr": "Aps",
+  "areaDeg2": 207,
+  "circPct": 0,
+  "neverPct": 100,
+  "raCenterH": 16.26,
+  "decCenter": -76,
+  "decMin": -83,
+  "decMax": -67.5
+ },
+ {
+  "abbr": "Ser",
+  "areaDeg2": 637,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 16.49,
+  "decCenter": 4.8,
+  "decMin": -16.3,
+  "decMax": 25.8
+ },
+ {
+  "abbr": "Sco",
+  "areaDeg2": 498,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 16.76,
+  "decCenter": -32.1,
+  "decMin": -45.8,
+  "decMax": -8.3
+ },
+ {
+  "abbr": "Dra",
+  "areaDeg2": 1083,
+  "circPct": 93,
+  "neverPct": 0,
+  "raCenterH": 16.95,
+  "decCenter": 68.1,
+  "decMin": 47.5,
+  "decMax": 86.5
+ },
+ {
+  "abbr": "Her",
+  "areaDeg2": 1225,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 17.3,
+  "decCenter": 28.6,
+  "decMin": 3.8,
+  "decMax": 51.3
+ },
+ {
+  "abbr": "Oph",
+  "areaDeg2": 949,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 17.31,
+  "decCenter": -5.2,
+  "decMin": -30.3,
+  "decMax": 14.5
+ },
+ {
+  "abbr": "Ara",
+  "areaDeg2": 237,
+  "circPct": 0,
+  "neverPct": 55,
+  "raCenterH": 17.34,
+  "decCenter": -54.2,
+  "decMin": -67.8,
+  "decMax": -45.5
+ },
+ {
+  "abbr": "CrA",
+  "areaDeg2": 128,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 18.65,
+  "decCenter": -41.2,
+  "decMin": -45.5,
+  "decMax": -36.8
+ },
+ {
+  "abbr": "Sct",
+  "areaDeg2": 109,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 18.68,
+  "decCenter": -9.9,
+  "decMin": -16,
+  "decMax": -3.8
+ },
+ {
+  "abbr": "Lyr",
+  "areaDeg2": 286,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 18.84,
+  "decCenter": 36.6,
+  "decMin": 25.8,
+  "decMax": 47.8
+ },
+ {
+  "abbr": "Sgr",
+  "areaDeg2": 868,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 19.17,
+  "decCenter": -27.5,
+  "decMin": -45.3,
+  "decMax": -11.8
+ },
+ {
+  "abbr": "Tel",
+  "areaDeg2": 252,
+  "circPct": 0,
+  "neverPct": 34,
+  "raCenterH": 19.33,
+  "decCenter": -51.2,
+  "decMin": -57,
+  "decMax": -45
+ },
+ {
+  "abbr": "Pav",
+  "areaDeg2": 378,
+  "circPct": 0,
+  "neverPct": 100,
+  "raCenterH": 19.57,
+  "decCenter": -65.6,
+  "decMin": -75,
+  "decMax": -56.5
+ },
+ {
+  "abbr": "Aql",
+  "areaDeg2": 651,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 19.65,
+  "decCenter": 2.1,
+  "decMin": -11.8,
+  "decMax": 18.8
+ },
+ {
+  "abbr": "Sge",
+  "areaDeg2": 80,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 19.72,
+  "decCenter": 18.7,
+  "decMin": 16,
+  "decMax": 21.8
+ },
+ {
+  "abbr": "Vul",
+  "areaDeg2": 269,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 20.29,
+  "decCenter": 24.9,
+  "decMin": 19.5,
+  "decMax": 29.5
+ },
+ {
+  "abbr": "Cyg",
+  "areaDeg2": 806,
+  "circPct": 14,
+  "neverPct": 0,
+  "raCenterH": 20.62,
+  "decCenter": 43.1,
+  "decMin": 27.8,
+  "decMax": 61.3
+ },
+ {
+  "abbr": "Del",
+  "areaDeg2": 190,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 20.68,
+  "decCenter": 12.2,
+  "decMin": 2.5,
+  "decMax": 21
+ },
+ {
+  "abbr": "Mic",
+  "areaDeg2": 210,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 20.97,
+  "decCenter": -36,
+  "decMin": -45,
+  "decMax": -27.5
+ },
+ {
+  "abbr": "Cap",
+  "areaDeg2": 414,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 21.02,
+  "decCenter": -18.7,
+  "decMin": -27.8,
+  "decMax": -8.5
+ },
+ {
+  "abbr": "Equ",
+  "areaDeg2": 71,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 21.2,
+  "decCenter": 7.4,
+  "decMin": 2.5,
+  "decMax": 13
+ },
+ {
+  "abbr": "Oct",
+  "areaDeg2": 291,
+  "circPct": 0,
+  "neverPct": 100,
+  "raCenterH": 21.26,
+  "decCenter": -84.5,
+  "decMin": -90,
+  "decMax": -74.3
+ },
+ {
+  "abbr": "Ind",
+  "areaDeg2": 294,
+  "circPct": 0,
+  "neverPct": 69,
+  "raCenterH": 21.48,
+  "decCenter": -58.5,
+  "decMin": -74.5,
+  "decMax": -45
+ },
+ {
+  "abbr": "PsA",
+  "areaDeg2": 246,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 22.29,
+  "decCenter": -30.7,
+  "decMin": -36.5,
+  "decMax": -24.8
+ },
+ {
+  "abbr": "Cep",
+  "areaDeg2": 587,
+  "circPct": 100,
+  "neverPct": 0,
+  "raCenterH": 22.32,
+  "decCenter": 72.1,
+  "decMin": 53.3,
+  "decMax": 88.8
+ },
+ {
+  "abbr": "Aqr",
+  "areaDeg2": 977,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 22.4,
+  "decCenter": -10.4,
+  "decMin": -25,
+  "decMax": 3.3
+ },
+ {
+  "abbr": "Lac",
+  "areaDeg2": 200,
+  "circPct": 14,
+  "neverPct": 0,
+  "raCenterH": 22.5,
+  "decCenter": 45.1,
+  "decMin": 35.3,
+  "decMax": 57
+ },
+ {
+  "abbr": "Gru",
+  "areaDeg2": 366,
+  "circPct": 0,
+  "neverPct": 12,
+  "raCenterH": 22.53,
+  "decCenter": -45.2,
+  "decMin": -56.5,
+  "decMax": -36.3
+ },
+ {
+  "abbr": "Peg",
+  "areaDeg2": 1118,
+  "circPct": 0,
+  "neverPct": 0,
+  "raCenterH": 22.69,
+  "decCenter": 19.5,
+  "decMin": 2.3,
+  "decMax": 36.5
+ },
+ {
+  "abbr": "Tuc",
+  "areaDeg2": 295,
+  "circPct": 0,
+  "neverPct": 100,
+  "raCenterH": 23.84,
+  "decCenter": -64.5,
+  "decMin": -75.3,
+  "decMax": -56.3
+ }
+]

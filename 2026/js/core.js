@@ -5,7 +5,7 @@
   var CN = window.CN = {};
 
   // ===== 설정 =====
-  CN.VERSION = '20261013c';
+  CN.VERSION = '20261013d';
   CN.DB_URL = 'https://gwangsu-on-default-rtdb.firebaseio.com';
   CN.ROOT = 'years/2026/cosmosNight';          // 행사·천체 아카이브 데이터 (연도 바뀌어도 이 경로 고정)
   CN.ROSTER_YEAR = 2026;                        // 학생·교사 명단 연도
@@ -251,7 +251,15 @@
     t._h = setTimeout(function () { t.classList.remove('show'); }, ms || 2400);
   };
 
-  // html을 담은 모달을 열고 {el, close} 반환. opts.onClose
+  // 모바일 뒤로가기(브라우저 back)로 페이지 대신 맨 위 모달부터 닫기
+  var modalStack = [], ignorePops = 0;
+  window.addEventListener('popstate', function () {
+    if (ignorePops > 0) { ignorePops--; return; }
+    var top = modalStack[modalStack.length - 1];
+    if (top) top.fromPop();
+  });
+
+  // html을 담은 모달을 열고 {el, close} 반환. opts.onClose, opts.beforeClose
   CN.modal = function (html, opts) {
     opts = opts || {};
     var back = document.createElement('div');
@@ -261,15 +269,31 @@
     document.body.style.overflow = 'hidden';
     var el = back.querySelector('.modal');
     var closed = false;
-    var close = function () {
-      if (closed) return;
-      if (opts.beforeClose && opts.beforeClose() === false) return;
+    var entry = { pushed: false };
+    var finish = function () {
       closed = true;
       back.remove();
+      var i = modalStack.indexOf(entry); if (i >= 0) modalStack.splice(i, 1);
       if (!document.querySelector('.modal-back')) document.body.style.overflow = '';
       document.removeEventListener('keydown', onKey);
       if (opts.onClose) opts.onClose();
     };
+    // 닫기 버튼·바깥 누르기·Esc
+    var close = function () {
+      if (closed) return;
+      if (opts.beforeClose && opts.beforeClose() === false) return;
+      finish();
+      if (entry.pushed) { entry.pushed = false; ignorePops++; try { history.back(); } catch (e) { ignorePops--; } }
+    };
+    // 휴대폰 뒤로가기
+    entry.fromPop = function () {
+      if (closed) return;
+      entry.pushed = false;
+      if (opts.beforeClose && opts.beforeClose() === false) { try { history.pushState({ cnModal: 1 }, ''); entry.pushed = true; } catch (e) {} return; }
+      finish();
+    };
+    try { history.pushState({ cnModal: 1 }, ''); entry.pushed = true; } catch (e) {}
+    modalStack.push(entry);
     var onKey = function (e) { if (e.key === 'Escape') close(); };
     document.addEventListener('keydown', onKey);
     back.addEventListener('click', function (e) { if (e.target === back) close(); });

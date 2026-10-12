@@ -10,8 +10,8 @@
 <meta property="og:title" content="밤하늘 관측 도우미 · 코스모스">
 <meta property="og:description" content="오늘 밤 무엇이 보일까? 날짜·시각·장소에 맞춰 천체 위치와 찾는 법을 알려 드려요">
 <meta property="og:image" content="https://ddelza.github.io/cosmos/2026/img/og.jpg">
-<link rel="stylesheet" href="2026/css/site.css?v=20261013c">
-<link rel="stylesheet" href="2026/css/objects.css?v=20261013c">
+<link rel="stylesheet" href="2026/css/site.css?v=20261013d">
+<link rel="stylesheet" href="2026/css/objects.css?v=20261013d">
 <style>
 .setbox .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .setbox input[type=date], .setbox input[type=time], .setbox input[type=number] {
@@ -71,11 +71,11 @@ details.grp.feat > summary { color: var(--red); }
 </main>
 
 <script>window.CN_BASE = '2026/';</script>
-<script src="2026/js/core.js?v=20261013c"></script>
+<script src="2026/js/core.js?v=20261013d"></script>
 <script src="2026/js/vendor/astronomy.browser.min.js"></script>
-<script src="2026/js/astro.js?v=20261013c"></script>
-<script src="2026/js/catalog.js?v=20261013c"></script>
-<script src="2026/js/object-view.js?v=20261013c"></script>
+<script src="2026/js/astro.js?v=20261013d"></script>
+<script src="2026/js/catalog.js?v=20261013d"></script>
+<script src="2026/js/object-view.js?v=20261013d"></script>
 <script>
 (function () {
   'use strict';
@@ -84,7 +84,7 @@ details.grp.feat > summary { color: var(--red); }
 
   var PLACES = { gwangsu: { name: '광수중학교', lat: 37.47304, lon: 127.3196 } };
   var KEY = 'cn26nightly';
-  var TYPE_CHIPS = [['all', '전체'], ['featured', '★ 추천'], ['planet', '🪐 행성·달'], ['star', '⭐ 별'], ['cluster', '✨ 성단'], ['nebula', '☁️ 성운'], ['galaxy', '🌀 은하'], ['other', '기타']];
+  var TYPE_CHIPS = [['all', '전체'], ['featured', '★ 추천'], ['planet', '🪐 행성·달'], ['star', '⭐ 별'], ['cluster', '✨ 성단'], ['nebula', '☁️ 성운'], ['galaxy', '🌀 은하'], ['constellation', '✦ 별자리'], ['other', '기타']];
   var pad = function (n) { return String(n).padStart(2, '0'); };
   var hm = function (d) { return d ? pad(d.getHours()) + ':' + pad(d.getMinutes()) : '—'; };
   var ymd = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
@@ -93,10 +93,11 @@ details.grp.feat > summary { color: var(--red); }
   // ----- 설정 -----
   var now = new Date();
   var S = { date: ymd(now), time: hm(now), place: 'gwangsu', lat: PLACES.gwangsu.lat, lon: PLACES.gwangsu.lon, name: PLACES.gwangsu.name,
-    minAlt: 20, mode: 'now', type: 'all', sort: 'rec', q: '', todo: false };
+    minAlt: 20, mode: 'now', types: [], sort: 'rec', q: '', todo: false };
   try {
     var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (saved) ['place', 'lat', 'lon', 'name', 'minAlt', 'mode', 'type', 'sort'].forEach(function (k) { if (saved[k] !== undefined) S[k] = saved[k]; });
+    if (saved) ['place', 'lat', 'lon', 'name', 'minAlt', 'mode', 'sort'].forEach(function (k) { if (saved[k] !== undefined) S[k] = saved[k]; });
+    if (saved && Array.isArray(saved.types)) S.types = saved.types;
   } catch (e) {}
   var qp = new URLSearchParams(location.search);
   if (/^\d{4}-\d{2}-\d{2}$/.test(qp.get('date') || '')) S.date = qp.get('date');
@@ -105,11 +106,11 @@ details.grp.feat > summary { color: var(--red); }
   var detailId = qp.get('id');
 
   function save() {
-    try { localStorage.setItem(KEY, JSON.stringify({ place: S.place, lat: S.lat, lon: S.lon, name: S.name, minAlt: S.minAlt, mode: S.mode, type: S.type, sort: S.sort })); } catch (e) {}
+    try { localStorage.setItem(KEY, JSON.stringify({ place: S.place, lat: S.lat, lon: S.lon, name: S.name, minAlt: S.minAlt, mode: S.mode, types: S.types, sort: S.sort })); } catch (e) {}
     var p = new URLSearchParams({ date: S.date, time: S.time });
     if (S.place !== 'gwangsu') { p.set('lat', (+S.lat).toFixed(4)); p.set('lon', (+S.lon).toFixed(4)); p.set('name', S.name); }
     if (detailId) p.set('id', detailId);
-    try { history.replaceState(null, '', 'nightly.html?' + p.toString()); } catch (e) {}
+    try { history.replaceState(history.state, '', 'nightly.html?' + p.toString()); } catch (e) {}
   }
 
   function baseDate() {
@@ -198,7 +199,7 @@ details.grp.feat > summary { color: var(--red); }
       '<button class="chip" data-mode="now">이 시각에<br>보이는 천체</button><button class="chip" data-mode="night">오늘 밤 한 번이라도<br>보이는 천체</button><button class="chip" data-mode="all">모든 천체<br>둘러보기</button></div>' +
       '<div id="altBox" class="alt-row"><label for="minAlt" style="font-size:.86rem;white-space:nowrap">최소 고도</label><input type="range" id="minAlt" min="0" max="60" step="5"><span class="v" id="minAltV"></span></div>' +
       '<div class="chips" id="typeChips" style="margin-top:10px"></div>' +
-      '<div class="ctrl-row"><select id="sort" aria-label="정렬"><option value="rec">추천순</option><option value="alt">높이순</option><option value="mag">밝기순</option><option value="az">방향순</option></select>' +
+      '<div class="ctrl-row"><select id="sort" aria-label="정렬"><option value="rec">추천순</option><option value="alt">높이순</option><option value="mag">밝기순</option><option value="az">방향순 (남서→서→북→동→남)</option></select>' +
       '<input type="search" id="q" placeholder="이름 찾기 (예: 안드로메다, M45, 직녀성)" autocomplete="off"></div>' +
       (CN.isAdmin() ? '<div class="chips" style="margin-top:8px"><button class="chip" id="bTodo" aria-pressed="false">✎ 작성 필요만</button></div>' : '') +
       '<div id="list"></div>' +
@@ -241,10 +242,7 @@ details.grp.feat > summary { color: var(--red); }
     r.value = S.minAlt; v.textContent = S.minAlt + '° 이상';
     r.addEventListener('input', function () { S.minAlt = Number(r.value); v.textContent = S.minAlt + '° 이상'; renderList(); });
     r.addEventListener('change', save);
-    var tc = document.getElementById('typeChips');
-    tc.innerHTML = TYPE_CHIPS.map(function (x) { return '<button class="chip" data-type="' + x[0] + '">' + x[1] + '</button>'; }).join('');
-    tc.querySelectorAll('[data-type]').forEach(function (b) { b.onclick = function () { S.type = b.dataset.type; save(); setPressedIn('#typeChips', 'data-type', S.type); renderList(); }; });
-    setPressedIn('#typeChips', 'data-type', S.type);
+    CN.typeFilter.render(document.getElementById('typeChips'), TYPE_CHIPS, S.types, function (t) { S.types = t; save(); renderList(); });
     var so = document.getElementById('sort'); so.value = S.sort; so.onchange = function () { S.sort = so.value; save(); renderList(); };
     var q = document.getElementById('q'), composing = false, timer;
     q.addEventListener('compositionstart', function () { composing = true; });
@@ -313,12 +311,7 @@ details.grp.feat > summary { color: var(--red); }
   }
 
   function brightness(o) { return o.mag != null ? o.mag : (o.magRange ? o.magRange[0] : 99); }
-  function typeOk(o) {
-    if (S.type === 'all') return true;
-    if (S.type === 'featured') return CN.isFeatured(state, o);
-    if (S.type === 'planet') return o.type === 'planet' || o.type === 'moon';
-    return o.type === S.type;
-  }
+  function typeOk(o) { return CN.typeFilter.match(state, o, S.types, true); }
   function progress(o) {
     var c = state.content[o.id] || {}, n = 0;
     if (c.points && c.points.v) n++; if (c.description && c.description.v) n++;
@@ -380,14 +373,14 @@ details.grp.feat > summary { color: var(--red); }
     } else if (S.mode === 'now') {
       var b = baseDate(), P2 = posAt(b), sky = Astro.sky(b);
       items = base.filter(function (o) { var p = P2[o.id]; return p && p.alt >= S.minAlt && p.alt >= 0; });
-      var cmp = { alt: function (a, c) { return P2[c.id].alt - P2[a.id].alt; }, az: function (a, c) { return P2[a.id].az - P2[c.id].az; }, mag: function (a, c) { return brightness(a) - brightness(c); }, rec: function (a, c) { return brightness(a) - brightness(c); } }[S.sort];
+      var cmp = { alt: function (a, c) { return P2[c.id].alt - P2[a.id].alt; }, az: function (a, c) { return Astro.dirKey(P2[a.id].az) - Astro.dirKey(P2[c.id].az); }, mag: function (a, c) { return brightness(a) - brightness(c); }, rec: function (a, c) { return brightness(a) - brightness(c); } }[S.sort];
       items.sort(cmp);
       html = '<div class="count">' + esc(S.time) + ' · 고도 ' + S.minAlt + '° 이상 · ' + items.length + '개</div>';
       html += grouped(items, function (o) { return rowNow(o, P2[o.id], sky); });
     } else {
       var sm = summary();
       items = base.filter(function (o) { var x = sm[o.id]; return x && x.first >= 0; });
-      var cmp2 = { alt: function (a, c) { return sm[c.id].best.alt - sm[a.id].best.alt; }, az: function (a, c) { return sm[a.id].best.az - sm[c.id].best.az; }, mag: function (a, c) { return brightness(a) - brightness(c); }, rec: function (a, c) { return sm[a.id].first - sm[c.id].first || brightness(a) - brightness(c); } }[S.sort];
+      var cmp2 = { alt: function (a, c) { return sm[c.id].best.alt - sm[a.id].best.alt; }, az: function (a, c) { return Astro.dirKey(sm[a.id].best.az) - Astro.dirKey(sm[c.id].best.az); }, mag: function (a, c) { return brightness(a) - brightness(c); }, rec: function (a, c) { return sm[a.id].first - sm[c.id].first || brightness(a) - brightness(c); } }[S.sort];
       items.sort(cmp2);
       html = '<div class="count">' + esc(dayLabel(win.noon)) + ' 밤(' + hm(win.sunset) + '~' + hm(win.sunrise) + ') 정각 중 한 번이라도 고도 ' + S.minAlt + '° 이상 · ' + items.length + '개</div>';
       html += grouped(items, function (o) { return rowNight(o, sm[o.id]); });
@@ -398,11 +391,11 @@ details.grp.feat > summary { color: var(--red); }
   }
 
   function grouped(items, row) {
-    if (S.sort !== 'rec' || S.type !== 'all' || S.q || !items.length) return '<div class="rows">' + items.map(row).join('') + '</div>';
+    if (S.sort !== 'rec' || S.types.length || S.q || !items.length) return '<div class="rows">' + items.map(row).join('') + '</div>';
     var feat = items.filter(function (o) { return CN.isFeatured(state, o); }), rest = items.filter(function (o) { return !CN.isFeatured(state, o); });
     var h = '';
     if (feat.length) h += '<details class="grp feat" open><summary>★ 코스모스 추천 <span class="n">' + feat.length + '개</span></summary><div class="rows">' + feat.map(row).join('') + '</div></details>';
-    ['planet', 'star', 'cluster', 'nebula', 'galaxy', 'other'].forEach(function (tp) {
+    ['planet', 'star', 'cluster', 'nebula', 'galaxy', 'other', 'constellation'].forEach(function (tp) {
       var g = rest.filter(function (o) { return o.type === tp || (tp === 'planet' && o.type === 'moon'); });
       if (!g.length) return;
       var T = CN.TYPES[tp];

@@ -8,19 +8,19 @@
 <title>다양한 천체 둘러보기 · 2026 광수중 주민 천체관측회</title>
 <meta property="og:title" content="다양한 천체 둘러보기 · 2026 광수중 주민 천체관측회">
 <meta property="og:description" content="광수중 천체관측동아리 코스모스가 정리한 천체 이야기와 찾는 법">
-<link rel="stylesheet" href="css/site.css?v=20261013c">
-<link rel="stylesheet" href="css/objects.css?v=20261013c">
+<link rel="stylesheet" href="css/site.css?v=20261013d">
+<link rel="stylesheet" href="css/objects.css?v=20261013d">
 </head>
 <body>
 <main class="wrap" id="app">
   <div class="loading">불러오는 중…</div>
 </main>
 
-<script src="js/core.js?v=20261013c"></script>
+<script src="js/core.js?v=20261013d"></script>
 <script src="js/vendor/astronomy.browser.min.js"></script>
-<script src="js/astro.js?v=20261013c"></script>
-<script src="js/catalog.js?v=20261013c"></script>
-<script src="js/object-view.js?v=20261013c"></script>
+<script src="js/astro.js?v=20261013d"></script>
+<script src="js/catalog.js?v=20261013d"></script>
+<script src="js/object-view.js?v=20261013d"></script>
 <script>
 (function () {
   'use strict';
@@ -28,7 +28,7 @@
   CN.topbar();
   var id = CN.qs('id');
   var state;
-  var filter = { type: 'all', featured: false, tonight: false, todo: false, q: '' };
+  var filter = { types: [], featured: false, tonight: false, todo: false, q: '' };
   var tonightMax = null; // id → 행사 시간대 최고 고도
 
   function computeTonight() {
@@ -56,15 +56,12 @@
   // ----- 목록 -----
   function renderListShell() {
     var admin = CN.isAdmin();
-    var types = ['all', 'planet', 'star', 'cluster', 'nebula', 'galaxy', 'moon', 'other'];
+    var TYPE_CHIPS = ['all', 'planet', 'star', 'cluster', 'nebula', 'galaxy', 'moon', 'constellation', 'other'].map(function (t) { return [t, t === 'all' ? '전체' : CN.TYPES[t].icon + ' ' + CN.TYPES[t].ko]; });
     app.innerHTML =
       '<h1>다양한 천체 둘러보기</h1>' +
       '<p class="sub">천체관측동아리 코스모스 학생들이 정리한 천체 이야기와 밤하늘에서 찾는 법이에요. 천체를 누르면 자세히 볼 수 있어요.</p>' +
       '<input type="search" id="q" placeholder="이름으로 찾기 (예: 안드로메다, M45, 직녀성)" autocomplete="off" style="width:100%">' +
-      '<div class="chips filters" id="typeChips">' + types.map(function (t) {
-        var label = t === 'all' ? '전체' : CN.TYPES[t].icon + ' ' + CN.TYPES[t].ko;
-        return '<button class="chip' + (filter.type === t ? ' on' : '') + '" data-type="' + t + '" aria-pressed="' + (filter.type === t) + '">' + label + '</button>';
-      }).join('') + '</div>' +
+      '<div class="chips filters" id="typeChips"></div>' +
       '<div class="chips filters">' +
       '<button class="chip" data-toggle="featured" aria-pressed="false">★ 관측회 추천</button>' +
       '<button class="chip" data-toggle="tonight" aria-pressed="false">' + esc(CN.dateShort(state.config.eventDate)) + ' 밤에 보이는 것만</button>' +
@@ -78,13 +75,7 @@
     q.addEventListener('compositionstart', function () { composing = true; });
     q.addEventListener('compositionend', function () { composing = false; filter.q = q.value; renderGrid(); });
     q.addEventListener('input', function () { if (composing) return; clearTimeout(timer); timer = setTimeout(function () { filter.q = q.value; renderGrid(); }, 120); });
-    app.querySelectorAll('[data-type]').forEach(function (b) {
-      b.onclick = function () {
-        filter.type = b.dataset.type;
-        app.querySelectorAll('[data-type]').forEach(function (x) { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); });
-        renderGrid();
-      };
-    });
+    CN.typeFilter.render(document.getElementById('typeChips'), TYPE_CHIPS, filter.types, function (t) { filter.types = t; renderGrid(); });
     app.querySelectorAll('[data-toggle]').forEach(function (b) {
       b.onclick = function () {
         var k = b.dataset.toggle; filter[k] = !filter[k];
@@ -100,7 +91,7 @@
     if (filter.tonight) computeTonight();
     var q = filter.q.toLowerCase().replace(/\s+/g, '');
     var items = state.list.filter(function (o) {
-      if (filter.type !== 'all' && o.type !== filter.type) return false;
+      if (!CN.typeFilter.match(state, o, filter.types, false)) return false;
       if (filter.featured && !CN.isFeatured(state, o)) return false;
       if (filter.tonight && !(tonightMax[o.id] >= 20)) return false;
       if (filter.todo && progress(o) >= 3) return false;
