@@ -5,7 +5,7 @@
   var CN = window.CN = {};
 
   // ===== 설정 =====
-  CN.VERSION = '20261012a';
+  CN.VERSION = '20261013a';
   CN.DB_URL = 'https://gwangsu-on-default-rtdb.firebaseio.com';
   CN.ROOT = 'years/2026/cosmosNight';          // 행사·천체 아카이브 데이터 (연도 바뀌어도 이 경로 고정)
   CN.ROSTER_YEAR = 2026;                        // 학생·교사 명단 연도
@@ -386,12 +386,17 @@
     if (s) return w > 500 ? s.full : s.thumb;
     return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) + '&sz=w' + w;
   };
-  // <img onerror> 대체 사슬: 드라이브 썸네일 → lh3 → 기본 이미지
+  // <img onerror> 대체 사슬: 드라이브 썸네일 → lh3 → (3초 뒤) 드라이브 다시 → 기본 이미지
+  // 방금 올린 사진은 드라이브가 썸네일을 만드는 데 몇 초 걸릴 수 있음
   CN.imgFallback = function (img) {
     var step = Number(img.dataset.fb || 0);
     img.dataset.fb = step + 1;
     var id = img.dataset.fid, w = img.dataset.w || 400;
     if (step === 0 && id) { img.src = 'https://lh3.googleusercontent.com/d/' + encodeURIComponent(id) + '=w' + w; return; }
+    if (step === 1 && id) {
+      setTimeout(function () { img.src = 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w' + w + '&r=' + Date.now(); }, 3000);
+      return;
+    }
     if (img.dataset.alt) { img.removeAttribute('onerror'); img.src = img.dataset.alt; return; }
     img.style.visibility = 'hidden';
   };
