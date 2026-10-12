@@ -7,8 +7,8 @@
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <meta name="robots" content="noindex">
 <title>관리자 메뉴 · 2026 광수중 주민 천체관측회</title>
-<link rel="stylesheet" href="css/site.css?v=20261013a">
-<link rel="stylesheet" href="css/objects.css?v=20261013a">
+<link rel="stylesheet" href="css/site.css?v=20261013b">
+<link rel="stylesheet" href="css/objects.css?v=20261013b">
 <style>
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .stat { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px; text-align: center; }
@@ -25,8 +25,8 @@ table.t td.n { text-align: right; }
 <body>
 <main class="wrap" id="app"><div class="loading">불러오는 중…</div></main>
 
-<script src="js/core.js?v=20261013a"></script>
-<script src="js/catalog.js?v=20261013a"></script>
+<script src="js/core.js?v=20261013b"></script>
+<script src="js/catalog.js?v=20261013b"></script>
 <script>
 (function () {
   'use strict';
@@ -53,16 +53,23 @@ table.t td.n { text-align: right; }
     try {
       var c = await CN.api('counts', {}, 20000);
       if (!c || !c.ok) throw new Error(c && c.error ? c.error : '집계를 불러오지 못했어요.');
-      var rows = function (obj) { return Object.keys(obj).map(function (k) { return '<tr><td>' + esc(k) + '</td><td class="n">' + obj[k].forms + '건</td><td class="n">' + obj[k].people + '명</td></tr>'; }).join(''); };
+      var rows = function (obj) { return Object.keys(obj).map(function (k) { return '<tr><td>' + esc(k) + '</td><td class="n">' + obj[k].forms + '건</td><td class="n">' + obj[k].people + '명' + (obj[k].remaining != null ? ' <span class="hint-inline">(남은 ' + obj[k].remaining + ')</span>' : '') + '</td></tr>'; }).join(''); };
       el.innerHTML = '<h2 style="margin-top:0">사전신청 현황</h2>' +
         '<div class="stats"><div class="stat"><div class="v">' + c.total.forms + '</div><div class="l">신청 건수</div></div><div class="stat"><div class="v">' + c.total.people + '</div><div class="l">예상 인원</div></div><div class="stat"><div class="v">' + (c.regOpen ? '받는 중' : '마감') + '</div><div class="l">신청 상태</div></div></div>' +
         '<h3 style="margin-top:14px">시간대별</h3><table class="t"><tr><th>시간대</th><th class="n">건수</th><th class="n">인원</th></tr>' + rows(c.slots) + '</table>' +
         '<h3 style="margin-top:14px">신분별</h3><table class="t"><tr><th>신분</th><th class="n">건수</th><th class="n">인원</th></tr>' + rows(c.roles) + '</table>' +
-        '<div class="row2"><button class="btn small" id="toggleReg">' + (c.regOpen ? '사전신청 마감하기' : '사전신청 다시 열기') + '</button><button class="btn small ghost" id="links">신청 명단(구글 시트) 열기</button></div>' +
+        '<div class="row2"><button class="btn small" id="toggleReg">' + (c.regOpen ? '사전신청 마감하기' : '사전신청 다시 열기') + '</button><button class="btn small ghost" id="links">신청 명단(구글 시트) 열기</button><a class="btn small ghost" href="status.html">공개 현황 페이지</a></div>' +
+        (c.capacity ? '<h3 style="margin-top:16px">첫 타임(' + esc(c.firstSlot) + ') 학생 신청</h3><p class="hint" style="margin-top:0">첫 타임은 주민 우선이라 학생 신청을 막아 두었어요. 자리가 남으면 열어 주세요. 정원은 시간대마다 ' + c.capacity + '명이에요.</p>' +
+          '<div class="row2" style="margin-top:4px"><strong>' + (c.studentFirstOpen ? '지금: 학생도 신청 가능' : '지금: 학생 신청 막힘') + '</strong><button class="btn small" id="toggleStudent">' + (c.studentFirstOpen ? '학생 신청 다시 막기' : '학생에게도 열기') + '</button></div>' : '') +
         '<p class="hint">명단(이름·학번 등)은 사이트에 띄우지 않고 구글 시트에서만 볼 수 있어요. 시트는 소유자 계정으로 로그인해야 열려요. 집계는 1분마다 갱신돼요.</p>';
       document.getElementById('toggleReg').onclick = async function () {
         if (!confirm(c.regOpen ? '사전신청을 마감할까요?' : '사전신청을 다시 열까요?')) return;
         try { var r = await CN.api('setRegOpen', { pw: a.pw, open: c.regOpen ? 'N' : 'Y' }); if (!r.ok) throw new Error(r.error); loadReg(); } catch (e) { CN.toast(e.message); }
+      };
+      var ts = document.getElementById('toggleStudent');
+      if (ts) ts.onclick = async function () {
+        if (!confirm(c.studentFirstOpen ? '첫 타임 학생 신청을 다시 막을까요? (이미 신청한 학생은 그대로예요)' : '첫 타임(' + c.firstSlot + ')을 학생에게도 열까요?')) return;
+        try { var r = await CN.api('setStudentFirst', { pw: a.pw, open: c.studentFirstOpen ? 'N' : 'Y' }); if (!r.ok) throw new Error(r.error); CN.toast('바꿨어요'); loadReg(); } catch (e) { CN.toast(e.message); }
       };
       document.getElementById('links').onclick = async function () {
         try { var r = await CN.api('links', { pw: a.pw }); if (!r.ok) throw new Error(r.error); window.open(r.sheetUrl, '_blank', 'noopener'); } catch (e) { CN.toast(e.message, 4000); }

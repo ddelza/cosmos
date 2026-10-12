@@ -8,25 +8,32 @@
 <title>사전신청 · 2026 광수중 주민 천체관측회</title>
 <meta property="og:title" content="사전신청 · 2026 광수중학교 주민 공개 천체관측회">
 <meta property="og:description" content="원하는 관측 시간대를 골라 신청해 주세요">
-<link rel="stylesheet" href="css/site.css?v=20261013a">
+<link rel="stylesheet" href="css/site.css?v=20261013b">
 <style>
 .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .role { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 10px; text-align: center; cursor: pointer; color: var(--text); font-family: inherit; font-size: 1rem; }
 .role .i { font-size: 1.6rem; display: block; }
 .role[aria-pressed="true"] { border-color: var(--red); background: var(--red-soft); color: var(--text-strong); font-weight: 700; }
 .slots { display: grid; gap: 8px; }
-.slot { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; cursor: pointer; color: var(--text); font-family: inherit; text-align: left; font-size: 1.05rem; }
-.slot[aria-pressed="true"] { border-color: var(--red); background: var(--red-soft); color: var(--text-strong); font-weight: 700; }
-.slot .n { margin-left: auto; font-size: .8rem; color: var(--muted); font-weight: 400; }
+.slot { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer; color: var(--text); font-family: inherit; text-align: left; font-size: 1.05rem; }
+.slot .t { font-weight: 700; color: var(--text-strong); }
+.slot .n { grid-column: 2; font-size: .8rem; color: var(--muted); font-weight: 400; }
+.slot .bar { grid-column: 1 / -1; height: 4px; border-radius: 4px; background: var(--bg-2); overflow: hidden; margin-top: 6px; }
+.slot .bar i { display: block; height: 100%; background: var(--red-deep); }
+.slot[aria-pressed="true"] { border-color: var(--red); background: var(--red-soft); }
+.slot:disabled { opacity: .45; cursor: not-allowed; }
+.slot .why { grid-column: 2; font-size: .78rem; color: var(--warn); }
 .step-n { display: inline-block; width: 1.6em; height: 1.6em; line-height: 1.6em; text-align: center; border-radius: 99px; background: var(--red-soft); color: var(--text-strong); font-size: .8rem; margin-right: 6px; }
 .consent { font-size: .8rem; color: var(--text); background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; line-height: 1.6; }
 .consent ul { margin: 4px 0; padding-left: 18px; }
 .check { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; font-size: .92rem; color: var(--text-strong); }
-.check input { width: 20px; height: 20px; accent-color: var(--red); flex: none; margin-top: 2px; }
 .done-box h2 { color: var(--red); }
 .inapp { display: none; background: #2a0b0a; border: 1px solid var(--red-deep); border-radius: 10px; padding: 10px 12px; font-size: .84rem; margin-top: 12px; }
 .inapp.show { display: block; }
 .quick .chip { font-size: .78rem; padding: 5px 10px; }
+#phoneConsentBox { display: none; }
+.pub-preview { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: .9rem; }
+.pub-state { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; font-size: .88rem; }
 </style>
 </head>
 <body>
@@ -35,6 +42,7 @@
   <p class="sub" id="lead">원하는 관측 시간대를 골라 주세요. 시간대별 인원을 나눠서 망원경 앞 줄을 줄이려고 해요.</p>
   <div class="inapp" id="inapp">카카오톡 안에서 열려 있어요. 신청이 잘 안 되면 <a href="#" id="openExt">다른 브라우저(크롬·사파리)로 열기</a>를 눌러 주세요.</div>
   <div class="msg ok" id="already"></div>
+  <p style="margin:10px 0 0"><a href="status.html">👥 사전신청 현황 보기 →</a></p>
 
   <form id="form" novalidate>
     <h2><span class="step-n">1</span>어떤 분이신가요?</h2>
@@ -49,17 +57,35 @@
 
     <h2><span class="step-n">3</span>관측 시간대</h2>
     <div class="slots" id="slots"></div>
+    <p class="hint" id="slotHint"></p>
 
-    <h2><span class="step-n">4</span>기대되는 천체 또는 하고 싶은 말 <span class="hint-inline" style="font-weight:400;color:var(--muted);font-size:.8rem">(선택)</span></h2>
+    <h2><span class="step-n">4</span>기대되는 천체 또는 하고 싶은 말 <span style="font-weight:400;color:var(--muted);font-size:.8rem">(선택)</span></h2>
     <div class="chips quick" id="quick"></div>
     <textarea id="message" maxlength="300" rows="3" placeholder="예) 토성 고리를 꼭 보고 싶어요! / 아이가 별을 정말 좋아해요" style="margin-top:8px"></textarea>
 
-    <h2><span class="step-n">5</span>개인정보 수집·이용 동의</h2>
+    <div id="phoneSection" style="display:none">
+      <h2><span class="step-n">5</span>알림 받을 휴대폰 번호 <span style="font-weight:400;color:var(--muted);font-size:.8rem">(선택)</span></h2>
+      <input type="tel" id="phone" inputmode="tel" maxlength="13" placeholder="010-1234-5678" autocomplete="tel">
+      <div class="hint">적어 주시면 신청한 관측 시간에 맞춰 알림 문자를 보내 드려요. <strong>비워 두셔도 신청할 수 있어요.</strong></div>
+      <div id="phoneConsentBox">
+        <div class="consent" style="margin-top:10px">
+          <ul>
+            <li><strong>수집 항목(선택)</strong>: 휴대폰 번호</li>
+            <li><strong>목적</strong>: 신청한 관측 시간에 맞춘 알림 문자 발송</li>
+            <li><strong>보유 기간</strong>: 이용 목적을 달성하면(행사 종료 후) 지체 없이 파기</li>
+            <li>동의하지 않으면 번호를 비워 두세요. 번호 없이도 신청과 참여에 아무 불이익이 없어요.</li>
+          </ul>
+        </div>
+        <label class="check"><input type="checkbox" id="phoneConsent"> (선택) 알림 문자 발송을 위한 휴대폰 번호 수집·이용에 동의합니다.</label>
+      </div>
+    </div>
+
+    <h2><span class="step-n" id="consentStep">5</span>개인정보 수집·이용 동의 <span style="font-weight:400;color:var(--muted);font-size:.8rem">(필수)</span></h2>
     <div class="consent">
       <ul>
         <li><strong>수집 항목</strong>: 신분, 이름(또는 별칭), 학번(학생), 자녀 이름·관계(학부모), 희망 시간대, 함께 오는 인원, 남기는 말</li>
         <li><strong>목적</strong>: 시간대별 관측 인원 파악과 행사 안내</li>
-        <li><strong>보유 기간</strong>: 2026년 11월 30일까지 (행사가 연기되면 행사 후 2주 이내) 보관 후 파기</li>
+        <li><strong>보유 기간</strong>: 이용 목적을 달성하면(행사 종료 후) 지체 없이 파기</li>
         <li><strong>보관 위치</strong>: 광수중학교 천체관측동아리 담당 교사의 구글 시트(구글 서버)</li>
         <li>동의하지 않을 수 있으며, <strong>사전신청을 하지 않아도 당일 행사에 참여할 수 있어요.</strong></li>
         <li>만 14세 미만 학생은 보호자에게 알리고 신청해 주세요.</li>
@@ -74,14 +100,15 @@
   <div id="done" style="display:none"></div>
 </main>
 
-<script src="js/core.js?v=20261013a"></script>
+<script src="js/core.js?v=20261013b"></script>
 <script>
 (function () {
   'use strict';
   var esc = CN.esc;
   CN.topbar();
   var cfg, counts = null, role = null, slot = null;
-  var REG_KEY = 'cn26reg';
+  var srvNew = false;            // 새 서버(정원·공개·전화번호 지원) 여부 — counts 응답으로 판단
+  var CAP = CN.DEFAULTS.capacity;
 
   // 인앱 브라우저 안내
   var ua = navigator.userAgent || '';
@@ -95,12 +122,17 @@
     };
   }
 
-  try {
-    var prev = JSON.parse(localStorage.getItem(REG_KEY) || 'null');
-    if (prev) { var a = document.getElementById('already'); a.innerHTML = '이 기기에서 <strong>' + esc(prev.who) + '</strong> 님이 <strong>' + esc(prev.slot) + '</strong> 시간대로 신청한 기록이 있어요. 다른 분을 추가로 신청하려면 아래를 다시 작성해 주세요.'; a.classList.add('show'); }
-  } catch (e) {}
+  var mine = CN.myRegs();
+  if (mine.length) {
+    var a = document.getElementById('already');
+    a.innerHTML = '이 기기에서 신청한 기록이 있어요: ' + mine.map(function (r) { return '<strong>' + esc(r.who) + '</strong>(' + esc(r.slot) + ')'; }).join(', ') +
+      '. 다른 분을 추가로 신청하려면 아래를 다시 작성해 주세요. <a href="status.html">현황·공개 설정 보기</a>';
+    a.classList.add('show');
+  }
 
   function setPressed(container, el) { container.querySelectorAll('[aria-pressed]').forEach(function (x) { x.setAttribute('aria-pressed', x === el); }); }
+
+  function studentBlocked(s) { return role === '학생' && s === cfg.slots[0] && !(counts && counts.studentFirstOpen); }
 
   function renderFields() {
     var f = document.getElementById('fields');
@@ -128,12 +160,21 @@
 
   function renderSlots() {
     var el = document.getElementById('slots');
+    if (slot && studentBlocked(slot)) slot = null;
     el.innerHTML = cfg.slots.map(function (s) {
       var c = counts && counts.slots && counts.slots[s];
-      return '<button type="button" class="slot" data-slot="' + esc(s) + '" aria-pressed="' + (slot === s) + '">🕖 ' + esc(s) +
-        '<span class="n">' + (c ? '현재 ' + c.people + '명' : '') + '</span></button>';
+      var people = c ? c.people : null, left = c ? (c.remaining != null ? c.remaining : Math.max(0, CAP - c.people)) : null;
+      var full = left === 0, blocked = studentBlocked(s);
+      var info = c ? '현재 ' + people + '명 / 정원 ' + CAP + '명' + (full ? ' · 마감' : ' · 남은 자리 ' + left + '명') : '';
+      return '<button type="button" class="slot" data-slot="' + esc(s) + '" aria-pressed="' + (slot === s) + '"' + (full || blocked ? ' disabled' : '') + '>' +
+        '<span>🕖</span><span class="t">' + esc(s) + '</span>' +
+        (info ? '<span class="n">' + info + '</span>' : '') +
+        (blocked ? '<span class="why">주민 우선 시간대라 학생 신청은 아직 열리지 않았어요</span>' : '') +
+        (c ? '<span class="bar"><i style="width:' + Math.min(100, Math.round(people / CAP * 100)) + '%"></i></span>' : '') + '</button>';
     }).join('');
     el.querySelectorAll('[data-slot]').forEach(function (b) { b.onclick = function () { slot = b.dataset.slot; setPressed(el, b); }; });
+    document.getElementById('slotHint').textContent = '시간대마다 최대 ' + CAP + '명까지 받아요. 첫 타임(' + cfg.slots[0] + ')은 주민분들을 먼저 모시는 시간이에요' +
+      (counts && counts.studentFirstOpen ? '. (지금은 학생도 신청할 수 있어요)' : ' — 자리가 남으면 학생에게도 열어요.');
   }
 
   function showErr(msg) { var e = document.getElementById('err'); e.textContent = msg; e.classList.add('show'); e.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
@@ -146,7 +187,6 @@
       p.studentNo = v('studentNo'); p.name = v('name');
       if (!/^\d{4}$/.test(p.studentNo)) throw new Error('학번 4자리를 입력해 주세요. 예) 2학년 1반 15번 → 2115');
       if (!p.name) throw new Error('이름을 입력해 주세요.');
-      // 학생 명단과 대조(오타 방지)
       try {
         var s = await CN.db.get('years/' + CN.ROSTER_YEAR + '/students/' + p.studentNo);
         if (!s || String(s.name || '').replace(/\s+/g, '') !== p.name.replace(/\s+/g, '')) throw new Error('학번과 이름이 학생 명단과 맞지 않아요. 다시 확인해 주세요.');
@@ -161,6 +201,20 @@
       if (!p.name) throw new Error(role === '일반주민' ? '이름 또는 별칭을 입력해 주세요.' : '이름을 입력해 주세요.');
     }
     if (!slot) throw new Error('관측 시간대를 골라 주세요.');
+    if (studentBlocked(slot)) throw new Error('첫 타임은 주민 우선이라 학생 신청이 아직 열리지 않았어요. 다른 시간대를 골라 주세요.');
+    var c = counts && counts.slots && counts.slots[slot];
+    if (c) {
+      var left = c.remaining != null ? c.remaining : CAP - c.people;
+      if (Number(p.party) > left) throw new Error(left > 0 ? slot + ' 시간대는 ' + left + '명까지만 더 신청할 수 있어요.' : slot + ' 시간대는 정원이 다 찼어요. 다른 시간대를 골라 주세요.');
+    }
+    if (srvNew) {
+      p.phone = v('phone');
+      if (p.phone) {
+        if (!/^01\d{8,9}$/.test(p.phone.replace(/\D/g, ''))) throw new Error('휴대폰 번호를 확인해 주세요. (예: 010-1234-5678) 비워 두셔도 신청할 수 있어요.');
+        if (!document.getElementById('phoneConsent').checked) throw new Error('휴대폰 번호를 적으셨다면 알림 문자 발송을 위한 수집·이용에 동의해 주세요. (번호를 지우면 동의 없이 신청할 수 있어요)');
+        p.phoneConsent = 'Y';
+      }
+    }
     if (p.consent !== 'Y') throw new Error('개인정보 수집·이용에 동의해 주셔야 신청할 수 있어요. (동의하지 않아도 당일 참여는 가능해요)');
     return p;
   }
@@ -171,26 +225,63 @@
     return cfg.previewTimes.filter(function (t) { var m = toMin(t); return m >= toMin(start) - 15 && m <= toMin(end); });
   }
 
-  function showDone(p) {
-    var who = p.role === '학부모' ? p.childName + ' ' + p.relation : p.name;
-    try { localStorage.setItem(REG_KEY, JSON.stringify({ who: who, slot: p.slot, at: Date.now() })); } catch (e) {}
+  function whoLabel(p) {
+    return p.role === '학부모' ? p.childName + ' ' + p.relation : p.role === '교사' ? p.name + ' 선생님' : p.name;
+  }
+
+  function showDone(p, id) {
+    var who = whoLabel(p);
+    CN.addMyReg({ id: id || '', who: who, slot: p.slot, at: Date.now(), public: false });
     var times = nearestTimes(p.slot);
     document.getElementById('form').style.display = 'none';
     document.getElementById('already').classList.remove('show');
     var d = document.getElementById('done');
     d.style.display = '';
     d.innerHTML = '<div class="card done-box"><h2>신청이 완료됐어요 🌙</h2><dl class="kv" style="display:grid;grid-template-columns:max-content 1fr;gap:6px 14px">' +
-      '<dt>신분</dt><dd>' + esc(p.role) + '</dd><dt>' + (p.role === '학부모' ? '자녀' : '이름') + '</dt><dd>' + esc(who) + (p.studentNo ? ' (' + esc(p.studentNo) + ')' : '') + '</dd>' +
-      '<dt>시간대</dt><dd>' + esc(CN.dateLabel(cfg.eventDate)) + ' ' + esc(p.slot) + '</dd><dt>인원</dt><dd>' + esc(p.party) + '명</dd></dl>' +
+      '<dt>신분</dt><dd>' + esc(p.role) + '</dd><dt>' + (p.role === '학부모' ? '자녀' : '이름') + '</dt><dd>' + esc(p.role === '학부모' ? p.childName + ' (' + p.relation + ')' : p.name) + (p.studentNo ? ' (' + esc(p.studentNo) + ')' : '') + '</dd>' +
+      '<dt>시간대</dt><dd>' + esc(CN.dateLabel(cfg.eventDate)) + ' ' + esc(p.slot) + '</dd><dt>인원</dt><dd>' + esc(p.party) + '명</dd>' +
+      (p.phone ? '<dt>알림 문자</dt><dd>' + esc(p.phone) + '</dd>' : '') + '</dl>' +
+      (id ? '<div class="pub-state" id="pubState"></div>' : '') +
       '<p class="hint">바꾸거나 취소하려면 광수중학교 과학실(천체관측동아리 담당 선생님)로 알려 주세요.</p></div>' +
       (times.length ? '<a class="btn primary block" href="sky.html" id="goSky">🔭 ' + esc(times.join(' · ')) + '에 보이는 천체 미리 보기</a>' : '') +
+      '<a class="btn ghost block" href="status.html" style="margin-top:8px">👥 사전신청 현황 보기</a>' +
       '<a class="btn ghost block" href="index.html" style="margin-top:8px">처음 화면으로</a>' +
       '<button class="btn ghost block" style="margin-top:8px" id="again">다른 분 추가로 신청하기</button>';
     var go = document.getElementById('goSky');
     if (go) go.onclick = function () { try { var s = JSON.parse(sessionStorage.getItem('cn26sky') || '{}'); s.time = times[0]; sessionStorage.setItem('cn26sky', JSON.stringify(s)); } catch (e) {} };
     document.getElementById('again').onclick = function () { location.reload(); };
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (id) { renderPubState(id); askPublic(p, id); }
   }
+
+  function renderPubState(id) {
+    var el = document.getElementById('pubState');
+    if (!el) return;
+    var r = CN.myRegs().find(function (x) { return x.id === id; });
+    var on = !!(r && r.public);
+    el.innerHTML = '현황 페이지 공개: <strong>' + (on ? '공개 중' : '비공개') + '</strong> <button class="btn small ghost" id="pubToggle">' + (on ? '공개 취소' : '공개하기') + '</button>';
+    document.getElementById('pubToggle').onclick = function () { CN.setRegPublic(id, !on).then(function () { renderPubState(id); }).catch(function (e) { CN.toast(e.message, 4000); }); };
+  }
+
+  function askPublic(p, id) {
+    var m = CN.modal(
+      '<div class="modal-head"><div class="t">사전신청 정보를 다른 사람에게 공개할까요?</div></div>' +
+      '<p>공개하면 「사전신청 현황」 페이지의 <strong>' + esc(p.slot) + '</strong> 목록에 아래처럼 보여요.</p>' +
+      '<div class="pub-preview"><strong>' + esc(whoLabel(p)) + '</strong><div class="hint">펼치면: ' + esc(p.role) + ' · ' + esc(p.party) + '명' + (p.message ? ' · "' + esc(p.message) + '"' : '') + '</div></div>' +
+      '<p class="hint">학번과 휴대폰 번호는 공개되지 않아요. 나중에 이 기기에서 「사전신청 현황」 페이지로 들어가 공개를 취소할 수 있어요.</p>' +
+      '<div style="display:flex;gap:8px;margin-top:12px"><button class="btn primary" data-yes>공개할게요</button><button class="btn ghost" data-no>공개하지 않을게요</button></div>',
+      { narrow: true });
+    m.el.querySelector('[data-yes]').onclick = function () {
+      this.disabled = true; this.textContent = '저장 중…';
+      CN.setRegPublic(id, true).then(function () { m.close(); CN.toast('현황 페이지에 공개했어요'); renderPubState(id); })
+        .catch(function (e) { CN.toast(e.message, 4000); m.close(); });
+    };
+    m.el.querySelector('[data-no]').onclick = function () { m.close(); };
+  }
+
+  // 휴대폰 칸: 입력하면 선택 동의 상자 보이기
+  var phoneEl = document.getElementById('phone');
+  phoneEl.addEventListener('input', function () { document.getElementById('phoneConsentBox').style.display = phoneEl.value.trim() ? 'block' : 'none'; });
 
   document.getElementById('form').addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -201,24 +292,30 @@
     btn.disabled = true; btn.textContent = '보내는 중…';
     try {
       var res = await CN.api('register', p, 30000);
-      if (!res || !res.ok) throw new Error(res && res.error ? res.error : '신청을 저장하지 못했어요.');
-      showDone(p);
+      if (!res || !res.ok) {
+        if (res && res.counts) { counts = res.counts; renderSlots(); }
+        throw new Error(res && res.error ? res.error : '신청을 저장하지 못했어요.');
+      }
+      if (res.counts) counts = res.counts;
+      if (p.phone) p.phone = p.phone.replace(/\D/g, '').replace(/^(\d{3})(\d{3,4})(\d{4})$/, '$1-$2-$3');
+      showDone(p, res.id);
     } catch (er) {
+      // 정원·학생 제한에 걸렸을 수 있으니 최신 인원으로 다시 그림
+      CN.api('counts', {}, 15000).then(function (c) { if (c && c.ok) { counts = c; renderSlots(); } }).catch(function () {});
       var inapp = document.getElementById('inapp').classList.contains('show');
-      showErr(er.message + (inapp ? ' 카카오톡 안에서는 잘 안 될 수 있어요. 위의 「다른 브라우저로 열기」를 눌러 다시 시도해 주세요.' : ' 잠시 후 다시 시도해 주세요.'));
+      showErr(er.message + (inapp && /서버|fetch|network|Failed/i.test(er.message) ? ' 카카오톡 안에서는 잘 안 될 수 있어요. 위의 「다른 브라우저로 열기」를 눌러 다시 시도해 주세요.' : ''));
       btn.disabled = false; btn.textContent = '신청하기';
     }
   });
 
   document.getElementById('roles').querySelectorAll('.role').forEach(function (b) {
-    b.onclick = function () { role = b.dataset.role; setPressed(document.getElementById('roles'), b); renderFields(); };
+    b.onclick = function () { role = b.dataset.role; setPressed(document.getElementById('roles'), b); renderFields(); renderSlots(); };
   });
 
   CN.getConfig().then(async function (c) {
     cfg = c;
     document.getElementById('lead').textContent = CN.dateLabel(cfg.eventDate) + ' 저녁, 원하는 관측 시간대를 골라 주세요. 시간대별 인원을 나눠서 망원경 앞 줄을 줄이려고 해요.';
     renderSlots();
-    // 빠른 선택 칩: 관측회 추천 천체 이름
     fetch('data/catalog.json?v=' + CN.VERSION).then(function (r) { return r.json(); }).then(function (list) {
       var names = (list || []).filter(function (o) { return o.featured; }).slice(0, 10).map(function (o) { return o.nameKo; });
       var q = document.getElementById('quick');
@@ -230,13 +327,16 @@
     try {
       counts = await CN.api('counts', {}, 15000);
       if (counts && counts.ok) {
+        srvNew = !!counts.capacity;
+        if (counts.capacity) CAP = counts.capacity;
+        if (srvNew) { document.getElementById('phoneSection').style.display = ''; document.getElementById('consentStep').textContent = '6'; }
         if (!counts.regOpen) {
           document.getElementById('form').innerHTML = '<div class="card"><h2>사전신청이 마감됐어요</h2><p>당일 현장으로 오셔도 참여할 수 있어요. 시간대별 천체 미리보기로 관측할 천체를 미리 살펴보세요!</p><a class="btn primary block" href="sky.html">🔭 시간대별 천체 미리보기</a></div>';
           return;
         }
         renderSlots();
-      }
-    } catch (e) {}
+      } else counts = null;
+    } catch (e) { counts = null; }
     CN.footer({});
   });
 })();

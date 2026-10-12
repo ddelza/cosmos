@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0405">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<title>사전신청 현황 · 2026 광수중 주민 천체관측회</title>
+<meta property="og:title" content="사전신청 현황 · 2026 광수중학교 주민 공개 천체관측회">
+<meta property="og:description" content="시간대별 신청 인원과 함께 오는 이웃들을 확인해 보세요">
+<link rel="stylesheet" href="css/site.css?v=20261013b">
+<style>
+.slotcard h2 { margin: 0 0 6px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.slotcard h2 .num { margin-left: auto; font-size: .95rem; color: var(--text); font-weight: 600; }
+.bar { height: 8px; border-radius: 8px; background: var(--bg-2); overflow: hidden; border: 1px solid var(--line); }
+.bar i { display: block; height: 100%; background: var(--red); }
+.bar.full i { background: var(--red-deep); }
+.meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: .8rem; color: var(--muted); margin-top: 6px; }
+.meta .left { color: var(--text-strong); font-weight: 700; }
+.meta .closed { color: var(--warn); }
+.names { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.names .nm { background: var(--bg-2); border: 1px solid var(--line); border-radius: 99px; padding: 4px 11px; font-size: .86rem; color: var(--text-strong); }
+.details { display: grid; gap: 6px; margin-top: 12px; }
+.det { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
+.det .h { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.det .h strong { color: var(--text-strong); }
+.det .msgtxt { font-size: .86rem; margin-top: 4px; white-space: pre-wrap; word-break: break-word; }
+.det .when { font-size: .72rem; color: var(--muted); margin-left: auto; }
+.privnote { font-size: .76rem; color: var(--muted); margin-top: 8px; }
+.toggle { margin-top: 10px; }
+.mine .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: .9rem; }
+.mine .row:last-child { border-bottom: none; }
+.mine .row .st { margin-left: auto; font-size: .8rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<main class="wrap narrow">
+  <h1>사전신청 현황</h1>
+  <p class="sub" id="lead">시간대별 신청 인원을 확인할 수 있어요.</p>
+  <div id="total"></div>
+  <div id="slots"><div class="loading">불러오는 중…</div></div>
+  <section class="card mine" id="mine" style="display:none"></section>
+  <a class="btn primary block" href="register.html" id="cta" style="margin-top:6px">사전신청 하기</a>
+  <div style="text-align:center;margin-top:10px"><button class="btn small ghost" id="refresh">↻ 새로 고침</button></div>
+  <p class="hint" style="margin-top:14px">이름은 신청할 때 <strong>공개에 동의한 분</strong>만 보여요. 학번·휴대폰 번호는 어디에도 공개되지 않아요. 인원 집계는 1분 정도 늦게 반영될 수 있어요.</p>
+</main>
+
+<script src="js/core.js?v=20261013b"></script>
+<script>
+(function () {
+  'use strict';
+  var esc = CN.esc;
+  CN.topbar();
+  var cfg, counts, pub;
+  var open = {}; // 시간대별 펼침 상태
+
+  function fmtAt(ts) {
+    if (!ts) return '';
+    var d = new Date(ts);
+    return (d.getMonth() + 1) + '/' + d.getDate() + ' 신청';
+  }
+
+  function render() {
+    var cap = counts.capacity || CN.DEFAULTS.capacity;
+    var total = counts.total || { forms: 0, people: 0 };
+    document.getElementById('total').innerHTML = '<div class="card" style="text-align:center"><div style="font-size:.84rem;color:var(--muted)">지금까지 신청</div><div style="font-size:1.6rem;font-weight:800;color:var(--text-strong)">' +
+      total.people + '명 <span style="font-size:.9rem;font-weight:500;color:var(--muted)">(' + total.forms + '건)</span></div></div>';
+    document.getElementById('slots').innerHTML = cfg.slots.map(function (s, i) {
+      var c = (counts.slots || {})[s] || { forms: 0, people: 0 };
+      var left = c.remaining != null ? c.remaining : Math.max(0, cap - c.people);
+      var list = pub && pub.slots ? (pub.slots[s] || []) : null;
+      var pct = Math.min(100, Math.round(c.people / cap * 100));
+      var h = '<section class="card slotcard" data-slot="' + esc(s) + '">' +
+        '<h2>🕖 ' + esc(s) + '<span class="num">' + c.people + ' / ' + cap + '명</span></h2>' +
+        '<div class="bar' + (left === 0 ? ' full' : '') + '"><i style="width:' + pct + '%"></i></div>' +
+        '<div class="meta"><span class="left">' + (left === 0 ? '마감' : '남은 자리 ' + left + '명') + '</span><span>신청 ' + c.forms + '건</span>' +
+        (i === 0 && counts.capacity ? (counts.studentFirstOpen ? '<span>학생 신청 가능</span>' : '<span class="closed">주민 우선 · 학생 신청은 아직 닫혀 있어요</span>') : '') + '</div>';
+      if (list === null) {
+        h += '<p class="privnote">공개 명단을 불러오지 못했어요.</p>';
+      } else if (!list.length) {
+        h += '<p class="privnote">' + (c.forms ? '아직 이름 공개에 동의한 분이 없어요.' : '아직 신청이 없어요. 첫 번째로 신청해 보세요!') + '</p>';
+      } else {
+        var isOpen = !!open[s];
+        h += isOpen
+          ? '<div class="details">' + list.map(function (x) {
+            return '<div class="det"><div class="h"><strong>' + esc(x.name) + '</strong><span class="badge">' + esc(x.role) + '</span><span class="badge">' + esc(x.party) + '명</span><span class="when">' + esc(fmtAt(x.at)) + '</span></div>' +
+              (x.message ? '<div class="msgtxt">💬 ' + esc(x.message) + '</div>' : '') + '</div>';
+          }).join('') + '</div>'
+          : '<div class="names">' + list.map(function (x) { return '<span class="nm">' + esc(x.name) + '</span>'; }).join('') + '</div>';
+        var hidden = c.forms - list.length;
+        h += (hidden > 0 ? '<p class="privnote">그 밖에 비공개 신청 ' + hidden + '건</p>' : '') +
+          '<button class="btn small ghost toggle" data-toggle="' + esc(s) + '">' + (isOpen ? '▲ 이름만 보기' : '▼ 펼쳐보기 (세부 정보)') + '</button>';
+      }
+      return h + '</section>';
+    }).join('');
+    document.querySelectorAll('[data-toggle]').forEach(function (b) {
+      b.onclick = function () { open[b.dataset.toggle] = !open[b.dataset.toggle]; render(); };
+    });
+    if (!counts.regOpen) { var cta = document.getElementById('cta'); cta.textContent = '사전신청 마감 · 당일 현장 참여 가능'; cta.classList.remove('primary'); cta.removeAttribute('href'); }
+    renderMine();
+  }
+
+  function renderMine() {
+    var regs = CN.myRegs();
+    var el = document.getElementById('mine');
+    if (!regs.length) { el.style.display = 'none'; return; }
+    el.style.display = '';
+    el.innerHTML = '<h2 style="margin-top:0">이 기기에서 한 신청</h2>' + regs.map(function (r, i) {
+      return '<div class="row"><strong>' + esc(r.who) + '</strong><span class="badge">' + esc(r.slot) + '</span>' +
+        (r.id ? '<span class="st">' + (r.public ? '이름 공개 중' : '비공개') + '</span><button class="btn small ghost" data-pub="' + i + '">' + (r.public ? '공개 취소' : '공개하기') + '</button>'
+          : '<span class="st">공개 설정 불가(예전 신청)</span>') + '</div>';
+    }).join('') + '<p class="hint" style="margin-bottom:0">신청 취소·변경은 광수중학교 과학실(천체관측동아리 담당 선생님)로 알려 주세요.</p>';
+    el.querySelectorAll('[data-pub]').forEach(function (b) {
+      b.onclick = async function () {
+        var r = regs[Number(b.dataset.pub)];
+        b.disabled = true;
+        try { await CN.setRegPublic(r.id, !r.public); CN.toast(r.public ? '공개를 취소했어요' : '이름을 공개했어요'); await load(); }
+        catch (e) { CN.toast(e.message, 4000); b.disabled = false; }
+      };
+    });
+  }
+
+  async function load() {
+    var res = await Promise.all([
+      CN.api('counts', {}, 20000).catch(function () { return null; }),
+      CN.api('publicList', {}, 20000).catch(function () { return null; }),
+    ]);
+    if (!res[0] || !res[0].ok) {
+      document.getElementById('slots').innerHTML = '<div class="msg err show">' + esc(res[0] && res[0].error ? res[0].error : '현황을 불러오지 못했어요. 잠시 후 새로 고침해 주세요.') + '</div>';
+      return;
+    }
+    counts = res[0];
+    pub = res[1] && res[1].ok ? res[1] : null;
+    render();
+  }
+
+  document.getElementById('refresh').onclick = function () { document.getElementById('slots').innerHTML = '<div class="loading">불러오는 중…</div>'; load(); };
+
+  CN.getConfig().then(function (c) {
+    cfg = c;
+    document.getElementById('lead').textContent = CN.dateLabel(cfg.eventDate) + ' · 시간대별 신청 인원과 함께 오시는 분들이에요.';
+    load().then(function () { CN.footer({}); });
+  });
+})();
+</script>
+</body>
+</html>

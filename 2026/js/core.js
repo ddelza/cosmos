@@ -5,7 +5,7 @@
   var CN = window.CN = {};
 
   // ===== 설정 =====
-  CN.VERSION = '20261013a';
+  CN.VERSION = '20261013b';
   CN.DB_URL = 'https://gwangsu-on-default-rtdb.firebaseio.com';
   CN.ROOT = 'years/2026/cosmosNight';          // 행사·천체 아카이브 데이터 (연도 바뀌어도 이 경로 고정)
   CN.ROSTER_YEAR = 2026;                        // 학생·교사 명단 연도
@@ -16,6 +16,7 @@
     slots: ['18:20~19:20', '19:30~20:30', '20:40~21:40'],
     notice: '',
     regOpen: true,
+    capacity: 72,
     placeText: '광수중학교 3층 과학실 · 3층 데크 · 옥상',
     addressText: '경기도 광주시 퇴촌면 도수길23번길 23',
   };
@@ -118,6 +119,29 @@
       if (e.name === 'AbortError') throw new Error('서버 응답이 늦습니다. 잠시 후 다시 시도해 주세요.');
       throw e;
     } finally { clearTimeout(t); }
+  };
+
+  // ===== 이 기기에서 한 사전신청 (공개 설정을 바꿀 수 있도록 신청 번호를 기기에만 보관) =====
+  var REGS_KEY = 'cn26regs';
+  CN.myRegs = function () {
+    try {
+      var list = JSON.parse(localStorage.getItem(REGS_KEY) || '[]');
+      var old = JSON.parse(localStorage.getItem('cn26reg') || 'null'); // 예전 형식(신청 번호 없음)
+      if (old && old.who) { list.push({ id: '', who: old.who, slot: old.slot, at: old.at, public: false }); localStorage.removeItem('cn26reg'); localStorage.setItem(REGS_KEY, JSON.stringify(list)); }
+      return Array.isArray(list) ? list : [];
+    } catch (e) { return []; }
+  };
+  CN.addMyReg = function (r) {
+    try { var list = CN.myRegs(); list.push(r); localStorage.setItem(REGS_KEY, JSON.stringify(list)); } catch (e) {}
+  };
+  CN.setRegPublic = async function (id, on) {
+    var res = await CN.api('setPublic', { id: id, public: on ? 'Y' : 'N' });
+    if (!res || !res.ok) throw new Error(res && res.error ? res.error : '공개 설정을 바꾸지 못했어요.');
+    try {
+      var list = CN.myRegs().map(function (r) { if (r.id === id) r.public = !!on; return r; });
+      localStorage.setItem(REGS_KEY, JSON.stringify(list));
+    } catch (e) {}
+    return res;
   };
 
   // ===== 행사 설정 (DB, 실패하면 기본값) =====
