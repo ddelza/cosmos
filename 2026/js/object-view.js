@@ -188,7 +188,7 @@
     h += '<h1>' + esc(o.nameKo) + ' <span class="cat">' + esc(o.catalog || '') + '</span></h1>';
     h += '<div class="tags"><span class="badge solid">' + t.icon + ' ' + esc(CN.typeLabel(o)) + '</span>' +
       (o.constellationKo ? '<span class="badge">' + esc(o.constellationKo) + '</span>' : '') +
-      (featured ? '<span class="badge star-feat">★ 관측회 추천</span>' : '') +
+      (featured ? '<span class="badge star-feat">★ ' + CN.featuredLabel() + '</span>' : '') +
       Object.keys(meta.places || {}).filter(function (k) { return meta.places[k]; }).map(function (k) { return '<span class="badge">📍 ' + esc(CN.PLACES[k]) + '</span>'; }).join('') + '</div>';
     var sub = [o.nameEn, o.altCatalog].concat(o.aliasesKo || []).filter(Boolean);
     if (sub.length) h += '<p class="en">' + esc(sub.join(' · ')) + '</p>';
@@ -521,10 +521,12 @@
     var meta = co.meta = co.meta || {};
     var seedD = (state.seed[o.id] || {}).difficulty || {};
     var lvOpts = function (v) { return '<option value="">—</option>' + CN.LEVELS.map(function (l) { return '<option' + (l === v ? ' selected' : '') + '>' + l + '</option>'; }).join(''); };
-    var feat = CN.isFeatured(state, o);
+    var feat = CN.isEventFeatured(state, o), nfeat = CN.isNightlyFeatured(state, o);
     box.innerHTML =
-      '<label class="field">관측회 추천</label><div class="chips"><button class="chip' + (feat ? ' on' : '') + '" data-feat aria-pressed="' + feat + '">★ 관측회 추천 천체로 표시</button></div>' +
-      '<div class="hint">추천 천체는 「시간대별 천체 미리보기」 맨 위에 고정돼요.</div>' +
+      '<label class="field">추천</label><div class="chips">' +
+      '<button class="chip' + (feat ? ' on' : '') + '" data-feat aria-pressed="' + feat + '">★ 관측회 추천 (11/3 행사)</button>' +
+      '<button class="chip' + (nfeat ? ' on' : '') + '" data-nfeat aria-pressed="' + nfeat + '">★ 코스모스 추천 (밤하늘 관측 도우미)</button></div>' +
+      '<div class="hint">관측회 추천은 「시간대별 천체 미리보기」(11/3 행사) 맨 위에, 코스모스 추천은 「밤하늘 관측 도우미」 맨 위에 고정돼요. 둘은 따로 켜고 꺼요.</div>' +
       '<label class="field">관측 장소</label><div class="chips">' + Object.keys(CN.PLACES).map(function (k) { var on = !!(meta.places || {})[k]; return '<button class="chip' + (on ? ' on' : '') + '" data-place="' + k + '" aria-pressed="' + on + '">' + CN.PLACES[k] + '</button>'; }).join('') + '</div>' +
       '<label class="field">눈으로 보기(안시) 난이도</label><select data-lv="eye">' + lvOpts(meta.eye || seedD.eye) + '</select>' +
       '<label class="field">사진 찍기(촬영) 난이도</label><select data-lv="photo">' + lvOpts(meta.photo || seedD.photo) + '</select>' +
@@ -536,6 +538,7 @@
     };
     var toggle = function (btn, on) { btn.classList.toggle('on', on); btn.setAttribute('aria-pressed', on); };
     box.querySelector('[data-feat]').onclick = function () { feat = !feat; toggle(this, feat); save({ featured: feat }); };
+    box.querySelector('[data-nfeat]').onclick = function () { nfeat = !nfeat; toggle(this, nfeat); save({ nightly: nfeat }); };
     box.querySelectorAll('[data-place]').forEach(function (b) { b.onclick = function () { var k = b.dataset.place, on = !(meta.places || {})[k]; toggle(b, on); var p = {}; p['places/' + k] = on || null; meta.places = meta.places || {}; meta.places[k] = on; save(p); }; });
     box.querySelectorAll('[data-gear]').forEach(function (b) { b.onclick = function () { var k = b.dataset.gear, on = !(meta.gear || {})[k]; toggle(b, on); var p = {}; p['gear/' + k] = on || null; meta.gear = meta.gear || {}; meta.gear[k] = on; save(p); }; });
     box.querySelectorAll('[data-lv]').forEach(function (s) { s.onchange = function () { var p = {}; p[s.dataset.lv] = s.value || null; save(p); }; });

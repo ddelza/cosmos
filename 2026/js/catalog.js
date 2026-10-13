@@ -70,12 +70,16 @@
       getJson(CN.asset('img/uploads/manifest.json'), {}),
       CN.getConfig(),
       getJson(CN.asset('data/constellations.json'), []),
+      getJson(CN.asset('data/nightly-picks.json'), { groups: {} }),
     ]);
     var list = (res[0] || []).concat(res[6] || []);
     var byId = {};
     list.forEach(function (o) { byId[o.id] = o; });
     CN.staticPhotos = res[4] || {};
-    var state = { list: list, byId: byId, credits: res[1] || {}, seed: res[2] || {}, content: res[3] || {}, config: res[5], dbOk: false };
+    var picks = res[7] || { groups: {} };
+    var pickSet = {};
+    Object.keys(picks.groups || {}).forEach(function (g) { (picks.groups[g] || []).forEach(function (id) { pickSet[id] = g; }); });
+    var state = { list: list, byId: byId, credits: res[1] || {}, seed: res[2] || {}, content: res[3] || {}, config: res[5], dbOk: false, nightlyPicks: pickSet, nightlyInfo: picks };
     cache = state;
 
     // DB 편집 내용(최신) — 실패해도 스냅숏으로 동작
@@ -112,7 +116,19 @@
       .sort(function (a, b) { return (a.order || 0) - (b.order || 0) || (a.at || 0) - (b.at || 0); });
   };
 
+  // 추천은 두 가지: 11/3 행사용 「관측회 추천」(meta.featured) / 밤하늘 관측 도우미용 「코스모스 추천」(meta.nightly)
+  // 페이지가 window.CN_FEATURED_MODE = 'nightly' 로 정하면 isFeatured가 코스모스 추천을 씀
+  CN.featuredMode = window.CN_FEATURED_MODE || 'event';
+  CN.featuredLabel = function () { return CN.featuredMode === 'nightly' ? '코스모스 추천' : '관측회 추천'; };
+  CN.isNightlyFeatured = function (state, o) {
+    var m = (state.content[o.id] || {}).meta || {};
+    return m.nightly === undefined || m.nightly === null ? !!(state.nightlyPicks && state.nightlyPicks[o.id]) : !!m.nightly;
+  };
   CN.isFeatured = function (state, o) {
+    if (CN.featuredMode === 'nightly') return CN.isNightlyFeatured(state, o);
+    return CN.isEventFeatured(state, o);
+  };
+  CN.isEventFeatured = function (state, o) {
     var m = (state.content[o.id] || {}).meta || {};
     return m.featured === undefined ? !!o.featured : !!m.featured;
   };

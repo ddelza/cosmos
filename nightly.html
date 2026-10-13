@@ -10,8 +10,8 @@
 <meta property="og:title" content="밤하늘 관측 도우미 · 코스모스">
 <meta property="og:description" content="오늘 밤 무엇이 보일까? 날짜·시각·장소에 맞춰 천체 위치와 찾는 법을 알려 드려요">
 <meta property="og:image" content="https://ddelza.github.io/cosmos/2026/img/og.jpg">
-<link rel="stylesheet" href="2026/css/site.css?v=20261013d">
-<link rel="stylesheet" href="2026/css/objects.css?v=20261013d">
+<link rel="stylesheet" href="2026/css/site.css?v=20261013e">
+<link rel="stylesheet" href="2026/css/objects.css?v=20261013e">
 <style>
 .setbox .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .setbox input[type=date], .setbox input[type=time], .setbox input[type=number] {
@@ -70,12 +70,12 @@ details.grp.feat > summary { color: var(--red); }
   <div class="loading">불러오는 중…</div>
 </main>
 
-<script>window.CN_BASE = '2026/';</script>
-<script src="2026/js/core.js?v=20261013d"></script>
+<script>window.CN_BASE = '2026/'; window.CN_FEATURED_MODE = 'nightly';</script>
+<script src="2026/js/core.js?v=20261013e"></script>
 <script src="2026/js/vendor/astronomy.browser.min.js"></script>
-<script src="2026/js/astro.js?v=20261013d"></script>
-<script src="2026/js/catalog.js?v=20261013d"></script>
-<script src="2026/js/object-view.js?v=20261013d"></script>
+<script src="2026/js/astro.js?v=20261013e"></script>
+<script src="2026/js/catalog.js?v=20261013e"></script>
+<script src="2026/js/object-view.js?v=20261013e"></script>
 <script>
 (function () {
   'use strict';
@@ -199,6 +199,7 @@ details.grp.feat > summary { color: var(--red); }
       '<button class="chip" data-mode="now">이 시각에<br>보이는 천체</button><button class="chip" data-mode="night">오늘 밤 한 번이라도<br>보이는 천체</button><button class="chip" data-mode="all">모든 천체<br>둘러보기</button></div>' +
       '<div id="altBox" class="alt-row"><label for="minAlt" style="font-size:.86rem;white-space:nowrap">최소 고도</label><input type="range" id="minAlt" min="0" max="60" step="5"><span class="v" id="minAltV"></span></div>' +
       '<div class="chips" id="typeChips" style="margin-top:10px"></div>' +
+      '<details class="crit" id="pickCrit" style="margin-top:10px"><summary>★ 코스모스 추천 기준 보기</summary><div class="crit-body"></div></details>' +
       '<div class="ctrl-row"><select id="sort" aria-label="정렬"><option value="rec">추천순</option><option value="alt">높이순</option><option value="mag">밝기순</option><option value="az">방향순 (남서→서→북→동→남)</option></select>' +
       '<input type="search" id="q" placeholder="이름 찾기 (예: 안드로메다, M45, 직녀성)" autocomplete="off"></div>' +
       (CN.isAdmin() ? '<div class="chips" style="margin-top:8px"><button class="chip" id="bTodo" aria-pressed="false">✎ 작성 필요만</button></div>' : '') +
@@ -252,6 +253,9 @@ details.grp.feat > summary { color: var(--red); }
     if (td) td.onclick = function () { S.todo = !S.todo; td.classList.toggle('on', S.todo); td.setAttribute('aria-pressed', S.todo); renderList(); };
     renderPlaceUi();
     renderModeUi();
+    var info = state.nightlyInfo || {}, groups = info.groups || {};
+    document.querySelector('#pickCrit .crit-body').innerHTML = '<ul>' + (info.criteria || []).map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul>' +
+      '<p class="hint" style="margin:6px 0 0">처음 목록: ' + Object.keys(groups).map(function (g) { return esc(g) + ' ' + groups[g].length + '개'; }).join(' · ') + '</p>';
   }
 
   function showCustom(on) {
