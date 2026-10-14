@@ -97,3 +97,42 @@ details.crit ul { padding-left: 18px; margin: 6px 0 0; }
 details.crit li { margin: 4px 0; }
 .rel { display: flex; flex-wrap: wrap; gap: 6px; }
 .rel a { font-size: .82rem; border: 1px solid var(--red-deep); border-radius: 99px; padding: 1px 9px; text-decoration: none; color: var(--text-strong); }
+
+/* 호핑법 그림 도구 */
+.starchart { display: block; width: 100%; height: auto; aspect-ratio: 10 / 7; border-radius: 10px; background: #070304; }
+button.hop-chart { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; border-radius: 10px; }
+.modal > .starchart { margin-top: 4px; }
+.sc-ed .sc-tools { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+.sc-ed .sc-size { display: inline-flex; align-items: center; gap: 6px; font-size: .84rem; color: var(--text); margin-right: 4px; }
+.sc-ed .sc-size input { width: 90px; accent-color: var(--red); }
+.sc-ed .sc-size span { min-width: 2.6em; color: var(--text-strong); }
+.sc-canvas { touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair; border: 1px solid var(--line); }
+.sc-canvas.t-select { cursor: default; }
+.sc-canvas.t-text { cursor: text; }
+.sc-hint { font-size: .8rem; color: var(--muted); margin: 8px 2px 4px; line-height: 1.55; }
+.sc-hint b { color: var(--text); }
+.sc-restored { color: var(--text-strong); margin-bottom: 4px; }
+.sc-menu { position: fixed; z-index: 400; background: var(--bg-2); border: 1px solid var(--red-deep); border-radius: 10px; padding: 4px; min-width: 150px; box-shadow: 0 6px 20px rgba(0,0,0,.6); }
+.sc-menu button { display: block; width: 100%; text-align: left; background: none; border: 0; color: var(--text-strong); padding: 8px 12px; border-radius: 6px; font: inherit; font-size: .9rem; cursor: pointer; }
+.sc-menu button:hover:not(:disabled), .sc-menu button:focus-visible { background: var(--red-soft); }
+.sc-menu button:disabled { color: var(--muted); cursor: default; }
+.sc-pop { position: fixed; z-index: 400; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; background: var(--bg-2); border: 1px solid var(--red-deep); border-radius: 10px; padding: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.6); max-width: calc(100vw - 16px); }
+.sc-pop input[type=text] { width: 190px; }
+.sc-pop input[type=number] { width: 70px; }
+.sc-pop-l { font-size: .86rem; color: var(--text-strong); display: inline-flex; align-items: center; gap: 6px; }
+.sc-pop-s { font-size: .74rem; color: var(--muted); }
+.sc-st { font-size: .78rem; color: var(--muted); }
+.sc-lib { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 12px; }
+.sc-lib-item { display: block; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 6px; color: var(--text); font: inherit; cursor: pointer; }
+.sc-lib-item:hover, .sc-lib-item:focus-visible { border-color: var(--red); }
+.sc-lib-item .t { display: block; font-weight: 700; color: var(--text-strong); font-size: .86rem; margin-top: 6px; }
+.sc-lib-item .s { display: block; font-size: .74rem; color: var(--muted); }
+.hop-import .imp-steps { list-style: none; padding: 0; margin: 10px 0; }
+.hop-import .imp-steps li { display: grid; grid-template-columns: 28px 160px 1fr; gap: 10px; align-items: start; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+.hop-import .imp-steps .im img, .hop-import .imp-steps .im svg { width: 100%; border-radius: 8px; display: block; }
+.hop-import .imp-steps .tx { font-size: .86rem; }
+.hop-import .imp-obj { display: flex; width: 100%; justify-content: space-between; gap: 8px; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-top: 6px; color: var(--text-strong); font: inherit; cursor: pointer; }
+.hop-import .imp-obj:hover { border-color: var(--red); }
+.hop-import .imp-obj .n { color: var(--muted); font-size: .8rem; white-space: nowrap; }
+@media (max-width: 560px) { .hop-import .imp-steps li { grid-template-columns: 28px 1fr; } .hop-import .imp-steps .tx { grid-column: 2; } }
+.sc-ed .sc-canvas { max-width: min(100%, calc((92vh - 330px) * 10 / 7)); margin: 0 auto; }

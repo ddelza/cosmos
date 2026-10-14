@@ -43,7 +43,7 @@ if (withPhotos) {
   const ids = new Set();
   for (const o of Object.values(objects)) {
     for (const p of Object.values(o.photos || {})) if (p.fileId) ids.add(p.fileId);
-    for (const s of Object.values(o.hopping || {})) if (s.fileId) ids.add(s.fileId);
+    for (const s of Object.values(o.hopping || {})) { if (s.fileId) ids.add(s.fileId); if (s.chart && s.chart.bgFile) ids.add(s.chart.bgFile); }
   }
   const pages = (await getJson(`${DB}/pages.json`)) || {};
   for (const pg of Object.values(pages)) for (const p of Object.values(pg.photos || {})) if (p.fileId) ids.add(p.fileId);

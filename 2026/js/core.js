@@ -5,7 +5,7 @@
   var CN = window.CN = {};
 
   // ===== 설정 =====
-  CN.VERSION = '20261013e';
+  CN.VERSION = '20261014a';
   CN.DB_URL = 'https://gwangsu-on-default-rtdb.firebaseio.com';
   CN.ROOT = 'years/2026/cosmosNight';          // 행사·천체 아카이브 데이터 (연도 바뀌어도 이 경로 고정)
   CN.ROSTER_YEAR = 2026;                        // 학생·교사 명단 연도
@@ -264,7 +264,7 @@
     opts = opts || {};
     var back = document.createElement('div');
     back.className = 'modal-back show';
-    back.innerHTML = '<div class="modal" role="dialog" aria-modal="true"' + (opts.narrow ? ' style="max-width:460px"' : '') + '>' + html + '</div>';
+    back.innerHTML = '<div class="modal" role="dialog" aria-modal="true"' + (opts.narrow ? ' style="max-width:460px"' : opts.wide ? ' style="max-width:1000px"' : '') + '>' + html + '</div>';
     document.body.appendChild(back);
     document.body.style.overflow = 'hidden';
     var el = back.querySelector('.modal');

@@ -215,8 +215,10 @@
         var steps = CN.sortedPhotos ? Object.keys(c.hopping).map(function (k) { return Object.assign({ key: k }, c.hopping[k]); }).sort(function (a, b) { return (a.order || 0) - (b.order || 0); }) : [];
         if (!steps.length && !admin) return;
         h += '<section data-sec="hopping">' + sectionHead('밤하늘에서 찾는 법 (호핑법)', 'hopping', admin) + '<div class="sec-body">';
+        root._hopCharts = steps.map(function (s) { return s.chart; });
         h += steps.length ? '<ol class="hop">' + steps.map(function (s, i) {
-          return '<li class="hop-step"><div class="hop-img">' + (s.fileId ? '<a href="' + esc(CN.photoUrl(s.fileId, 1600)) + '" target="_blank" rel="noopener">' + CN.driveImgTag(s.fileId, 800, 'photo', '', '호핑 ' + (i + 1) + '단계') + '</a>' : '<div class="ph-icon">' + (i + 1) + '</div>') +
+          return '<li class="hop-step"><div class="hop-img">' + (CN.chartCount(s.chart) ? '<button type="button" class="hop-chart" data-chart-zoom="' + i + '" title="크게 보기">' + CN.chartSvg(s.chart, '호핑 ' + (i + 1) + '단계 그림') + '</button>'
+            : s.fileId ? '<a href="' + esc(CN.photoUrl(s.fileId, 1600)) + '" target="_blank" rel="noopener">' + CN.driveImgTag(s.fileId, 800, 'photo', '', '호핑 ' + (i + 1) + '단계') + '</a>' : '<div class="ph-icon">' + (i + 1) + '</div>') +
             '</div><div class="hop-text"><div class="hop-n">' + (i + 1) + '단계</div>' + CN.md(s.text) + '</div></li>';
         }).join('') + '</ol>' : '<p class="empty-sec">아직 작성 전이에요. 별자리 사진을 왼쪽에, 찾아가는 방법을 오른쪽에 단계별로 적어 주세요.</p>';
         h += '</div></section>';
@@ -271,6 +273,13 @@
     });
     var hb = root.querySelector('[data-history]');
     if (hb) hb.onclick = function () { openHistory(state, o, root, opts); };
+    root.querySelectorAll('[data-chart-zoom]').forEach(function (b) {
+      b.onclick = function () {
+        var n = Number(b.dataset.chartZoom);
+        CN.modal('<div class="modal-head"><div class="t">' + esc(o.nameKo) + ' · 호핑 ' + (n + 1) + '단계</div><button class="icon-btn" data-close>닫기</button></div>' +
+          CN.chartSvg((root._hopCharts || [])[n], '호핑 ' + (n + 1) + '단계 그림'), { wide: true });
+      };
+    });
     root.querySelectorAll('[data-related]').forEach(function (a) {
       a.onclick = function (e) {
         e.preventDefault();
@@ -281,6 +290,35 @@
   }
 
   function ensureContent(state, id) { if (!state.content[id]) state.content[id] = {}; return state.content[id]; }
+
+  // 호핑 단계 목록 (순서대로)
+  function hopSteps(hop) {
+    return Object.keys(hop || {}).map(function (k) { return Object.assign({ key: k }, hop[k]); }).sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+  }
+  // 불러온 단계는 다른 천체와 같은 사진을 함께 쓸 수 있음 → 다른 곳에서 안 쓸 때만 휴지통으로
+  function fileInUse(state, fid, objId, key) {
+    return Object.keys(state.content).some(function (id) {
+      var c = state.content[id] || {};
+      return Object.keys(c.hopping || {}).some(function (k) {
+        if (id === objId && k === key) return false;
+        var s = c.hopping[k] || {};
+        return s.fileId === fid || (s.chart && s.chart.bgFile === fid);
+      }) || Object.keys(c.photos || {}).some(function (k) { return (c.photos[k] || {}).fileId === fid; });
+    });
+  }
+  function safeTrash(state, fid, objId, key) { if (fid && !fileInUse(state, fid, objId, key)) CN.trashPhoto(fid); }
+  // 그림 편집기의 「다른 그림 불러오기」 목록: 모든 천체의 호핑 그림
+  function chartLibrary(state, curId, curKey) {
+    var out = [];
+    Object.keys(state.content).forEach(function (id) {
+      var o = state.byId[id];
+      hopSteps((state.content[id] || {}).hopping).forEach(function (s, i) {
+        if (!CN.chartCount(s.chart) || (id === curId && s.key === curKey)) return;
+        out.push({ chart: s.chart, label: (o ? o.nameKo : id) + ' · ' + (i + 1) + '단계', sub: id === curId ? '이 천체' : (o && o.catalog) || '', search: o ? CN.searchText(o) : id });
+      });
+    });
+    return out.sort(function (a, b) { return (a.sub === '이 천체' ? 0 : 1) - (b.sub === '이 천체' ? 0 : 1) || a.label.localeCompare(b.label, 'ko'); });
+  }
 
   // --- 글 섹션 (조건부 저장) ---
   async function editText(box, state, o, sec, root, opts) {
@@ -443,13 +481,15 @@
       var list = steps();
       box.innerHTML = '<ol class="hop edit">' + list.map(function (s, i) {
         var dk = getDraft(o.id, 'hop-' + s.key);
+        var hasChart = CN.chartCount(s.chart) > 0;
         return '<li class="hop-step" data-k="' + esc(s.key) + '"><div class="hop-img">' +
-          (s.fileId ? CN.driveImgTag(s.fileId, 500, 'photo', '', '') : '<div class="ph-icon">' + (i + 1) + '</div>') +
-          '<label class="btn small ghost">' + (s.fileId ? '사진 바꾸기' : '＋ 사진') + '<input type="file" accept="image/*" hidden></label></div>' +
+          (hasChart ? CN.chartSvg(s.chart) : s.fileId ? CN.driveImgTag(s.fileId, 500, 'photo', '', '') : '<div class="ph-icon">' + (i + 1) + '</div>') +
+          '<div class="ph-btns"><button type="button" class="btn small ghost" data-chart>' + (hasChart ? '✎ 그림 고치기' : '✎ 그림 그리기') + '</button>' +
+          '<label class="btn small ghost">' + (s.fileId ? '사진 바꾸기' : hasChart ? '사진으로 바꾸기' : '＋ 사진') + '<input type="file" accept="image/*" hidden></label></div></div>' +
           '<div class="hop-text"><div class="hop-n">' + (i + 1) + '단계</div><textarea rows="5" placeholder="예) 카시오페이아자리 W의 오른쪽 두 별을 이은 선을 따라 내려가면…">' + esc(dk != null ? dk : (s.text || '')) + '</textarea>' +
           '<div class="ph-btns"><button class="btn small primary" data-save>글 저장</button><button class="btn small ghost" data-mv="-1"' + (i === 0 ? ' disabled' : '') + '>▲</button><button class="btn small ghost" data-mv="1"' + (i === list.length - 1 ? ' disabled' : '') + '>▼</button><button class="btn small ghost" data-del>단계 삭제</button></div></div></li>';
       }).join('') + '</ol>' +
-        '<button class="btn small" data-add>＋ 단계 추가</button><div class="msg ok" data-st></div>' +
+        '<div class="ph-btns"><button class="btn small" data-add>＋ 단계 추가</button><button class="btn small ghost" data-import>📥 다른 천체 호핑법 불러오기</button></div><div class="msg ok" data-st></div>' +
         '<div class="ed-actions"><button class="btn primary small" data-done>편집 마치기</button></div>';
 
       box.querySelectorAll('.hop-step').forEach(function (el) {
@@ -463,16 +503,44 @@
             co.hopping[k].text = ta.value.trim(); clearDraft(o.id, 'hop-' + k); CN.toast('저장했어요');
           } catch (e) { CN.toast(e.message); }
         };
+        // 그림 도구 (사진 대신 별·점선·붉은 원·글자)
+        el.querySelector('[data-chart]').onclick = async function () {
+          var cur = co.hopping[k];
+          if (cur.fileId && !CN.chartCount(cur.chart) && !confirm('그림을 저장하면 지금 사진 대신 그림이 보여요. (사진은 드라이브 휴지통으로 옮겨져요) 그림을 그릴까요?')) return;
+          setDraft(o.id, 'hop-' + k, ta.value);
+          var n = steps().findIndex(function (s) { return s.key === k; }) + 1;
+          var saved = await CN.openChartEditor(cur.chart, {
+            title: o.nameKo + ' · 호핑 ' + n + '단계 그림',
+            draftKey: draftKey(o.id, 'hopchart-' + k),
+            uploadFolder: o.id,
+            library: function () { return chartLibrary(state, o.id, k); },
+            onSave: async function (chart) {
+              var empty = !chart.items.length, old = co.hopping[k];
+              var patch = { chart: empty ? null : chart, by: who(), at: Date.now() };
+              if (!empty && old.fileId) patch.fileId = null;
+              await CN.db.patch(CN.path('objects', o.id, 'hopping', k), patch);
+              if (CN.chartCount(old.chart)) pushHistory(o.id, 'hopping', { key: k, chart: old.chart });
+              if (patch.fileId === null) { pushHistory(o.id, 'hopping', { key: k, fileId: old.fileId }); safeTrash(state, old.fileId, o.id, k); delete old.fileId; }
+              if (empty) delete old.chart; else old.chart = chart;
+              CN.toast(empty ? '그림을 지웠어요' : '그림을 저장했어요');
+            },
+          });
+          if (saved) draw();
+        };
         el.querySelector('input[type=file]').onchange = async function () {
           var f = this.files[0], st = box.querySelector('[data-st]');
           if (!f) return;
+          var hadChart = CN.chartCount(co.hopping[k].chart) > 0;
+          if (hadChart && !confirm('사진으로 바꾸면 이 단계의 그림은 지워져요. (수정 기록에 남아요) 바꿀까요?')) { this.value = ''; return; }
           st.classList.add('show');
           try {
             var fid = await CN.uploadPhoto(o.id, f, function (s) { st.textContent = s; });
-            var old = co.hopping[k].fileId;
-            await CN.db.patch(CN.path('objects', o.id, 'hopping', k), { fileId: fid, by: who(), at: Date.now() });
+            var old = co.hopping[k].fileId, oldChart = co.hopping[k].chart;
+            await CN.db.patch(CN.path('objects', o.id, 'hopping', k), { fileId: fid, chart: null, by: who(), at: Date.now() });
             co.hopping[k].fileId = fid;
-            if (old) { pushHistory(o.id, 'hopping', { key: k, fileId: old }); CN.trashPhoto(old); }
+            delete co.hopping[k].chart;
+            if (hadChart) pushHistory(o.id, 'hopping', { key: k, chart: oldChart });
+            if (old) { pushHistory(o.id, 'hopping', { key: k, fileId: old }); safeTrash(state, old, o.id, k); }
             setDraft(o.id, 'hop-' + k, ta.value);
             draw();
           } catch (e) { st.textContent = e.message; }
@@ -495,7 +563,7 @@
             await CN.db.del(CN.path('objects', o.id, 'hopping', k));
             await pushHistory(o.id, 'hopping', s);
             delete co.hopping[k]; clearDraft(o.id, 'hop-' + k);
-            if (s.fileId) CN.trashPhoto(s.fileId);
+            if (s.fileId) safeTrash(state, s.fileId, o.id, k);
             draw();
           } catch (e) { CN.toast(e.message); }
         };
@@ -505,6 +573,10 @@
         var key = 'h' + CN.uid(), rec = { text: '', order: steps().length, by: who(), at: Date.now() };
         try { await CN.db.put(CN.path('objects', o.id, 'hopping', key), rec); co.hopping[key] = rec; draw(); } catch (e) { CN.toast(e.message); }
       };
+      box.querySelector('[data-import]').onclick = function () {
+        box.querySelectorAll('.hop-step').forEach(function (el) { setDraft(o.id, 'hop-' + el.dataset.k, el.querySelector('textarea').value); });
+        importHopping(state, o, co, function () { draw(); });
+      };
       box.querySelector('[data-done]').onclick = function () {
         var unsaved = Array.from(box.querySelectorAll('.hop-step')).some(function (el) { return el.querySelector('textarea').value.trim() !== (co.hopping[el.dataset.k].text || ''); });
         if (unsaved && !confirm('「글 저장」을 누르지 않은 단계가 있어요. 그래도 닫을까요? (쓰던 글은 이 기기에 임시저장돼 있어요)')) return;
@@ -512,6 +584,76 @@
       };
     };
     draw();
+  }
+
+  // --- 다른 천체의 호핑법 단계 불러오기 (글·그림·사진을 복사해서 이 천체 단계 뒤에 붙임) ---
+  function importHopping(state, o, co, after) {
+    var srcs = Object.keys(state.content).filter(function (id) { return id !== o.id; }).map(function (id) {
+      var steps = hopSteps((state.content[id] || {}).hopping).filter(function (s) { return (s.text || '').trim() || s.fileId || CN.chartCount(s.chart); });
+      var x = state.byId[id];
+      return steps.length ? { id: id, o: x, name: x ? x.nameKo : id, steps: steps } : null;
+    }).filter(Boolean).sort(function (a, b) { return a.name.localeCompare(b.name, 'ko'); });
+    var m = CN.modal('<div class="modal-head"><div class="t">다른 천체 호핑법 불러오기</div><button class="icon-btn" data-close>닫기</button></div><div class="hop-import" data-body></div>', { wide: true });
+    var body = m.el.querySelector('[data-body]');
+
+    var showList = function () {
+      body.innerHTML = '<p class="hint" style="margin-top:0">고른 천체의 호핑법 단계를 <b>' + esc(o.nameKo) + '</b> 호핑법 뒤에 복사해 붙여요. 원래 천체의 글은 바뀌지 않아요. 불러온 뒤에는 이 천체에 맞게 글과 그림을 고쳐 주세요.</p>' +
+        '<input type="search" data-q placeholder="천체 이름으로 찾기 (예: 카시오페이아, M31)" autocomplete="off" style="width:100%"><div data-list></div>';
+      var q = body.querySelector('[data-q]'), list = body.querySelector('[data-list]'), composing = false;
+      var draw = function () {
+        var k = q.value.replace(/\s+/g, '').toLowerCase();
+        var hits = srcs.filter(function (s) { return !k || (s.o ? CN.searchText(s.o) : s.id).indexOf(k) >= 0; });
+        list.innerHTML = hits.length ? hits.map(function (s) {
+          var nc = s.steps.filter(function (x) { return CN.chartCount(x.chart); }).length, np = s.steps.filter(function (x) { return x.fileId && !CN.chartCount(x.chart); }).length;
+          return '<button type="button" class="imp-obj" data-id="' + esc(s.id) + '"><span>' + esc(s.name) + (s.o && s.o.catalog ? ' <span class="cat">' + esc(s.o.catalog) + '</span>' : '') + '</span>' +
+            '<span class="n">' + s.steps.length + '단계' + (nc ? ' · 그림 ' + nc : '') + (np ? ' · 사진 ' + np : '') + '</span></button>';
+        }).join('') : '<p class="empty">' + (srcs.length ? '찾는 천체가 없어요.' : '아직 호핑법을 쓴 다른 천체가 없어요.') + '</p>';
+        list.querySelectorAll('[data-id]').forEach(function (b) { b.onclick = function () { showSteps(srcs.find(function (s) { return s.id === b.dataset.id; })); }; });
+      };
+      q.addEventListener('compositionstart', function () { composing = true; });
+      q.addEventListener('compositionend', function () { composing = false; draw(); });
+      q.addEventListener('input', function () { if (!composing) draw(); });
+      draw();
+      setTimeout(function () { q.focus(); }, 50);
+    };
+
+    var showSteps = function (src) {
+      body.innerHTML = '<button type="button" class="btn small ghost" data-back>← 다른 천체 고르기</button>' +
+        '<h3 style="margin:12px 0 0">' + esc(src.name) + '의 호핑법</h3><p class="hint" style="margin:2px 0 0">불러올 단계를 고르세요.</p>' +
+        '<ol class="imp-steps">' + src.steps.map(function (s, i) {
+          var img = CN.chartCount(s.chart) ? CN.chartSvg(s.chart) : s.fileId ? CN.driveImgTag(s.fileId, 400, 'photo', '', '') : '<div class="ph-icon">' + (i + 1) + '</div>';
+          return '<li><input type="checkbox" class="cb" data-i="' + i + '" checked aria-label="' + (i + 1) + '단계 불러오기"><div class="im">' + img + '</div>' +
+            '<div class="tx"><div class="hop-n">' + (i + 1) + '단계</div>' + (s.text ? CN.md(s.text) : '<p class="hint">(글 없음)</p>') + '</div></li>';
+        }).join('') + '</ol>' +
+        '<div class="ed-actions"><button type="button" class="btn primary small" data-go></button></div><div class="msg err" data-err></div>';
+      var go = body.querySelector('[data-go]'), cbs = body.querySelectorAll('.cb');
+      var count = function () { var n = Array.from(cbs).filter(function (c) { return c.checked; }).length; go.textContent = '고른 ' + n + '단계 불러오기'; go.disabled = !n; };
+      cbs.forEach(function (c) { c.onchange = count; });
+      count();
+      body.querySelector('[data-back]').onclick = showList;
+      go.onclick = async function () {
+        var pick = src.steps.filter(function (s, i) { return cbs[i].checked; });
+        var base = Object.keys(co.hopping).reduce(function (mx, k) { return Math.max(mx, (co.hopping[k].order || 0) + 1); }, 0);
+        var patch = {}, now = Date.now();
+        pick.forEach(function (s, i) {
+          var rec = { text: s.text || '', order: base + i, by: who(), at: now, from: src.id };
+          if (CN.chartCount(s.chart)) rec.chart = JSON.parse(JSON.stringify(s.chart));
+          else if (s.fileId) rec.fileId = s.fileId;
+          patch['h' + CN.uid() + i] = rec;
+        });
+        go.disabled = true; go.textContent = '불러오는 중…';
+        try {
+          await CN.db.patch(CN.path('objects', o.id, 'hopping'), patch);
+          Object.keys(patch).forEach(function (k) { co.hopping[k] = patch[k]; });
+          m.close();
+          CN.toast(src.name + '에서 ' + pick.length + '단계를 불러왔어요. ' + o.nameKo + '에 맞게 고쳐 주세요', 3200);
+          after();
+        } catch (e) {
+          var er = body.querySelector('[data-err]'); er.textContent = e.message; er.classList.add('show'); count();
+        }
+      };
+    };
+    showList();
   }
 
   // --- 난이도·장비·장소·추천 (필드별 즉시 저장) ---
@@ -590,7 +732,8 @@
       var label = function (s) { return CN.SECTIONS[s] || { photos: '사진', hopping: '호핑법', basic: '기본 정보', meta: '난이도·장비' }[s] || s; };
       listEl.innerHTML = '<p class="hint">각 항목은 "그 시점에 바뀌기 <strong>전</strong> 내용"이에요. 글 항목은 되돌릴 수 있어요.</p>' + keys.map(function (k) {
         var h = hist[k], prev = h.prev;
-        var preview = prev == null ? '(비어 있었음)' : prev.v != null ? prev.v : prev.text != null ? prev.text : prev.caption != null ? '사진 ' + (prev.caption || '') : JSON.stringify(prev);
+        var preview = prev == null ? '(비어 있었음)' : prev.v != null ? prev.v : prev.text != null ? prev.text : prev.caption != null ? '사진 ' + (prev.caption || '') :
+          prev.chart ? '호핑 그림 (요소 ' + CN.chartCount(prev.chart) + '개)' : prev.fileId ? '사진 (드라이브 휴지통)' : JSON.stringify(prev);
         return '<div class="card hist"><div class="hist-h"><strong>' + esc(label(h.section)) + '</strong> · ' + esc(h.by || '') + ' · ' + CN.fmtWhen(h.at) + '</div>' +
           '<div class="hist-p">' + esc(String(preview).slice(0, 300)) + '</div>' +
           (CN.SECTIONS[h.section] ? '<button class="btn small ghost" data-restore="' + k + '">이 내용으로 되돌리기</button>' : '') + '</div>';
