@@ -10,8 +10,8 @@
 <meta property="og:title" content="밤하늘 관측 도우미 · 코스모스">
 <meta property="og:description" content="오늘 밤 무엇이 보일까? 날짜·시각·장소에 맞춰 천체 위치와 찾는 법을 알려 드려요">
 <meta property="og:image" content="https://ddelza.github.io/cosmos/2026/img/og.jpg">
-<link rel="stylesheet" href="2026/css/site.css?v=20261014c">
-<link rel="stylesheet" href="2026/css/objects.css?v=20261014c">
+<link rel="stylesheet" href="2026/css/site.css?v=20261014d">
+<link rel="stylesheet" href="2026/css/objects.css?v=20261014d">
 <style>
 .setbox .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .setbox input[type=date], .setbox input[type=time], .setbox input[type=number] {
@@ -71,12 +71,12 @@ details.grp.feat > summary { color: var(--red); }
 </main>
 
 <script>window.CN_BASE = '2026/'; window.CN_FEATURED_MODE = 'nightly';</script>
-<script src="2026/js/core.js?v=20261014c"></script>
+<script src="2026/js/core.js?v=20261014d"></script>
 <script src="2026/js/vendor/astronomy.browser.min.js"></script>
-<script src="2026/js/astro.js?v=20261014c"></script>
-<script src="2026/js/catalog.js?v=20261014c"></script>
-<script src="2026/js/starchart.js?v=20261014c"></script>
-<script src="2026/js/object-view.js?v=20261014c"></script>
+<script src="2026/js/astro.js?v=20261014d"></script>
+<script src="2026/js/catalog.js?v=20261014d"></script>
+<script src="2026/js/starchart.js?v=20261014d"></script>
+<script src="2026/js/object-view.js?v=20261014d"></script>
 <script>
 (function () {
   'use strict';
@@ -94,7 +94,7 @@ details.grp.feat > summary { color: var(--red); }
   // ----- 설정 -----
   var now = new Date();
   var S = { date: ymd(now), time: hm(now), place: 'gwangsu', lat: PLACES.gwangsu.lat, lon: PLACES.gwangsu.lon, name: PLACES.gwangsu.name,
-    minAlt: 20, mode: 'now', types: [], sort: 'rec', q: '', todo: false };
+    minAlt: 20, mode: 'now', types: [], sort: 'rec', q: '', prog: '' };
   try {
     var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (saved) ['place', 'lat', 'lon', 'name', 'minAlt', 'mode', 'sort'].forEach(function (k) { if (saved[k] !== undefined) S[k] = saved[k]; });
@@ -203,7 +203,7 @@ details.grp.feat > summary { color: var(--red); }
       '<details class="crit" id="pickCrit" style="margin-top:10px"><summary>★ 코스모스 추천 기준 보기</summary><div class="crit-body"></div></details>' +
       '<div class="ctrl-row"><select id="sort" aria-label="정렬"><option value="rec">추천순</option><option value="alt">높이순</option><option value="mag">밝기순</option><option value="az">방향순 (남서→서→북→동→남)</option></select>' +
       '<input type="search" id="q" placeholder="이름 찾기 (예: 안드로메다, M45, 직녀성)" autocomplete="off"></div>' +
-      (CN.isAdmin() ? '<div class="chips" style="margin-top:8px"><button class="chip" id="bTodo" aria-pressed="false">✎ 작성 필요만</button></div>' : '') +
+      (CN.isAdmin() ? '<div class="chips" id="progChips" style="margin-top:8px"><button class="chip" data-prog="todo" aria-pressed="false">✎ 작성 필요만</button><button class="chip" data-prog="done" aria-pressed="false">✓ 작성 완료만</button></div>' : '') +
       '<div id="list"></div>' +
       '<p class="hint" style="margin-top:14px">고도는 지평선 0° ~ 머리 꼭대기 90°, 팔을 뻗은 주먹 하나가 약 10°예요. 위치는 Astronomy Engine으로 계산했어요(오차 약 1′). <a href="2026/index.html">2026 주민 관측회</a> · <a href="index.html">동아리 홈</a></p>';
     CN.footer({ loginLink: true });
@@ -250,8 +250,13 @@ details.grp.feat > summary { color: var(--red); }
     q.addEventListener('compositionstart', function () { composing = true; });
     q.addEventListener('compositionend', function () { composing = false; S.q = q.value; renderList(); });
     q.addEventListener('input', function () { if (composing) return; clearTimeout(timer); timer = setTimeout(function () { S.q = q.value; renderList(); }, 120); });
-    var td = document.getElementById('bTodo');
-    if (td) td.onclick = function () { S.todo = !S.todo; td.classList.toggle('on', S.todo); td.setAttribute('aria-pressed', S.todo); renderList(); };
+    document.querySelectorAll('#progChips [data-prog]').forEach(function (b) {
+      b.onclick = function () {
+        S.prog = S.prog === b.dataset.prog ? '' : b.dataset.prog;
+        document.querySelectorAll('#progChips [data-prog]').forEach(function (x) { var on = x.dataset.prog === S.prog; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+        renderList();
+      };
+    });
     renderPlaceUi();
     renderModeUi();
     var info = state.nightlyInfo || {}, groups = info.groups || {};
@@ -317,12 +322,7 @@ details.grp.feat > summary { color: var(--red); }
 
   function brightness(o) { return o.mag != null ? o.mag : (o.magRange ? o.magRange[0] : 99); }
   function typeOk(o) { return CN.typeFilter.match(state, o, S.types, true); }
-  function progress(o) {
-    var c = state.content[o.id] || {}, n = 0;
-    if (c.points && c.points.v) n++; if (c.description && c.description.v) n++;
-    if (c.hopping && Object.keys(c.hopping).length) n++; if (c.photos && Object.keys(c.photos).length) n++;
-    return n;
-  }
+  function progress(o) { return CN.progressOf(state, o.id); }
 
   function tagsHtml(o, alt) {
     var c = (state.content[o.id] || {}).meta || {};
@@ -354,7 +354,7 @@ details.grp.feat > summary { color: var(--red); }
     var base = state.list.filter(function (o) {
       if (!typeOk(o)) return false;
       if (q && CN.searchText(o).indexOf(q) < 0) return false;
-      if (S.todo && progress(o) >= 3) return false;
+      if (CN.isAdmin() && !CN.progressMatch(state, o, S.prog)) return false;
       return true;
     });
     var html = '', items;

@@ -110,6 +110,22 @@
     return out;
   };
 
+  // 작성 진행도 0~4: 관측포인트 · 설명 · 호핑법(내용 있는 단계) · 사진
+  CN.progressOf = function (state, id) {
+    var c = state.content[id] || {}, n = 0;
+    if (c.points && c.points.v) n++;
+    if (c.description && c.description.v) n++;
+    if (Object.keys(c.hopping || {}).some(function (k) { var s = c.hopping[k] || {}; return (s.text || '').trim() || s.fileId || (s.chart && CN.chartCount ? CN.chartCount(s.chart) : s.chart); })) n++;
+    if (Object.keys(c.photos || {}).some(function (k) { return (c.photos[k] || {}).fileId; })) n++;
+    return n;
+  };
+  // 작성 상태 필터: '' | 'todo'(4/4 미만) | 'done'(4/4)
+  CN.progressMatch = function (state, o, mode) {
+    if (!mode) return true;
+    var p = CN.progressOf(state, o.id);
+    return mode === 'done' ? p >= 4 : p < 4;
+  };
+
   CN.sortedPhotos = function (photos) {
     return Object.keys(photos || {}).map(function (k) { return Object.assign({ key: k }, photos[k]); })
       .filter(function (p) { return p.fileId; })

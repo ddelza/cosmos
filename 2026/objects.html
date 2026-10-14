@@ -8,20 +8,20 @@
 <title>다양한 천체 둘러보기 · 2026 광수중 주민 천체관측회</title>
 <meta property="og:title" content="다양한 천체 둘러보기 · 2026 광수중 주민 천체관측회">
 <meta property="og:description" content="광수중 천체관측동아리 코스모스가 정리한 천체 이야기와 찾는 법">
-<link rel="stylesheet" href="css/site.css?v=20261014c">
-<link rel="stylesheet" href="css/objects.css?v=20261014c">
+<link rel="stylesheet" href="css/site.css?v=20261014d">
+<link rel="stylesheet" href="css/objects.css?v=20261014d">
 </head>
 <body>
 <main class="wrap" id="app">
   <div class="loading">불러오는 중…</div>
 </main>
 
-<script src="js/core.js?v=20261014c"></script>
+<script src="js/core.js?v=20261014d"></script>
 <script src="js/vendor/astronomy.browser.min.js"></script>
-<script src="js/astro.js?v=20261014c"></script>
-<script src="js/catalog.js?v=20261014c"></script>
-<script src="js/starchart.js?v=20261014c"></script>
-<script src="js/object-view.js?v=20261014c"></script>
+<script src="js/astro.js?v=20261014d"></script>
+<script src="js/catalog.js?v=20261014d"></script>
+<script src="js/starchart.js?v=20261014d"></script>
+<script src="js/object-view.js?v=20261014d"></script>
 <script>
 (function () {
   'use strict';
@@ -29,7 +29,7 @@
   CN.topbar();
   var id = CN.qs('id');
   var state;
-  var filter = { types: [], featured: false, tonight: false, todo: false, q: '' };
+  var filter = { types: [], featured: false, tonight: false, prog: '', q: '' };
   var tonightMax = null; // id → 행사 시간대 최고 고도
 
   function computeTonight() {
@@ -44,15 +44,7 @@
     });
   }
 
-  function progress(o) {
-    var c = state.content[o.id] || {};
-    var done = 0;
-    if (c.points && c.points.v) done++;
-    if (c.description && c.description.v) done++;
-    if (c.hopping && Object.keys(c.hopping).length) done++;
-    if (c.photos && Object.keys(c.photos).length) done++;
-    return done;
-  }
+  function progress(o) { return CN.progressOf(state, o.id); }
 
   // ----- 목록 -----
   function renderListShell() {
@@ -66,7 +58,7 @@
       '<div class="chips filters">' +
       '<button class="chip" data-toggle="featured" aria-pressed="false">★ 관측회 추천</button>' +
       '<button class="chip" data-toggle="tonight" aria-pressed="false">' + esc(CN.dateShort(state.config.eventDate)) + ' 밤에 보이는 것만</button>' +
-      (admin ? '<button class="chip" data-toggle="todo" aria-pressed="false">✎ 작성 필요</button>' : '') +
+      (admin ? '<button class="chip" data-prog="todo" aria-pressed="false">✎ 작성 필요</button><button class="chip" data-prog="done" aria-pressed="false">✓ 작성 완료</button>' : '') +
       '</div>' +
       '<div class="count" id="count"></div><div class="grid" id="grid"></div>';
     CN.footer({ loginLink: true });
@@ -77,6 +69,14 @@
     q.addEventListener('compositionend', function () { composing = false; filter.q = q.value; renderGrid(); });
     q.addEventListener('input', function () { if (composing) return; clearTimeout(timer); timer = setTimeout(function () { filter.q = q.value; renderGrid(); }, 120); });
     CN.typeFilter.render(document.getElementById('typeChips'), TYPE_CHIPS, filter.types, function (t) { filter.types = t; renderGrid(); });
+    // 작성 필요 / 작성 완료: 둘 중 하나만 (다시 누르면 해제)
+    app.querySelectorAll('[data-prog]').forEach(function (b) {
+      b.onclick = function () {
+        filter.prog = filter.prog === b.dataset.prog ? '' : b.dataset.prog;
+        app.querySelectorAll('[data-prog]').forEach(function (x) { var on = x.dataset.prog === filter.prog; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+        renderGrid();
+      };
+    });
     app.querySelectorAll('[data-toggle]').forEach(function (b) {
       b.onclick = function () {
         var k = b.dataset.toggle; filter[k] = !filter[k];
@@ -95,7 +95,7 @@
       if (!CN.typeFilter.match(state, o, filter.types, false)) return false;
       if (filter.featured && !CN.isFeatured(state, o)) return false;
       if (filter.tonight && !(tonightMax[o.id] >= 20)) return false;
-      if (filter.todo && progress(o) >= 3) return false;
+      if (!CN.progressMatch(state, o, filter.prog)) return false;
       if (q && CN.searchText(o).indexOf(q) < 0) return false;
       return true;
     });
