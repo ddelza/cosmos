@@ -7,8 +7,8 @@
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <meta name="robots" content="noindex">
 <title>관리자 메뉴 · 2026 광수중 주민 천체관측회</title>
-<link rel="stylesheet" href="css/site.css?v=20261014a">
-<link rel="stylesheet" href="css/objects.css?v=20261014a">
+<link rel="stylesheet" href="css/site.css?v=20261014c">
+<link rel="stylesheet" href="css/objects.css?v=20261014c">
 <style>
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .stat { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px; text-align: center; }
@@ -25,8 +25,8 @@ table.t td.n { text-align: right; }
 <body>
 <main class="wrap" id="app"><div class="loading">불러오는 중…</div></main>
 
-<script src="js/core.js?v=20261014a"></script>
-<script src="js/catalog.js?v=20261014a"></script>
+<script src="js/core.js?v=20261014c"></script>
+<script src="js/catalog.js?v=20261014c"></script>
 <script>
 (function () {
   'use strict';
@@ -110,20 +110,25 @@ table.t td.n { text-align: right; }
     var recent = [];
     Object.keys(st.content).forEach(function (id) {
       var c = st.content[id];
-      ['points', 'description', 'story'].forEach(function (k) { if (c[k] && c[k].at) recent.push({ id: id, sec: CN.SECTIONS[k], by: c[k].by, at: c[k].at }); });
-      Object.values(c.photos || {}).forEach(function (p) { recent.push({ id: id, sec: '사진', by: p.by, at: p.at }); });
-      Object.values(c.hopping || {}).forEach(function (p) { if (p.at) recent.push({ id: id, sec: '호핑법', by: p.by, at: p.at }); });
+      var add = function (sec, r) { if (r && r.at) recent.push({ id: id, sec: sec, by: r.by, author: CN.authorOf(r), at: r.at }); };
+      ['points', 'description', 'story'].forEach(function (k) { add(CN.SECTIONS[k], c[k]); });
+      Object.values(c.photos || {}).forEach(function (p) { add('사진', p); });
+      Object.values(c.hopping || {}).forEach(function (p) { if ((p.text || '').trim() || p.fileId || p.chart) add('호핑법', p); });
+      add('난이도·추천', c.meta);
+      add('기본 정보', c.basic);
     });
     recent.sort(function (x, y) { return y.at - x.at; });
+    // 사람별: 처음 쓴 항목 수(작성) / 마지막으로 고친 항목 수(편집)
     var byWho = {};
-    recent.forEach(function (r) { if (r.by) byWho[r.by] = (byWho[r.by] || 0) + 1; });
+    var bump = function (name, f) { if (!name) return; name = name.replace(/ \(되돌림\)$/, ''); byWho[name] = byWho[name] || { w: 0, e: 0 }; byWho[name][f]++; };
+    recent.forEach(function (r) { bump(r.author, 'w'); if (r.by && r.by !== r.author) bump(r.by, 'e'); });
     el.innerHTML = '<h2 style="margin-top:0">천체 설명 작성 현황</h2>' +
       '<div class="stats"><div class="stat"><div class="v">' + st.list.length + '</div><div class="l">전체 천체</div></div><div class="stat"><div class="v">' + any + '</div><div class="l">하나라도 작성</div></div><div class="stat"><div class="v">' + full + '</div><div class="l">4개 항목 완성</div></div></div>' +
       '<h3 style="margin-top:14px">★ 관측회 추천 천체 (' + feat.length + '개)</h3><table class="t todo"><tr><th>천체</th><th class="n">작성</th></tr>' +
       feat.map(function (o) { var s = score(o.id); return '<tr><td><a href="objects.html?id=' + encodeURIComponent(o.id) + '">' + esc(o.nameKo) + '</a></td><td class="n">' + s + '/4</td></tr>'; }).join('') + '</table>' +
       '<p class="hint">작성 4항목 = 관측포인트 · 설명 · 호핑법 · 사진</p>' +
-      '<h3 style="margin-top:14px">편집한 사람</h3>' + (Object.keys(byWho).length ? '<table class="t"><tr><th>이름</th><th class="n">저장 횟수</th></tr>' + Object.keys(byWho).sort(function (x, y) { return byWho[y] - byWho[x]; }).map(function (k) { return '<tr><td>' + esc(k) + '</td><td class="n">' + byWho[k] + '</td></tr>'; }).join('') + '</table>' : '<p class="empty-sec">아직 없어요.</p>') +
-      '<h3 style="margin-top:14px">최근 편집</h3>' + (recent.length ? '<table class="t"><tr><th>천체</th><th>항목</th><th>편집</th></tr>' + recent.slice(0, 30).map(function (r) { var o = st.byId[r.id]; return '<tr><td><a href="objects.html?id=' + encodeURIComponent(r.id) + '">' + esc(o ? o.nameKo : r.id) + '</a></td><td>' + esc(r.sec) + '</td><td>' + esc(r.by || '') + ' · ' + CN.fmtWhen(r.at) + '</td></tr>'; }).join('') + '</table>' : '<p class="empty-sec">아직 없어요.</p>');
+      '<h3 style="margin-top:14px">작성·편집한 사람</h3>' + (Object.keys(byWho).length ? '<table class="t"><tr><th>이름</th><th class="n">작성</th><th class="n">편집</th></tr>' + Object.keys(byWho).sort(function (x, y) { return (byWho[y].w + byWho[y].e) - (byWho[x].w + byWho[x].e); }).map(function (k) { return '<tr><td>' + esc(k) + '</td><td class="n">' + byWho[k].w + '</td><td class="n">' + byWho[k].e + '</td></tr>'; }).join('') + '</table><p class="hint">작성 = 처음 쓴 항목 수, 편집 = 다른 사람이 쓴 것을 마지막으로 고친 항목 수</p>' : '<p class="empty-sec">아직 없어요.</p>') +
+      '<h3 style="margin-top:14px">최근 편집</h3>' + (recent.length ? '<table class="t"><tr><th>천체</th><th>항목</th><th>작성</th><th>마지막 편집</th></tr>' + recent.slice(0, 30).map(function (r) { var o = st.byId[r.id]; return '<tr><td><a href="objects.html?id=' + encodeURIComponent(r.id) + '">' + esc(o ? o.nameKo : r.id) + '</a></td><td>' + esc(r.sec) + '</td><td>' + esc(r.author || '') + '</td><td>' + (r.by && r.by !== r.author ? esc(r.by) + ' · ' : '') + CN.fmtWhen(r.at) + '</td></tr>'; }).join('') + '</table>' : '<p class="empty-sec">아직 없어요.</p>');
   }
 
   document.getElementById('bk').onclick = async function () {

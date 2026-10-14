@@ -5,7 +5,7 @@
   var CN = window.CN = {};
 
   // ===== 설정 =====
-  CN.VERSION = '20261014a';
+  CN.VERSION = '20261014c';
   CN.DB_URL = 'https://gwangsu-on-default-rtdb.firebaseio.com';
   CN.ROOT = 'years/2026/cosmosNight';          // 행사·천체 아카이브 데이터 (연도 바뀌어도 이 경로 고정)
   CN.ROSTER_YEAR = 2026;                        // 학생·교사 명단 연도
@@ -58,6 +58,34 @@
     if (!ts) return '';
     var d = new Date(ts);
     return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  };
+
+  // ===== 작성자·편집자 표시 =====
+  // 기록: author/authorAt = 처음 쓴 사람, by/at = 마지막으로 고친 사람 (예전 기록은 author가 없으면 by를 작성자로 봄)
+  // 모두에게 이름을 보여 주고, 학번과 시각은 관리자 로그인했을 때만
+  CN.personName = function (label) { return String(label || '').replace(/^\d{4,5}\s+/, ''); };
+  CN.authorOf = function (rec) { return (rec && (rec.author || rec.by)) || ''; };
+  CN.byline = function (rec, o) {
+    o = o || {};
+    var author = CN.authorOf(rec);
+    if (!author) return '';
+    var authorAt = rec.author ? rec.authorAt : rec.at, admin = CN.isAdmin();
+    var nm = function (l) { return '<b>' + CN.esc(admin ? l : CN.personName(l)) + '</b>'; };
+    var when = function (t) { return admin && t ? ' <span class="when">' + CN.fmtWhen(t) + '</span>' : ''; };
+    var parts = [(o.made || '작성') + ' ' + nm(author) + when(authorAt)];
+    if (rec.by && rec.by !== author) parts.push((o.edited || '편집') + ' ' + nm(rec.by) + when(rec.at));
+    else if (admin && rec.at && authorAt && rec.at - authorAt > 60000) parts.push('마지막 저장' + when(rec.at));
+    if (o.extra) parts.push(o.extra);
+    return '<div class="by">✎ ' + parts.join(' · ') + '</div>';
+  };
+  // 저장할 때 붙일 값: 작성자는 그대로 두고(없으면 지금 사람, 또는 예전 기록의 by), 편집자·시각은 지금으로
+  // prev가 내용 없는 빈 기록이면 null을 넘겨서 지금 사람이 작성자가 되게 함
+  CN.stamp = function (prev, extra) {
+    var me = CN.adminLabel(), now = Date.now(), out = { by: me, at: now };
+    var a = CN.authorOf(prev);
+    out.author = a || me;
+    out.authorAt = a ? (prev.author ? prev.authorAt : prev.at) || now : now;
+    return Object.assign(out, extra || {});
   };
   CN.uid = function () { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); };
 

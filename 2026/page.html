@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#0a0405">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <title>안내 · 2026 광수중 주민 천체관측회</title>
-<link rel="stylesheet" href="css/site.css?v=20261014a">
-<link rel="stylesheet" href="css/objects.css?v=20261014a">
+<link rel="stylesheet" href="css/site.css?v=20261014c">
+<link rel="stylesheet" href="css/objects.css?v=20261014c">
 <style>
 .pg-photos { display: grid; gap: 12px; margin-top: 14px; }
 .pg-photos figure { margin: 0; }
@@ -20,7 +20,7 @@
 <body>
 <main class="wrap narrow" id="app"><div class="loading">불러오는 중…</div></main>
 
-<script src="js/core.js?v=20261014a"></script>
+<script src="js/core.js?v=20261014c"></script>
 <script>
 (function () {
   'use strict';
@@ -70,7 +70,7 @@
     if (key === 'dirs') h += '<div class="maplinks"><a class="btn small" target="_blank" rel="noopener" href="https://map.kakao.com/?q=' + encodeURIComponent('광수중학교') + '">카카오맵에서 보기</a><a class="btn small" target="_blank" rel="noopener" href="https://map.naver.com/p/search/' + encodeURIComponent('광수중학교') + '">네이버 지도에서 보기</a></div>';
     var ph = photosSorted();
     if (ph.length) h += '<div class="pg-photos">' + ph.map(function (p) { return '<figure>' + CN.driveImgTag(p.fileId, 1280, 'photo', '', p.caption) + (p.caption ? '<figcaption>' + esc(p.caption) + '</figcaption>' : '') + '</figure>'; }).join('') + '</div>';
-    if (data.by) h += '<div class="by" style="margin-top:8px">✎ ' + esc(data.by) + ' · ' + CN.fmtWhen(data.at) + '</div>';
+    if (data.text) h += '<div style="margin-top:8px">' + CN.byline(data) + '</div>';
     if (admin) h += '<div class="ed-actions"><button class="btn small" id="editText">✎ 글 편집</button><button class="btn small ghost" id="editPhotos">🖼 사진 편집</button></div>';
     h += '<p style="margin-top:20px"><a href="index.html">← 처음 화면</a></p>';
     app.innerHTML = h;
@@ -95,7 +95,7 @@
     document.getElementById('cc').onclick = function () { editing = false; render(); };
     document.getElementById('sv').onclick = async function () {
       try {
-        var v = { text: ta.value.trim(), by: CN.adminLabel(), at: Date.now() };
+        var v = CN.stamp(data.text ? data : null, { text: ta.value.trim() });
         await CN.db.patch(path, v);
         Object.assign(data, v);
         try { localStorage.removeItem(dk); } catch (e) {}

@@ -165,7 +165,7 @@
   function metaLine(x) {
     if (!x) return '';
     if (x.seed) return '<div class="seed-note">작년 자료 · 검토 필요 (' + esc(x.src || '') + ')</div>';
-    return x.by ? '<div class="by">✎ ' + esc(x.by) + ' · ' + CN.fmtWhen(x.at) + '</div>' : '';
+    return CN.byline(x);
   }
 
   CN.renderObject = function (root, state, o, opts) {
@@ -184,6 +184,7 @@
     h += '<div class="cover">' + (photos.length ? CN.driveImgTag(photos[0].fileId, 1600, 'photo', defaultImg, o.nameKo)
       : defaultImg ? '<img class="photo" src="' + esc(defaultImg) + '" alt="' + esc(o.nameKo) + '">' : '<div class="ph-icon big">' + t.icon + '</div>') + '</div>';
     if (photos.length && (photos[0].caption || photos[0].credit)) h += '<div class="cap">' + esc([photos[0].caption, photos[0].credit].filter(Boolean).join(' · ')) + '</div>';
+    if (photos.length) h += CN.byline(photos[0], { made: '올림' });
     else if (!photos.length && state.credits[o.id]) h += '<div class="cap">기본 사진: ' + esc(state.credits[o.id].author || '') + ' (' + esc(state.credits[o.id].license || '') + ')</div>';
     h += '<h1>' + esc(o.nameKo) + ' <span class="cat">' + esc(o.catalog || '') + '</span></h1>';
     h += '<div class="tags"><span class="badge solid">' + t.icon + ' ' + esc(CN.typeLabel(o)) + '</span>' +
@@ -200,7 +201,7 @@
       h += '<section data-sec="photos">' + sectionHead('사진', 'photos', admin) + '<div class="sec-body">';
       h += photos.length ? '<div class="gallery">' + photos.map(function (p) {
         return '<figure><a href="' + esc(CN.photoUrl(p.fileId, 1600)) + '" target="_blank" rel="noopener">' + CN.driveImgTag(p.fileId, 500, 'photo', '', p.caption) + '</a>' +
-          (p.caption || p.credit ? '<figcaption>' + esc([p.caption, p.credit].filter(Boolean).join(' · ')) + '</figcaption>' : '') + '</figure>';
+          (p.caption || p.credit ? '<figcaption>' + esc([p.caption, p.credit].filter(Boolean).join(' · ')) + '</figcaption>' : '') + CN.byline(p, { made: '올림' }) + '</figure>';
       }).join('') + '</div>' : '<p class="empty-sec">아직 올린 사진이 없어요. 직접 찍은 사진이나 출처가 분명한 사진을 올려 주세요.</p>';
       h += '</div></section>';
     }
@@ -219,7 +220,8 @@
         h += steps.length ? '<ol class="hop">' + steps.map(function (s, i) {
           return '<li class="hop-step"><div class="hop-img">' + (CN.chartCount(s.chart) ? '<button type="button" class="hop-chart" data-chart-zoom="' + i + '" title="크게 보기">' + CN.chartSvg(s.chart, '호핑 ' + (i + 1) + '단계 그림') + '</button>'
             : s.fileId ? '<a href="' + esc(CN.photoUrl(s.fileId, 1600)) + '" target="_blank" rel="noopener">' + CN.driveImgTag(s.fileId, 800, 'photo', '', '호핑 ' + (i + 1) + '단계') + '</a>' : '<div class="ph-icon">' + (i + 1) + '</div>') +
-            '</div><div class="hop-text"><div class="hop-n">' + (i + 1) + '단계</div>' + CN.md(s.text) + '</div></li>';
+            '</div><div class="hop-text"><div class="hop-n">' + (i + 1) + '단계</div>' + CN.md(s.text) +
+            CN.byline(s, { extra: s.from && state.byId[s.from] ? '<a href="#" data-related="' + esc(s.from) + '">' + esc(state.byId[s.from].nameKo) + '</a>에서 불러옴' : '' }) + '</div></li>';
         }).join('') + '</ol>' : '<p class="empty-sec">아직 작성 전이에요. 별자리 사진을 왼쪽에, 찾아가는 방법을 오른쪽에 단계별로 적어 주세요.</p>';
         h += '</div></section>';
         return;
@@ -238,13 +240,14 @@
       h += '<dt>눈으로 보기(안시)</dt><dd>' + (eye ? '<span class="lv">' + esc(eye) + '</span>' : '—') + '</dd>';
       h += '<dt>사진 찍기(촬영)</dt><dd>' + (photoLv ? '<span class="lv">' + esc(photoLv) + '</span>' : '—') + '</dd>';
       h += '<dt>추천 장비</dt><dd>' + (gear.length ? gear.map(function (k) { return esc(CN.GEAR[k]); }).join(', ') : '—') + '</dd>';
-      h += '</dl>' + (!meta.eye && c.seedDifficulty ? '<div class="seed-note">작년 자료 · 검토 필요</div>' : '') + '</div></section>';
+      h += '</dl>' + (!meta.eye && c.seedDifficulty ? '<div class="seed-note">작년 자료 · 검토 필요</div>' : '') + CN.byline(meta) + '</div></section>';
     }
 
     // 기본 정보
     var rows = basicRows(state, o, c, opts);
     h += '<section data-sec="basic">' + sectionHead('기본 정보', 'basic', admin) + '<div class="sec-body"><dl class="kv">' +
       rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('') + '</dl>' +
+      (Object.keys(c.basic || {}).some(function (k) { return BASIC_EDITABLE[k] && c.basic[k] != null && c.basic[k] !== ''; }) ? CN.byline(c.basic, { made: '고침', edited: '마지막 고침' }) : '') +
       (o.type === 'constellation' ? CON_CRITERIA : '<p class="hint">기본 정보는 AI가 공개 천문 자료(OpenNGC, HYG 별 목록, 위키백과 등)를 바탕으로 입력했어요. 틀린 곳이 있으면 동아리에 알려 주세요.</p>') + '</div></section>';
 
     if (admin) h += '<div class="obj-admin"><button class="btn small ghost" data-history>🕘 수정 기록 보기</button></div>';
@@ -290,6 +293,8 @@
   }
 
   function ensureContent(state, id) { if (!state.content[id]) state.content[id] = {}; return state.content[id]; }
+  // 「＋ 단계 추가」만 누른 빈 단계는 작성자가 아직 없음 → 처음 내용을 넣은 사람이 작성자
+  function hopAuthorBase(s) { return s && (s.author || (s.text || '').trim() || s.fileId || CN.chartCount(s.chart)) ? s : null; }
 
   // 호핑 단계 목록 (순서대로)
   function hopSteps(hop) {
@@ -357,12 +362,13 @@
       var text = ta.value.trim();
       btn.disabled = true; btn.textContent = '저장 중…'; err.classList.remove('show');
       try {
-        var value = text ? { v: text, by: who(), at: Date.now() } : null;
+        var value = text ? CN.stamp(tagged.data && tagged.data.v ? tagged.data : null, { v: text }) : null;
         var res = await CN.db.putIfMatch(path, value, etag);
         if (res.conflict) {
           var other = res.current && res.current.v ? res.current : null;
           var choice = await conflictDialog(other, text);
           if (choice === 'mine') {
+            if (value) value = CN.stamp(other, { v: text });
             res = await CN.db.putIfMatch(path, value, res.etag);
             if (res.conflict) throw new Error('또 다른 저장이 있었어요. 다시 시도해 주세요.');
             cur = other ? other.v : '';
@@ -413,7 +419,7 @@
         '<div class="ph-edit">' + list.map(function (p, i) {
           return '<div class="ph-item" data-k="' + esc(p.key) + '">' + CN.driveImgTag(p.fileId, 250, 'photo', '', '') +
             '<div class="ph-fields"><input type="text" data-f="caption" placeholder="설명 (예: 10인치 돕소니안으로 본 모습)" value="' + esc(p.caption || '') + '">' +
-            '<input type="text" data-f="credit" placeholder="촬영자·출처 (예: 2108 백서후 촬영)" value="' + esc(p.credit || '') + '">' +
+            '<input type="text" data-f="credit" placeholder="촬영자·출처 (예: 백서후 촬영 / 출처: NASA)" value="' + esc(p.credit || '') + '">' +
             '<div class="ph-btns"><button class="btn small ghost" data-mv="-1"' + (i === 0 ? ' disabled' : '') + '>◀ 앞으로</button><button class="btn small ghost" data-mv="1"' + (i === list.length - 1 ? ' disabled' : '') + '>뒤로 ▶</button><button class="btn small ghost" data-del>삭제</button></div></div></div>';
         }).join('') + '</div>' +
         '<label class="btn small" style="margin-top:10px">＋ 사진 올리기<input type="file" accept="image/*" multiple hidden></label>' +
@@ -423,7 +429,7 @@
         var k = el.dataset.k;
         el.querySelectorAll('input[data-f]').forEach(function (inp) {
           inp.addEventListener('change', async function () {
-            try { await CN.db.patch(CN.path('objects', o.id, 'photos', k), { [inp.dataset.f]: inp.value.trim() }); co.photos[k][inp.dataset.f] = inp.value.trim(); CN.toast('저장했어요'); }
+            try { var pp = CN.stamp(co.photos[k]); pp[inp.dataset.f] = inp.value.trim(); await CN.db.patch(CN.path('objects', o.id, 'photos', k), pp); Object.assign(co.photos[k], pp); CN.toast('저장했어요'); }
             catch (e) { CN.toast(e.message); }
           });
         });
@@ -458,7 +464,7 @@
           try {
             var fid = await CN.uploadPhoto(o.id, files[n], function (s) { st.textContent = (n + 1) + '/' + files.length + ' ' + s; });
             var key = 'p' + CN.uid();
-            var rec = { fileId: fid, caption: '', credit: '', order: base + n, by: who(), at: Date.now() };
+            var rec = CN.stamp(null, { fileId: fid, caption: '', credit: '', order: base + n });
             await CN.db.put(CN.path('objects', o.id, 'photos', key), rec);
             co.photos[key] = rec;
           } catch (e) { st.textContent = e.message; CN.toast(e.message, 4000); }
@@ -498,7 +504,9 @@
         el.querySelector('[data-save]').onclick = async function () {
           try {
             var prev = co.hopping[k].text || '';
-            await CN.db.patch(CN.path('objects', o.id, 'hopping', k), { text: ta.value.trim(), by: who(), at: Date.now() });
+            var hp = CN.stamp(hopAuthorBase(co.hopping[k]), { text: ta.value.trim() });
+            await CN.db.patch(CN.path('objects', o.id, 'hopping', k), hp);
+            Object.assign(co.hopping[k], hp);
             if (prev && prev !== ta.value.trim()) pushHistory(o.id, 'hopping', { key: k, text: prev });
             co.hopping[k].text = ta.value.trim(); clearDraft(o.id, 'hop-' + k); CN.toast('저장했어요');
           } catch (e) { CN.toast(e.message); }
@@ -516,11 +524,12 @@
             library: function () { return chartLibrary(state, o.id, k); },
             onSave: async function (chart) {
               var empty = !chart.items.length, old = co.hopping[k];
-              var patch = { chart: empty ? null : chart, by: who(), at: Date.now() };
+              var patch = CN.stamp(hopAuthorBase(old), { chart: empty ? null : chart });
               if (!empty && old.fileId) patch.fileId = null;
               await CN.db.patch(CN.path('objects', o.id, 'hopping', k), patch);
               if (CN.chartCount(old.chart)) pushHistory(o.id, 'hopping', { key: k, chart: old.chart });
               if (patch.fileId === null) { pushHistory(o.id, 'hopping', { key: k, fileId: old.fileId }); safeTrash(state, old.fileId, o.id, k); delete old.fileId; }
+              ['by', 'at', 'author', 'authorAt'].forEach(function (f) { old[f] = patch[f]; });
               if (empty) delete old.chart; else old.chart = chart;
               CN.toast(empty ? '그림을 지웠어요' : '그림을 저장했어요');
             },
@@ -536,7 +545,9 @@
           try {
             var fid = await CN.uploadPhoto(o.id, f, function (s) { st.textContent = s; });
             var old = co.hopping[k].fileId, oldChart = co.hopping[k].chart;
-            await CN.db.patch(CN.path('objects', o.id, 'hopping', k), { fileId: fid, chart: null, by: who(), at: Date.now() });
+            var fp = CN.stamp(hopAuthorBase(co.hopping[k]), { fileId: fid, chart: null });
+            await CN.db.patch(CN.path('objects', o.id, 'hopping', k), fp);
+            ['by', 'at', 'author', 'authorAt'].forEach(function (f) { co.hopping[k][f] = fp[f]; });
             co.hopping[k].fileId = fid;
             delete co.hopping[k].chart;
             if (hadChart) pushHistory(o.id, 'hopping', { key: k, chart: oldChart });
@@ -636,7 +647,7 @@
         var base = Object.keys(co.hopping).reduce(function (mx, k) { return Math.max(mx, (co.hopping[k].order || 0) + 1); }, 0);
         var patch = {}, now = Date.now();
         pick.forEach(function (s, i) {
-          var rec = { text: s.text || '', order: base + i, by: who(), at: now, from: src.id };
+          var rec = { text: s.text || '', order: base + i, by: who(), at: now, from: src.id, author: CN.authorOf(s) || who(), authorAt: (s.author ? s.authorAt : s.at) || now };
           if (CN.chartCount(s.chart)) rec.chart = JSON.parse(JSON.stringify(s.chart));
           else if (s.fileId) rec.fileId = s.fileId;
           patch['h' + CN.uid() + i] = rec;
@@ -675,7 +686,7 @@
       '<label class="field">추천 장비</label><div class="chips">' + Object.keys(CN.GEAR).map(function (k) { var on = !!(meta.gear || {})[k]; return '<button class="chip' + (on ? ' on' : '') + '" data-gear="' + k + '" aria-pressed="' + on + '">' + CN.GEAR[k] + '</button>'; }).join('') + '</div>' +
       '<div class="ed-actions"><button class="btn primary small" data-done>편집 마치기</button></div>';
     var save = async function (patch) {
-      patch.by = who(); patch.at = Date.now();
+      patch = CN.stamp(meta.by || meta.author ? meta : null, patch);
       try { await CN.db.patch(CN.path('objects', o.id, 'meta'), patch); Object.assign(meta, patch); CN.toast('저장했어요', 1200); } catch (e) { CN.toast(e.message); }
     };
     var toggle = function (btn, on) { btn.classList.toggle('on', on); btn.setAttribute('aria-pressed', on); };
@@ -711,7 +722,7 @@
           else patch[k] = v.slice(0, 60);
         });
         await pushHistory(o.id, 'basic', Object.assign({}, basic));
-        patch.by = who(); patch.at = Date.now();
+        patch = CN.stamp(basic.by || basic.author ? basic : null, patch);
         await CN.db.patch(CN.path('objects', o.id, 'basic'), patch);
         Object.keys(patch).forEach(function (k) { if (patch[k] === null) delete basic[k]; else basic[k] = patch[k]; });
         CN.toast('저장했어요');
@@ -746,7 +757,7 @@
             var path = CN.path('objects', o.id, h.section);
             var curNow = await CN.db.get(path);
             await pushHistory(o.id, h.section, curNow && curNow.v ? { v: curNow.v } : null);
-            var value = h.prev && h.prev.v ? { v: h.prev.v, by: who() + ' (되돌림)', at: Date.now() } : null;
+            var value = h.prev && h.prev.v ? CN.stamp(curNow && curNow.v ? curNow : null, { v: h.prev.v, by: who() + ' (되돌림)' }) : null;
             await CN.db.put(path, value);
             var co = ensureContent(state, o.id);
             if (value) co[h.section] = value; else delete co[h.section];

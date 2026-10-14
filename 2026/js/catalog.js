@@ -101,7 +101,7 @@
     var s = state.seed[id] || {};
     var out = { meta: c.meta || {}, basic: c.basic || {}, photos: c.photos || {}, hopping: c.hopping || {} };
     Object.keys(CN.SECTIONS).forEach(function (k) {
-      if (c[k] && c[k].v) out[k] = { v: c[k].v, by: c[k].by, at: c[k].at };
+      if (c[k] && c[k].v) out[k] = { v: c[k].v, by: c[k].by, at: c[k].at, author: c[k].author, authorAt: c[k].authorAt };
       else if (s[k] && s[k].v) out[k] = { v: s[k].v, seed: true, src: s[k].src };
       else out[k] = null;
     });

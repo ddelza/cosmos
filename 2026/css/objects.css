@@ -136,3 +136,8 @@ button.hop-chart { display: block; width: 100%; padding: 0; border: 0; backgroun
 .hop-import .imp-obj .n { color: var(--muted); font-size: .8rem; white-space: nowrap; }
 @media (max-width: 560px) { .hop-import .imp-steps li { grid-template-columns: 28px 1fr; } .hop-import .imp-steps .tx { grid-column: 2; } }
 .sc-ed .sc-canvas { max-width: min(100%, calc((92vh - 330px) * 10 / 7)); margin: 0 auto; }
+.by b { color: var(--text); font-weight: 600; }
+.by .when { opacity: .85; }
+.by a { color: var(--text); }
+.hop-text .by, figure .by, .sec-body > .by { margin-top: 6px; }
+.obj-head .by { margin: 2px 0 6px; }
