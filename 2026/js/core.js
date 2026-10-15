@@ -5,7 +5,7 @@
   var CN = window.CN = {};
 
   // ===== 설정 =====
-  CN.VERSION = '20261014d';
+  CN.VERSION = '20261015a';
   CN.DB_URL = 'https://gwangsu-on-default-rtdb.firebaseio.com';
   CN.ROOT = 'years/2026/cosmosNight';          // 행사·천체 아카이브 데이터 (연도 바뀌어도 이 경로 고정)
   CN.ROSTER_YEAR = 2026;                        // 학생·교사 명단 연도

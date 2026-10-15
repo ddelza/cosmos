@@ -10,7 +10,7 @@
   var STAR_R = [0, 5, 8, 12.5];
   var TEXT_PX = [0, 26, 34, 46];
   var SIZE_LABEL = ['', '작게', '보통', '크게'];
-  var C = { bg: '#070304', faint: '#4a2422', star: '#ffd2cc', text: '#e9b7b2', line: '#d9483c', solid: '#a8433b', red: '#e0453b', ui: '#ffd2cc' };
+  var C = { bg: '#070304', faint: '#4a2422', star: '#ffd2cc', text: '#e9b7b2', line: '#d9483c', solid: '#a8433b', white: '#f4ece9', whiteSolid: '#cbbfbc', red: '#e0453b', ui: '#ffd2cc' };
   var FONT = "Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif";
   var CLIP_KEY = 'cn26chartClip';
   var LAYER = { circle: 0, line: 1, star: 2, text: 3 };
@@ -83,20 +83,21 @@
       } else if (it.t === 'line') {
         var e = ends(it, byId);
         var n = Math.round(num(it.div, 0)), L = dist(e.x1, e.y1, e.x2, e.y2);
+        var lc = it.col === 'w' ? (it.solid ? C.whiteSolid : C.white) : (it.solid ? C.solid : C.line);
         h += it.solid
-          ? '<line x1="' + r1(e.x1) + '" y1="' + r1(e.y1) + '" x2="' + r1(e.x2) + '" y2="' + r1(e.y2) + '" stroke="' + C.solid + '" stroke-width="3" stroke-linecap="round"/>'
-          : '<line x1="' + r1(e.x1) + '" y1="' + r1(e.y1) + '" x2="' + r1(e.x2) + '" y2="' + r1(e.y2) + '" stroke="' + C.line + '" stroke-width="4" stroke-dasharray="14 10" stroke-linecap="round"/>';
+          ? '<line x1="' + r1(e.x1) + '" y1="' + r1(e.y1) + '" x2="' + r1(e.x2) + '" y2="' + r1(e.y2) + '" stroke="' + lc + '" stroke-width="3" stroke-linecap="round"/>'
+          : '<line x1="' + r1(e.x1) + '" y1="' + r1(e.y1) + '" x2="' + r1(e.x2) + '" y2="' + r1(e.y2) + '" stroke="' + lc + '" stroke-width="4" stroke-dasharray="14 10" stroke-linecap="round"/>';
         if (it.arrow && L > 20) {
           // 끝(별에 붙어 있으면 별 바로 앞)에 화살촉
           var ux = (e.x2 - e.x1) / L, uy = (e.y2 - e.y1) / L, back = it.b && byId[it.b] ? STAR_R[sizeOf(byId[it.b])] + 7 : 0;
           var tx = e.x2 - ux * back, ty = e.y2 - uy * back, bx = tx - ux * 24, by = ty - uy * 24;
-          h += '<path d="M' + r1(tx) + ' ' + r1(ty) + 'L' + r1(bx - uy * 11) + ' ' + r1(by + ux * 11) + 'L' + r1(bx + uy * 11) + ' ' + r1(by - ux * 11) + 'Z" fill="' + (it.solid ? C.solid : C.line) + '"/>';
+          h += '<path d="M' + r1(tx) + ' ' + r1(ty) + 'L' + r1(bx - uy * 11) + ' ' + r1(by + ux * 11) + 'L' + r1(bx + uy * 11) + ' ' + r1(by - ux * 11) + 'Z" fill="' + lc + '"/>';
         }
         if (n > 1 && L > 0) {
           var nx = -(e.y2 - e.y1) / L * 10, ny = (e.x2 - e.x1) / L * 10;
           for (var k = 1; k < n; k++) {
             var px = e.x1 + (e.x2 - e.x1) * k / n, py = e.y1 + (e.y2 - e.y1) * k / n;
-            h += '<line x1="' + r1(px - nx) + '" y1="' + r1(py - ny) + '" x2="' + r1(px + nx) + '" y2="' + r1(py + ny) + '" stroke="' + C.line + '" stroke-width="3.5" stroke-linecap="round"/>';
+            h += '<line x1="' + r1(px - nx) + '" y1="' + r1(py - ny) + '" x2="' + r1(px + nx) + '" y2="' + r1(py + ny) + '" stroke="' + lc + '" stroke-width="3.5" stroke-linecap="round"/>';
           }
         }
       } else if (it.t === 'star') {
@@ -118,7 +119,7 @@
   };
 
   // 저장용: 필요한 값만, 소수 한 자리
-  var KEYS = { star: ['x', 'y', 's'], line: ['x1', 'y1', 'x2', 'y2', 'a', 'b', 'div', 'arrow', 'solid'], circle: ['x', 'y', 'r'], text: ['x', 'y', 'v', 's'] };
+  var KEYS = { star: ['x', 'y', 's'], line: ['x1', 'y1', 'x2', 'y2', 'a', 'b', 'div', 'arrow', 'solid', 'col'], circle: ['x', 'y', 'r'], text: ['x', 'y', 'v', 's'] };
   function clean(c) {
     var byId = starMap(c.items);
     return {
@@ -140,7 +141,7 @@
   var HINT = {
     select: '눌러서 고르기 · 끌어서 옮기기 · 빈 곳을 끌면 여러 개 고르기(Shift+클릭으로 추가) · <b>오른쪽 클릭</b>: 복사·잘라내기 / 빈 곳은 붙여넣기 · Delete 지우기 · 화살표 키로 조금씩 옮기기 · Ctrl+C·V 복사·붙여넣기 · Ctrl+Z 되돌리기',
     star: '누른 자리에 별이 생겨요 · 별 근처를 <b>오른쪽 클릭</b>하면 지워져요 · 크기는 위 슬라이더(작게·보통·크게)',
-    line: '끌어서 점선을 그어요(또는 시작점·끝점을 차례로 클릭) · 끝을 별 가까이 가져가면 별에 <b>붙어요</b> · 점선을 <b>오른쪽 클릭 → 분할</b>',
+    line: '끌어서 점선을 그어요(또는 시작점·끝점을 차례로 클릭) · 끝을 별 가까이 가져가면 별에 <b>붙어요</b> · 선 색은 위 <b>붉은색·흰색</b>에서(고른 선도 바뀜) · 점선을 <b>오른쪽 클릭 → 분할</b>',
     circle: '끌어서 원을 그려요(누르기만 하면 기본 크기) · 원 <b>테두리를 끌면</b> 크기 조정 · 옮기기는 「선택」에서',
     text: '누른 자리에 글자를 넣어요 · 이미 있는 글자를 누르면 고치기 · 크기는 위 슬라이더',
   };
@@ -163,7 +164,7 @@
         if (d) { var dc = norm(JSON.parse(d)); if (JSON.stringify(dc) !== JSON.stringify(saved)) { c = dc; restored = true; } }
       } catch (e) {}
     }
-    var tool = 'select', size = 2, sel = {}, undo = [], redo = [], dirty = restored;
+    var tool = 'select', size = 2, lineCol = 'r', sel = {}, undo = [], redo = [], dirty = restored;
     var g = null, pending = null, hover = null, lastP = null, pasteN = 0, lastDown = { t: 0, id: null };
     var menuEl = null, popEl = null, done, finished = false, uidN = 0;
     var result = new Promise(function (res) { done = res; });
@@ -174,6 +175,7 @@
       '<div class="sc-ed">' +
       '<div class="sc-tools" data-tools>' + TOOLS.map(function (t) { return '<button type="button" class="chip" data-tool="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>' +
       '<div class="sc-tools"><label class="sc-size">크기 <input type="range" min="1" max="3" step="1" value="2" data-size><span data-sizel>보통</span></label>' +
+      '<span class="sc-col">선 색 <button type="button" class="chip" data-col="r"><i class="sw r"></i>붉은색</button><button type="button" class="chip" data-col="w"><i class="sw w"></i>흰색</button></span>' +
       '<button type="button" class="chip" data-bg>배경 잔별</button>' +
       '<button type="button" class="btn small ghost" data-undo>↶ 되돌리기</button><button type="button" class="btn small ghost" data-redo>↷ 다시</button>' +
       '<button type="button" class="btn small ghost" data-clear>모두 지우기</button></div>' +
@@ -277,7 +279,7 @@
         h += '<rect x="' + r1(Math.min(g.p0.x, g.p.x)) + '" y="' + r1(Math.min(g.p0.y, g.p.y)) + '" width="' + r1(Math.abs(g.p.x - g.p0.x)) + '" height="' + r1(Math.abs(g.p.y - g.p0.y)) + '" fill="rgba(255,210,204,.07)" stroke="' + C.ui + '" stroke-width="2" stroke-dasharray="6 5"/>';
       }
       var pl = pending || (g && g.type === 'line' ? g : null);
-      if (pl && pl.cur) h += '<line x1="' + r1(pl.x1) + '" y1="' + r1(pl.y1) + '" x2="' + r1(pl.cur.x) + '" y2="' + r1(pl.cur.y) + '" stroke="' + C.line + '" stroke-opacity=".75" stroke-width="4" stroke-dasharray="14 10" stroke-linecap="round"/>';
+      if (pl && pl.cur) h += '<line x1="' + r1(pl.x1) + '" y1="' + r1(pl.y1) + '" x2="' + r1(pl.cur.x) + '" y2="' + r1(pl.cur.y) + '" stroke="' + (lineCol === 'w' ? C.white : C.line) + '" stroke-opacity=".75" stroke-width="4" stroke-dasharray="14 10" stroke-linecap="round"/>';
       if (g && g.type === 'circle' && g.r > 3) h += '<circle cx="' + r1(g.x) + '" cy="' + r1(g.y) + '" r="' + r1(g.r) + '" fill="none" stroke="' + C.red + '" stroke-opacity=".75" stroke-width="4"/>';
       if (hover) h += '<circle cx="' + r1(hover.x) + '" cy="' + r1(hover.y) + '" r="' + (STAR_R[sizeOf(hover)] + 12) + '" fill="none" stroke="' + C.ui + '" stroke-width="3" opacity=".9"/>';
       return h;
@@ -378,6 +380,7 @@
       snapshot();
       var it = { id: nid(), t: 'line', x1: from.x1, y1: from.y1, x2: q.x, y2: q.y };
       if (from.a) it.a = from.a;
+      if (lineCol === 'w') it.col = 'w';
       if (q.id) it.b = q.id;
       c.items.push(it);
       changed();
@@ -589,6 +592,7 @@
         if (it.t === 'line') {
           list.push(['분할…' + (it.div > 1 ? ' (지금 ' + it.div + '분할)' : ''), function () { splitLine(e.clientX, e.clientY, it); }]);
           list.push([it.arrow ? '화살표 빼기' : '끝에 화살표 넣기', function () { snapshot(); if (it.arrow) delete it.arrow; else it.arrow = true; changed(); }]);
+          list.push([it.col === 'w' ? '붉은색으로 바꾸기' : '흰색으로 바꾸기', function () { snapshot(); if (it.col === 'w') delete it.col; else it.col = 'w'; changed(); }]);
           list.push([it.solid ? '점선으로 바꾸기' : '실선으로 바꾸기 (별자리 선)', function () { snapshot(); if (it.solid) delete it.solid; else it.solid = true; changed(); }]);
           list.push(['방향 뒤집기', function () {
             snapshot();
@@ -661,6 +665,20 @@
     // ----- 도구 막대 -----
     el.querySelectorAll('[data-tool]').forEach(function (b) { b.onclick = function () { setTool(b.dataset.tool); }; });
     sizeIn.addEventListener('input', function () { size = Number(sizeIn.value); sizeL.textContent = SIZE_LABEL[size]; });
+    var colBtns = el.querySelectorAll('[data-col]');
+    var showCol = function () { colBtns.forEach(function (b) { var on = b.dataset.col === lineCol; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }); };
+    colBtns.forEach(function (b) {
+      b.onclick = function () {
+        lineCol = b.dataset.col; showCol();
+        // 고른 선이 있으면 그 선들도 이 색으로
+        var targets = c.items.filter(function (it) { return sel[it.id] && it.t === 'line' && (it.col === 'w' ? 'w' : 'r') !== lineCol; });
+        if (!targets.length) { render(); return; }
+        snapshot();
+        targets.forEach(function (it) { if (lineCol === 'w') it.col = 'w'; else delete it.col; });
+        changed();
+      };
+    });
+    showCol();
     sizeIn.addEventListener('change', function () {
       size = Number(sizeIn.value); sizeL.textContent = SIZE_LABEL[size];
       var targets = c.items.filter(function (it) { return sel[it.id] && (it.t === 'star' || it.t === 'text') && sizeOf(it) !== size; });

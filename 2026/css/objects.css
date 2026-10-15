@@ -141,3 +141,6 @@ button.hop-chart { display: block; width: 100%; padding: 0; border: 0; backgroun
 .by a { color: var(--text); }
 .hop-text .by, figure .by, .sec-body > .by { margin-top: 6px; }
 .obj-head .by { margin: 2px 0 6px; }
+.sc-ed .sc-col { display: inline-flex; align-items: center; gap: 4px; font-size: .84rem; color: var(--text); margin-right: 4px; }
+.sc-ed .sw { display: inline-block; width: 16px; height: 0; border-top: 3px dashed; vertical-align: middle; margin-right: 5px; }
+.sc-ed .sw.r { color: #d9483c; } .sc-ed .sw.w { color: #f4ece9; }
