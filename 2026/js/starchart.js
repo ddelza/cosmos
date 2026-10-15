@@ -1,4 +1,4 @@
-// 호핑법 그림 도구 — 별·점선·붉은 원·글자로 "찾아가는 길"을 그림 (사진 대신 쓸 수 있음)
+// 호핑법 그림 도구 — 별·점선·원·글자로 "찾아가는 길"을 그림 (사진 대신 쓸 수 있음)
 // DB에는 그림 파일이 아니라 좌표만 저장: objects/{id}/hopping/{key}/chart
 //   { v:1, bg:true(배경 잔별), seed:n, items:[
 //       {id,t:'star',x,y,s} | {id,t:'line',x1,y1,x2,y2,a,b,div} | {id,t:'circle',x,y,r} | {id,t:'text',x,y,v,s} ] }
@@ -79,7 +79,7 @@
     }
     c.items.slice().sort(function (a, b) { return LAYER[a.t] - LAYER[b.t]; }).forEach(function (it) {
       if (it.t === 'circle') {
-        h += '<circle cx="' + r1(it.x) + '" cy="' + r1(it.y) + '" r="' + r1(Math.max(4, num(it.r, 40))) + '" fill="none" stroke="' + C.red + '" stroke-width="4"/>';
+        h += '<circle cx="' + r1(it.x) + '" cy="' + r1(it.y) + '" r="' + r1(Math.max(4, num(it.r, 40))) + '" fill="none" stroke="' + (it.col === 'w' ? C.white : C.red) + '" stroke-width="4"/>';
       } else if (it.t === 'line') {
         var e = ends(it, byId);
         var n = Math.round(num(it.div, 0)), L = dist(e.x1, e.y1, e.x2, e.y2);
@@ -119,7 +119,7 @@
   };
 
   // 저장용: 필요한 값만, 소수 한 자리
-  var KEYS = { star: ['x', 'y', 's'], line: ['x1', 'y1', 'x2', 'y2', 'a', 'b', 'div', 'arrow', 'solid', 'col'], circle: ['x', 'y', 'r'], text: ['x', 'y', 'v', 's'] };
+  var KEYS = { star: ['x', 'y', 's'], line: ['x1', 'y1', 'x2', 'y2', 'a', 'b', 'div', 'arrow', 'solid', 'col'], circle: ['x', 'y', 'r', 'col'], text: ['x', 'y', 'v', 's'] };
   function clean(c) {
     var byId = starMap(c.items);
     return {
@@ -137,13 +137,13 @@
   }
 
   // ===== 편집기 =====
-  var TOOLS = [['select', '↖ 선택'], ['star', '★ 별'], ['line', '╌ 점선'], ['circle', '◯ 붉은 원'], ['text', '가 글자']];
+  var TOOLS = [['select', '↖ 선택'], ['star', '★ 별'], ['line', '╌ 점선'], ['circle', '◯ 원'], ['text', '가 글자']];
   var HINT = {
     select: '눌러서 고르기 · 끌어서 옮기기 · 빈 곳을 끌면 여러 개 고르기(Shift+클릭으로 추가) · <b>오른쪽 클릭</b>: 복사·잘라내기 / 빈 곳은 붙여넣기 · Delete 지우기 · 화살표 키로 조금씩 옮기기 · Ctrl+C·V 복사·붙여넣기 · Ctrl+Z 되돌리기',
     star: '누른 자리에 별이 생겨요 · 별 근처를 <b>오른쪽 클릭</b>하면 지워져요 · 크기는 위 슬라이더(작게·보통·크게)',
     line: '끌어서 점선을 그어요(또는 시작점·끝점을 차례로 클릭) · 끝을 별 가까이 가져가면 별에 <b>붙어요</b> · 선 색은 위 <b>붉은색·흰색</b>에서(고른 선도 바뀜) · 점선을 <b>오른쪽 클릭 → 분할</b>',
-    circle: '끌어서 원을 그려요(누르기만 하면 기본 크기) · 원 <b>테두리를 끌면</b> 크기 조정 · 옮기기는 「선택」에서',
-    text: '누른 자리에 글자를 넣어요 · 이미 있는 글자를 누르면 고치기 · 크기는 위 슬라이더',
+    circle: '끌어서 원을 그려요(누르기만 하면 기본 크기) · 원 <b>테두리를 끌면</b> 크기 조정 · 색은 위 <b>붉은색·흰색</b> · 옮기기는 「선택」에서',
+    text: '누른 자리에 글자를 넣어요 · 이미 있는 글자를 누르면 고치기 · <b>글자 크기</b>는 위 슬라이더(작게·보통·크게) — 고른 글자도 바뀌어요, 글자 오른쪽 클릭으로도 바꿀 수 있어요',
   };
 
   var clipMem = null;
@@ -174,8 +174,8 @@
       '<div class="modal-head"><div class="t">' + esc(opts.title || '찾아가는 길 그림') + '</div><button class="icon-btn" data-close>닫기</button></div>' +
       '<div class="sc-ed">' +
       '<div class="sc-tools" data-tools>' + TOOLS.map(function (t) { return '<button type="button" class="chip" data-tool="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>' +
-      '<div class="sc-tools"><label class="sc-size">크기 <input type="range" min="1" max="3" step="1" value="2" data-size><span data-sizel>보통</span></label>' +
-      '<span class="sc-col">선 색 <button type="button" class="chip" data-col="r"><i class="sw r"></i>붉은색</button><button type="button" class="chip" data-col="w"><i class="sw w"></i>흰색</button></span>' +
+      '<div class="sc-tools"><label class="sc-size"><span data-sizet>크기</span> <input type="range" min="1" max="3" step="1" value="2" data-size><span data-sizel>보통</span></label>' +
+      '<span class="sc-col" title="점선·원 색">색 <button type="button" class="chip" data-col="r"><i class="sw r"></i>붉은색</button><button type="button" class="chip" data-col="w"><i class="sw w"></i>흰색</button></span>' +
       '<button type="button" class="chip" data-bg>배경 잔별</button>' +
       '<button type="button" class="btn small ghost" data-undo>↶ 되돌리기</button><button type="button" class="btn small ghost" data-redo>↷ 다시</button>' +
       '<button type="button" class="btn small ghost" data-clear>모두 지우기</button></div>' +
@@ -280,11 +280,21 @@
       }
       var pl = pending || (g && g.type === 'line' ? g : null);
       if (pl && pl.cur) h += '<line x1="' + r1(pl.x1) + '" y1="' + r1(pl.y1) + '" x2="' + r1(pl.cur.x) + '" y2="' + r1(pl.cur.y) + '" stroke="' + (lineCol === 'w' ? C.white : C.line) + '" stroke-opacity=".75" stroke-width="4" stroke-dasharray="14 10" stroke-linecap="round"/>';
-      if (g && g.type === 'circle' && g.r > 3) h += '<circle cx="' + r1(g.x) + '" cy="' + r1(g.y) + '" r="' + r1(g.r) + '" fill="none" stroke="' + C.red + '" stroke-opacity=".75" stroke-width="4"/>';
+      if (g && g.type === 'circle' && g.r > 3) h += '<circle cx="' + r1(g.x) + '" cy="' + r1(g.y) + '" r="' + r1(g.r) + '" fill="none" stroke="' + (lineCol === 'w' ? C.white : C.red) + '" stroke-opacity=".75" stroke-width="4"/>';
       if (hover) h += '<circle cx="' + r1(hover.x) + '" cy="' + r1(hover.y) + '" r="' + (STAR_R[sizeOf(hover)] + 12) + '" fill="none" stroke="' + C.ui + '" stroke-width="3" opacity=".9"/>';
       return h;
     }
+    // 슬라이더: 별 도구면 「별 크기」, 글자 도구면 「글자 크기」, 별·글자 하나를 고르면 그 크기를 보여 줌
+    function syncSize() {
+      var one = c.items.filter(function (it) { return sel[it.id]; });
+      var pick = one.length === 1 && (one[0].t === 'star' || one[0].t === 'text') ? one[0] : null;
+      if (pick) size = sizeOf(pick);
+      var kind = pick ? pick.t : tool;
+      el.querySelector('[data-sizet]').textContent = kind === 'text' ? '글자 크기' : kind === 'star' ? '별 크기' : '크기';
+      sizeIn.value = size; sizeL.textContent = SIZE_LABEL[size];
+    }
     function render() {
+      syncSize();
       svg.innerHTML = body(c, 'scEd') + overlay();
       svg.setAttribute('class', 'starchart sc-canvas t-' + tool);
       undoBtn.disabled = !undo.length; redoBtn.disabled = !redo.length;
@@ -568,7 +578,9 @@
       }
       if (gg.type === 'circle') {
         snapshot();
-        c.items.push({ id: nid(), t: 'circle', x: gg.x, y: gg.y, r: gg.r < 10 ? 45 : gg.r });
+        var ci = { id: nid(), t: 'circle', x: gg.x, y: gg.y, r: gg.r < 10 ? 45 : gg.r };
+        if (lineCol === 'w') ci.col = 'w';
+        c.items.push(ci);
         changed(); return;
       }
       if (gg.type === 'text') textAt(gg.p0, null);
@@ -603,7 +615,13 @@
             changed();
           }]);
         }
-        if (it.t === 'text') list.push(['글자 고치기', function () { textAt(p, it); }]);
+        if (it.t === 'circle') list.push([it.col === 'w' ? '붉은색으로 바꾸기' : '흰색으로 바꾸기', function () { snapshot(); if (it.col === 'w') delete it.col; else it.col = 'w'; changed(); }]);
+        if (it.t === 'text') {
+          list.push(['글자 고치기', function () { textAt(p, it); }]);
+          [1, 2, 3].forEach(function (n) {
+            if (n !== sizeOf(it)) list.push(['글자 크기: ' + SIZE_LABEL[n], function () { snapshot(); it.s = n; size = n; syncSize(); changed(); }]);
+          });
+        }
         list.push(['복사', function () { copySel(false); }], ['잘라내기', function () { copySel(true); }], ['삭제', deleteSel]);
         showMenu(e.clientX, e.clientY, list);
         return;
@@ -671,7 +689,7 @@
       b.onclick = function () {
         lineCol = b.dataset.col; showCol();
         // 고른 선이 있으면 그 선들도 이 색으로
-        var targets = c.items.filter(function (it) { return sel[it.id] && it.t === 'line' && (it.col === 'w' ? 'w' : 'r') !== lineCol; });
+        var targets = c.items.filter(function (it) { return sel[it.id] && (it.t === 'line' || it.t === 'circle') && (it.col === 'w' ? 'w' : 'r') !== lineCol; });
         if (!targets.length) { render(); return; }
         snapshot();
         targets.forEach(function (it) { if (lineCol === 'w') it.col = 'w'; else delete it.col; });
