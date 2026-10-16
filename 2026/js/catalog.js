@@ -46,7 +46,11 @@
   };
   CN.SECTIONS = { points: '관측포인트', description: '설명', story: '관련 이야기' };
   CN.PLACES = { lab: '과학실', deck: '3층 데크', roof: '옥상' };
-  CN.GEAR = { eye: '맨눈', binoc: '쌍안경', scope: '소형 망원경', dob: '10인치 돕소니안', smart: '스마트 망원경(촬영)' };
+  // 기존 저장 키(eye·smart·dob)는 의미가 같은 새 이름으로 이어 쓴다.
+  CN.GEAR = { eye: '맨눈', phone: '핸드폰 촬영', wideBinoc: '2X 내외로 시야가 넓은 별자리 쌍안경', binoc: '배율 10X 내외의 쌍안경', smart: '촬영용 망원경', dob: '구경이 큰 반사망원경(돕소니안 등)', refractor: '굴절망원경', sct: '슈미트-카세그레인식 망원경' };
+  // 새 선택지에서는 빠졌지만 이미 고른 천체에 표시만 하는 예전 항목
+  CN.GEAR_OLD = { scope: '소형 망원경' };
+  CN.gearLabel = function (k) { return CN.GEAR[k] || CN.GEAR_OLD[k] || k; };
   CN.LEVELS = ['최하', '하', '중하', '중', '중상', '상', '최상', '∞'];
 
   async function getJson(path, fallback) {

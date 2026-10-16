@@ -239,7 +239,7 @@
       h += '<section data-sec="meta">' + sectionHead('관측 난이도 · 추천 장비', 'meta', admin) + '<div class="sec-body"><dl class="kv">';
       h += '<dt>눈으로 보기(안시)</dt><dd>' + (eye ? '<span class="lv">' + esc(eye) + '</span>' : '—') + '</dd>';
       h += '<dt>사진 찍기(촬영)</dt><dd>' + (photoLv ? '<span class="lv">' + esc(photoLv) + '</span>' : '—') + '</dd>';
-      h += '<dt>추천 장비</dt><dd>' + (gear.length ? gear.map(function (k) { return esc(CN.GEAR[k]); }).join(', ') : '—') + '</dd>';
+      h += '<dt>추천 장비</dt><dd>' + (gear.length ? gear.map(function (k) { return esc(CN.gearLabel(k)); }).join(', ') : '—') + '</dd>';
       h += '</dl>' + (!meta.eye && c.seedDifficulty ? '<div class="seed-note">작년 자료 · 검토 필요</div>' : '') + CN.byline(meta) + '</div></section>';
     }
 
@@ -683,7 +683,7 @@
       '<label class="field">관측 장소</label><div class="chips">' + Object.keys(CN.PLACES).map(function (k) { var on = !!(meta.places || {})[k]; return '<button class="chip' + (on ? ' on' : '') + '" data-place="' + k + '" aria-pressed="' + on + '">' + CN.PLACES[k] + '</button>'; }).join('') + '</div>' +
       '<label class="field">눈으로 보기(안시) 난이도</label><select data-lv="eye">' + lvOpts(meta.eye || seedD.eye) + '</select>' +
       '<label class="field">사진 찍기(촬영) 난이도</label><select data-lv="photo">' + lvOpts(meta.photo || seedD.photo) + '</select>' +
-      '<label class="field">추천 장비</label><div class="chips">' + Object.keys(CN.GEAR).map(function (k) { var on = !!(meta.gear || {})[k]; return '<button class="chip' + (on ? ' on' : '') + '" data-gear="' + k + '" aria-pressed="' + on + '">' + CN.GEAR[k] + '</button>'; }).join('') + '</div>' +
+      '<label class="field">추천 장비</label><div class="chips">' + Object.keys(CN.GEAR).concat(Object.keys(CN.GEAR_OLD).filter(function (k) { return (meta.gear || {})[k]; })).map(function (k) { var on = !!(meta.gear || {})[k]; return '<button class="chip' + (on ? ' on' : '') + '" data-gear="' + k + '" aria-pressed="' + on + '">' + esc(CN.gearLabel(k)) + '</button>'; }).join('') + '</div>' +
       '<div class="ed-actions"><button class="btn primary small" data-done>편집 마치기</button></div>';
     var save = async function (patch) {
       patch = CN.stamp(meta.by || meta.author ? meta : null, patch);
