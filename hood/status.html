@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>후드티 투표 현황</title>
+<link rel="icon" href="../logo.png">
+<link rel="stylesheet" href="hood.css">
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <h1>📊 후드티 투표 현황</h1>
+    <p>2026 코스모스 후드티 · <span id="updated">불러오는 중...</span></p>
+  </div>
+
+  <div class="who-banner">
+    <span id="whoLabel">누구나 볼 수 있어요</span>
+    <span class="links">
+      <a href="index.html">✏️ 투표하러 가기</a>
+      <button onclick="load()">새로고침</button>
+    </span>
+  </div>
+
+  <div class="card" style="text-align:center">
+    <div class="muted">참여 인원</div>
+    <div class="stat-big" id="total">-</div>
+  </div>
+
+  <div class="card">
+    <h2>뒷면 시안 <span class="muted">(복수 투표 · 참여 인원 대비 %)</span></h2>
+    <div id="designBars"></div>
+    <div id="designEtcList"></div>
+  </div>
+
+  <div class="card">
+    <h2>색</h2>
+    <div id="colorBars"></div>
+    <div id="colorEtcList"></div>
+  </div>
+
+  <div class="card">
+    <h2>사이즈</h2>
+    <div id="sizeBars"></div>
+    <div class="scroll-x" style="margin-top:12px"><table class="grid" id="crossTable"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>참여한 사람</h2>
+    <div class="chips" id="voterChips"></div>
+  </div>
+
+  <div class="card hidden" id="teacherCard">
+    <h2>전체 응답 (교사용)</h2>
+    <div class="scroll-x"><table class="grid" id="detailTable"></table></div>
+  </div>
+</div>
+
+<script src="hood.js"></script>
+<script>
+const viewer = getHoodUser();
+const isTeacher = !!(viewer && viewer.isTeacher);
+if (viewer) document.getElementById('whoLabel').textContent = `✓ ${whoLabel(viewer)}`;
+
+function bars(rows, denom) {
+  const max = Math.max(0, ...rows.map(r => r.n));
+  return rows.map(r => {
+    const pct = denom ? Math.round(r.n / denom * 100) : 0;
+    const lead = max > 0 && r.n === max;
+    return `<div class="bar-row${lead ? ' lead' : ''}">
+      <div class="bar-top"><span class="lbl">${r.html}</span><span class="cnt">${r.n}표${denom ? ` · ${pct}%` : ''}</span></div>
+      <div class="bar"><span style="width:${denom ? r.n / denom * 100 : 0}%"></span></div>
+    </div>`;
+  }).join('');
+}
+
+function suggestList(title, items) {
+  if (!items.length) return '';
+  return `<div class="muted" style="margin:12px 0 6px">${title} (${items.length})</div>` +
+    items.map(t => `<div class="suggest">${esc(t)}</div>`).join('');
+}
+
+function render(votes) {
+  const list = Object.entries(votes || {}).map(([id, v]) => ({ id, ...v })).sort((a, b) => a.id.localeCompare(b.id));
+  const total = list.length;
+  document.getElementById('total').textContent = `${total}명`;
+
+  // 시안
+  const designRows = DESIGNS.map(d => ({
+    html: `<img class="thumb" src="img/p-${d.key}.png" alt="">${d.key}. ${esc(d.label)}`,
+    n: list.filter(v => (v.designs || []).includes(d.key)).length,
+  }));
+  const designEtc = list.map(v => v.designEtc).filter(Boolean);
+  designRows.push({ html: '8. 그외 제안', n: designEtc.length });
+  document.getElementById('designBars').innerHTML = bars(designRows, total);
+  document.getElementById('designEtcList').innerHTML = suggestList('그외 시안 제안', designEtc);
+
+  // 색
+  const colorRows = COLORS.map((c, i) => ({
+    html: `${c.swatch ? `<span class="sw" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${c.swatch};border:1px solid rgba(255,255,255,.35);margin-right:6px"></span>` : ''}${i + 1}. ${esc(c.label)}`,
+    n: list.filter(v => v.color === c.key).length,
+  }));
+  document.getElementById('colorBars').innerHTML = bars(colorRows, total);
+  document.getElementById('colorEtcList').innerHTML = suggestList('그외 색 제안', list.filter(v => v.color === 'etc' && v.colorEtc).map(v => v.colorEtc));
+
+  // 사이즈
+  const sizeRows = SIZES.map(s => ({ html: s, n: list.filter(v => v.size === s).length }));
+  document.getElementById('sizeBars').innerHTML = bars(sizeRows, total);
+
+  // 색 × 사이즈 (주문 수량 확인용)
+  const head = `<tr><th class="l">색 / 사이즈</th>${SIZES.map(s => `<th>${s.replace(/\(.*\)/, '')}</th>`).join('')}<th>합계</th></tr>`;
+  const body = COLORS.map(c => {
+    const row = SIZES.map(s => list.filter(v => v.color === c.key && v.size === s).length);
+    const sum = row.reduce((a, b) => a + b, 0);
+    return `<tr><td class="l">${esc(c.label)}</td>${row.map(n => `<td>${n || ''}</td>`).join('')}<td><b>${sum}</b></td></tr>`;
+  }).join('');
+  document.getElementById('crossTable').innerHTML = head + body;
+
+  document.getElementById('voterChips').innerHTML = total
+    ? list.map(v => `<span class="chip">${esc(v.name)}</span>`).join('')
+    : '<span class="muted">아직 아무도 투표하지 않았어요.</span>';
+
+  if (isTeacher) {
+    document.getElementById('teacherCard').classList.remove('hidden');
+    document.getElementById('detailTable').innerHTML =
+      `<tr><th>학번</th><th class="l">이름</th><th>시안</th><th class="l">색</th><th>사이즈</th><th>제출</th></tr>` +
+      list.map(v => `<tr>
+        <td>${esc(v.id)}</td><td class="l">${esc(v.name)}</td>
+        <td class="wrap">${(v.designs || []).join(', ')}${v.designEtc ? ` <span class="muted">+제안: ${esc(v.designEtc)}</span>` : ''}</td>
+        <td class="l">${esc(colorLabel(v.color))}${v.colorEtc ? ` (${esc(v.colorEtc)})` : ''}</td>
+        <td>${esc(v.size)}</td>
+        <td class="muted">${v.at ? new Date(v.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}</td>
+      </tr>`).join('');
+  }
+}
+
+async function load() {
+  try {
+    const votes = await fetch(`${await hoodBase()}/votes.json`).then(r => r.json());
+    render(votes);
+    document.getElementById('updated').textContent = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' 기준';
+  } catch (e) {
+    document.getElementById('updated').textContent = '불러오기 실패 — 새로고침을 눌러주세요';
+  }
+}
+
+load();
+setInterval(load, 20000);
+</script>
+</body>
+</html>

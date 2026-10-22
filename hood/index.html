@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 코스모스 후드티 설문</title>
+<link rel="icon" href="../logo.png">
+<link rel="stylesheet" href="hood.css">
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <img src="../logo.png" alt="COSMOS Astronomy Club">
+    <h1>2026 코스모스 후드티 설문</h1>
+    <p>뒷면 시안 · 색 · 사이즈를 골라주세요</p>
+  </div>
+
+  <!-- 1. 로그인 -->
+  <div id="step-login">
+    <div class="card">
+      <h2><span class="qnum">1</span>학생 확인</h2>
+      <p class="hint">학번(4자리)과 이름을 입력해주세요. 예) 2학년 1반 15번 → 2115</p>
+      <label class="field-label" for="inputId">학번 (4자리)</label>
+      <input type="tel" id="inputId" maxlength="4" inputmode="numeric" placeholder="2115">
+      <label class="field-label" for="inputName">이름</label>
+      <input type="text" id="inputName" placeholder="홍길동">
+      <div class="msg err" id="loginError"></div>
+      <button class="btn" id="loginBtn" onclick="onLogin()">입장하기</button>
+    </div>
+    <a class="btn ghost" href="status.html">📊 투표 현황 보기</a>
+  </div>
+
+  <!-- 2~4. 설문 -->
+  <div id="step-form" class="hidden">
+    <div class="who-banner">
+      <span id="welcomeLabel"></span>
+      <span class="links">
+        <a href="status.html">📊 투표 현황</a>
+        <button onclick="onLogout()">다른 학생으로</button>
+      </span>
+    </div>
+    <div class="msg ok" id="prevMsg"></div>
+
+    <div class="card">
+      <h2><span class="qnum">2</span>뒷면 시안 투표 <span class="muted">(복수 선택 가능)</span></h2>
+      <p class="hint">다수결로 하나가 정해집니다. 마음에 드는 시안을 모두 골라주세요. 그림의 <b>크게</b>를 누르면 확대돼요.</p>
+      <div class="designs" id="designList"></div>
+      <label class="opt" id="opt-design-etc">
+        <input type="checkbox" id="designEtcChk">
+        <span>8. 그외 제안 (말로 쓰기)</span>
+      </label>
+      <div class="etc-box hidden" id="designEtcBox">
+        <textarea id="designEtc" placeholder="원하는 시안을 자유롭게 설명해주세요"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="qnum">3</span>색</h2>
+      <p class="hint">파랑을 고르면 <b>무료</b>예요 (지혁이 아버지 만세! 🙌). 단, 파랑은 <b>S(90) · M(95) · L(100)</b>만 가능해요.</p>
+      <div id="colorList"></div>
+      <div class="etc-box hidden" id="colorEtcBox">
+        <input type="text" id="colorEtc" placeholder="원하는 색을 적어주세요">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="qnum">4</span>사이즈</h2>
+      <p class="hint" id="sizeHint">본인 사이즈를 골라주세요.</p>
+      <div id="sizeList"></div>
+    </div>
+
+    <div class="msg err" id="submitError"></div>
+    <div class="msg ok" id="submitOk"></div>
+    <button class="btn" id="submitBtn" onclick="onSubmit()">제출하기</button>
+    <a class="btn ghost" href="status.html">📊 투표 현황 보기</a>
+  </div>
+</div>
+
+<div class="lightbox hidden" id="lightbox" onclick="this.classList.add('hidden')">
+  <img id="lbImg" alt="">
+  <div class="lb-cap" id="lbCap"></div>
+</div>
+
+<script src="hood.js"></script>
+<script>
+let me = null;
+
+function show(id) {
+  ['step-login', 'step-form'].forEach(s => document.getElementById(s).classList.toggle('hidden', s !== id));
+}
+function setMsg(id, text) {
+  const el = document.getElementById(id);
+  el.textContent = text || '';
+  el.classList.toggle('show', !!text);
+}
+
+/* ---------- 선택지 그리기 ---------- */
+function renderOptions() {
+  document.getElementById('designList').innerHTML = DESIGNS.map(d => `
+    <div class="dcard" data-key="${d.key}">
+      <span class="no">${d.key}</span>
+      <button type="button" class="zoom" data-zoom="${d.key}">크게</button>
+      <img src="img/p-${d.key}.png" alt="시안 ${d.key}" loading="lazy">
+      <label class="cap"><input type="checkbox" name="design" value="${d.key}"><span>${esc(d.label)}</span></label>
+    </div>`).join('');
+
+  document.getElementById('colorList').innerHTML = COLORS.map((c, i) => `
+    <label class="opt" data-color="${c.key}">
+      <input type="radio" name="color" value="${c.key}">
+      ${c.swatch ? `<span class="sw" style="background:${c.swatch}"></span>` : '<span class="sw" style="background:conic-gradient(#e26b6b,#e8c368,#7fd1a3,#2f6fd6,#b07fd1,#e26b6b)"></span>'}
+      <span>${i + 1}. ${esc(c.label)}${c.note ? `<span class="note">${esc(c.note)}</span>` : ''}</span>
+    </label>`).join('');
+
+  document.getElementById('sizeList').innerHTML = SIZES.map((s, i) => `
+    <label class="opt" data-size="${s}">
+      <input type="radio" name="size" value="${s}">
+      <span>${i + 1}. ${s}</span>
+    </label>`).join('');
+
+  // 그림 카드 아무 곳이나 눌러도 체크
+  document.querySelectorAll('.dcard').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('.zoom')) return;
+      if (e.target.closest('label')) return; // label이 알아서 토글
+      const chk = card.querySelector('input');
+      chk.checked = !chk.checked;
+      syncUI();
+    });
+  });
+  document.querySelectorAll('.zoom').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    const d = DESIGNS.find(x => x.key === Number(b.dataset.zoom));
+    document.getElementById('lbImg').src = `img/p-${d.key}.png`;
+    document.getElementById('lbCap').textContent = `${d.key}. ${d.label}`;
+    document.getElementById('lightbox').classList.remove('hidden');
+  }));
+  document.querySelectorAll('#step-form input').forEach(el => el.addEventListener('change', syncUI));
+}
+
+function val(name) {
+  const el = document.querySelector(`input[name=${name}]:checked`);
+  return el ? el.value : '';
+}
+
+// 체크 상태 표시 + 파랑이면 XL 이상 막기
+function syncUI() {
+  document.querySelectorAll('.dcard').forEach(c => c.classList.toggle('checked', c.querySelector('input').checked));
+  const etcChk = document.getElementById('designEtcChk');
+  document.getElementById('opt-design-etc').classList.toggle('checked', etcChk.checked);
+  document.getElementById('designEtcBox').classList.toggle('hidden', !etcChk.checked);
+
+  const color = val('color');
+  document.querySelectorAll('[data-color]').forEach(o => o.classList.toggle('checked', o.dataset.color === color));
+  document.getElementById('colorEtcBox').classList.toggle('hidden', color !== 'etc');
+
+  const blue = color === 'blue';
+  const curSize = val('size');
+  if (blue && curSize && !BLUE_SIZES.includes(curSize)) {
+    document.querySelector(`input[name=size][value="${curSize}"]`).checked = false;
+    setMsg('submitError', `파랑은 S·M·L만 가능해서 고른 사이즈(${curSize})를 해제했어요. 다시 골라주세요.`);
+  }
+  document.querySelectorAll('[data-size]').forEach(o => {
+    const off = blue && !BLUE_SIZES.includes(o.dataset.size);
+    o.classList.toggle('disabled', off);
+    o.querySelector('input').disabled = off;
+    o.classList.toggle('checked', o.querySelector('input').checked);
+  });
+  document.getElementById('sizeHint').textContent = blue
+    ? '파랑을 골라서 S(90) · M(95) · L(100)만 선택할 수 있어요.'
+    : '본인 사이즈를 골라주세요.';
+}
+
+function fillForm(v) {
+  (v.designs || []).forEach(k => {
+    const el = document.querySelector(`input[name=design][value="${k}"]`);
+    if (el) el.checked = true;
+  });
+  if (v.designEtc) { document.getElementById('designEtcChk').checked = true; document.getElementById('designEtc').value = v.designEtc; }
+  if (v.color) { const el = document.querySelector(`input[name=color][value="${v.color}"]`); if (el) el.checked = true; }
+  if (v.colorEtc) document.getElementById('colorEtc').value = v.colorEtc;
+  if (v.size) { const el = document.querySelector(`input[name=size][value="${v.size}"]`); if (el) el.checked = true; }
+  syncUI();
+}
+
+/* ---------- 로그인 ---------- */
+window.onLogin = async function () {
+  const id = document.getElementById('inputId').value.trim();
+  const name = document.getElementById('inputName').value.trim();
+  setMsg('loginError', '');
+  if (!/^\d{4}$/.test(id)) { setMsg('loginError', '학번은 4자리 숫자로 입력해주세요.'); return; }
+  if (!name) { setMsg('loginError', '이름을 입력해주세요.'); return; }
+
+  if (id === TEACHER_ID && name === TEACHER_NAME) {
+    setHoodUser({ id, name, isTeacher: true });
+    location.href = 'status.html';
+    return;
+  }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = '확인 중...';
+  try {
+    const year = await loadYear();
+    const res = await fetch(`${DB_URL}/years/${year}/students/${id}.json`);
+    if (!res.ok) throw new Error('학생 명단을 불러오지 못했습니다.');
+    const rec = await res.json();
+    if (!rec || String(rec.name).trim() !== name) {
+      setMsg('loginError', '학번 또는 이름이 일치하지 않습니다. 다시 확인해주세요.');
+      return;
+    }
+    const s = { id, name: rec.name, grade: rec.grade, ban: rec.ban, num: rec.num };
+    setHoodUser(s);
+    await enterForm(s);
+  } catch (e) {
+    setMsg('loginError', e.message || '확인 중 오류가 발생했습니다.');
+  } finally {
+    btn.disabled = false; btn.textContent = '입장하기';
+  }
+};
+
+window.onLogout = function () {
+  clearHoodUser();
+  location.reload();
+};
+
+async function enterForm(s) {
+  me = s;
+  document.getElementById('welcomeLabel').textContent = `✓ ${whoLabel(s)}님`;
+  show('step-form');
+  try {
+    const prev = await fetch(`${await hoodBase()}/votes/${s.id}.json`).then(r => r.json());
+    if (prev) {
+      fillForm(prev);
+      setMsg('prevMsg', '이미 제출한 내용을 불러왔어요. 고쳐서 다시 제출하면 새 내용으로 바뀝니다.');
+      document.getElementById('submitBtn').textContent = '수정해서 다시 제출하기';
+    }
+  } catch (e) { /* 이전 응답 불러오기 실패는 무시 */ }
+}
+
+/* ---------- 제출 ---------- */
+window.onSubmit = async function () {
+  setMsg('submitError', ''); setMsg('submitOk', '');
+  const designs = [...document.querySelectorAll('input[name=design]:checked')].map(el => Number(el.value));
+  const etcOn = document.getElementById('designEtcChk').checked;
+  const designEtc = etcOn ? document.getElementById('designEtc').value.trim() : '';
+  const color = val('color');
+  const colorEtc = color === 'etc' ? document.getElementById('colorEtc').value.trim() : '';
+  const size = val('size');
+
+  if (etcOn && !designEtc) return setMsg('submitError', '시안 「그외 제안」을 골랐다면 내용을 적어주세요.');
+  if (!designs.length && !designEtc) return setMsg('submitError', '뒷면 시안을 하나 이상 골라주세요.');
+  if (!color) return setMsg('submitError', '색을 골라주세요.');
+  if (color === 'etc' && !colorEtc) return setMsg('submitError', '색 「그외 제안」을 골랐다면 원하는 색을 적어주세요.');
+  if (!size) return setMsg('submitError', '사이즈를 골라주세요.');
+  if (color === 'blue' && !BLUE_SIZES.includes(size)) return setMsg('submitError', '파랑은 S·M·L만 가능해요.');
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '제출 중...';
+  try {
+    const body = { name: me.name, grade: me.grade, ban: me.ban, num: me.num, designs, designEtc, color, colorEtc, size, at: Date.now() };
+    const res = await fetch(`${await hoodBase()}/votes/${me.id}.json`, { method: 'PUT', body: JSON.stringify(body) });
+    if (!res.ok) throw new Error('저장에 실패했어요. 잠시 후 다시 시도해주세요.');
+    setMsg('prevMsg', '');
+    setMsg('submitOk', '제출 완료! 고마워요 🌌 바꾸고 싶으면 고쳐서 다시 제출하면 돼요.');
+    btn.textContent = '수정해서 다시 제출하기';
+  } catch (e) {
+    setMsg('submitError', e.message);
+    btn.textContent = '제출하기';
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+document.getElementById('inputId').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('inputName').focus(); }
+});
+document.getElementById('inputName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); onLogin(); }
+});
+
+renderOptions();
+syncUI();
+const saved = getHoodUser();
+if (saved && !saved.isTeacher) enterForm(saved);
+</script>
+</body>
+</html>
