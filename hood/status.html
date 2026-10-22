@@ -54,10 +54,12 @@
 
   <div class="card hidden" id="teacherCard">
     <h2>전체 응답 (교사용)</h2>
+    <button class="btn" style="margin:6px 0 12px" onclick="downloadXlsx()">📥 엑셀로 다운로드</button>
     <div class="scroll-x"><table class="grid" id="detailTable"></table></div>
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="hood.js"></script>
 <script>
 const viewer = getHoodUser();
@@ -82,8 +84,11 @@ function suggestList(title, items) {
     items.map(t => `<div class="suggest">${esc(t)}</div>`).join('');
 }
 
+let lastList = [];
+
 function render(votes) {
   const list = Object.entries(votes || {}).map(([id, v]) => ({ id, ...v })).sort((a, b) => a.id.localeCompare(b.id));
+  lastList = list;
   const total = list.length;
   document.getElementById('total').textContent = `${total}명`;
 
@@ -141,6 +146,64 @@ function render(votes) {
         <td class="muted">${v.at ? new Date(v.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}</td>
       </tr>`).join('');
   }
+}
+
+// 엑셀: 전체 응답 / 시안·색 집계 / 색×사이즈 주문표 / 멤버 투표 여부
+function downloadXlsx() {
+  if (typeof XLSX === 'undefined') { alert('엑셀 도구를 불러오지 못했어요. 새로고침 후 다시 시도해주세요.'); return; }
+  const list = lastList;
+  const total = list.length;
+  const fmt = t => t ? new Date(t).toLocaleString('ko-KR') : '';
+  const wb = XLSX.utils.book_new();
+  const add = (rows, name, widths) => {
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = widths.map(w => ({ wch: w }));
+    XLSX.utils.book_append_sheet(wb, ws, name);
+  };
+
+  add([
+    ['학번', '이름', ...DESIGNS.map(d => `시안${d.key}`), '그외 시안 제안', '색', '그외 색 제안', '사이즈', '제출 시각'],
+    ...list.map(v => [
+      v.id, v.name,
+      ...DESIGNS.map(d => (v.designs || []).includes(d.key) ? 'O' : ''),
+      v.designEtc || '', colorLabel(v.color), v.colorEtc || '', v.size || '', fmt(v.at),
+    ]),
+  ], '전체 응답', [7, 9, ...DESIGNS.map(() => 7), 30, 11, 16, 10, 22]);
+
+  const pct = n => total ? Math.round(n / total * 100) + '%' : '';
+  const dEtc = list.filter(v => v.designEtc).length;
+  add([
+    [`참여 인원 ${total}명`],
+    [],
+    ['뒷면 시안', '득표', '참여 인원 대비'],
+    ...DESIGNS.map(d => { const n = list.filter(v => (v.designs || []).includes(d.key)).length; return [`${d.key}. ${d.label}`, n, pct(n)]; }),
+    ['8. 그외 제안', dEtc, pct(dEtc)],
+    [],
+    ['색', '인원', '비율'],
+    ...COLORS.map((c, i) => { const n = list.filter(v => v.color === c.key).length; return [`${i + 1}. ${c.label}`, n, pct(n)]; }),
+  ], '집계', [34, 8, 14]);
+
+  const cross = COLORS.map(c => {
+    const row = SIZES.map(s => list.filter(v => v.color === c.key && v.size === s).length);
+    return [c.label, ...row, row.reduce((a, b) => a + b, 0)];
+  });
+  const colSum = SIZES.map((s, i) => cross.reduce((a, r) => a + r[i + 1], 0));
+  add([
+    ['색 / 사이즈', ...SIZES, '합계'],
+    ...cross,
+    ['합계', ...colSum, total],
+  ], '색×사이즈', [14, ...SIZES.map(() => 9), 8]);
+
+  const voted = new Map(list.map(v => [String(v.name).trim(), v]));
+  add([
+    ['이름', '투표 여부', '학번'],
+    ...MEMBERS.map(n => [n, voted.has(n) ? '투표함' : '아직', voted.has(n) ? voted.get(n).id : '']),
+    ...list.filter(v => !MEMBERS.includes(String(v.name).trim())).map(v => [v.name, '투표함(명단 밖)', v.id]),
+  ], '멤버 투표 여부', [10, 14, 8]);
+
+  const d = new Date();
+  const stamp = `${d.getMonth() + 1}월${d.getDate()}일_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+  XLSX.writeFile(wb, `코스모스_후드티_설문_${stamp}.xlsx`);
 }
 
 async function load() {
