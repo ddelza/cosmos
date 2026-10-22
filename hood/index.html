@@ -192,8 +192,9 @@ window.onLogin = async function () {
   if (!name) { setMsg('loginError', '이름을 입력해주세요.'); return; }
 
   if (id === TEACHER_ID && name === TEACHER_NAME) {
-    setHoodUser({ id, name, isTeacher: true });
-    location.href = 'status.html';
+    const t = { id, name, isTeacher: true };
+    setHoodUser(t);
+    await enterForm(t);
     return;
   }
   const btn = document.getElementById('loginBtn');
@@ -224,7 +225,7 @@ window.onLogout = function () {
 
 async function enterForm(s) {
   me = s;
-  document.getElementById('welcomeLabel').textContent = `✓ ${whoLabel(s)}님`;
+  document.getElementById('welcomeLabel').textContent = `✓ ${whoLabel(s)}${s.isTeacher ? '' : '님'}`;
   show('step-form');
   try {
     const prev = await fetch(`${await hoodBase()}/votes/${s.id}.json`).then(r => r.json());
@@ -280,7 +281,7 @@ document.getElementById('inputName').addEventListener('keydown', e => {
 renderOptions();
 syncUI();
 const saved = getHoodUser();
-if (saved && !saved.isTeacher) enterForm(saved);
+if (saved) enterForm(saved);
 </script>
 </body>
 </html>

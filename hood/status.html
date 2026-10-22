@@ -48,6 +48,7 @@
 
   <div class="card">
     <h2>참여한 사람</h2>
+    <p class="hint"><span style="color:var(--ok)">● 투표함</span> · <span style="color:var(--danger)">● 아직 안 함</span> — <span id="memberSummary"></span></p>
     <div class="chips" id="voterChips"></div>
   </div>
 
@@ -117,9 +118,16 @@ function render(votes) {
   }).join('');
   document.getElementById('crossTable').innerHTML = head + body;
 
-  document.getElementById('voterChips').innerHTML = total
-    ? list.map(v => `<span class="chip">${esc(v.name)}</span>`).join('')
-    : '<span class="muted">아직 아무도 투표하지 않았어요.</span>';
+  // 멤버: 투표함 초록 / 아직 빨강, 명단 밖 투표자는 뒤에 회색으로
+  const votedNames = new Set(list.map(v => String(v.name).trim()));
+  const doneCnt = MEMBERS.filter(n => votedNames.has(n)).length;
+  const others = list.filter(v => !MEMBERS.includes(String(v.name).trim()));
+  document.getElementById('memberSummary').textContent =
+    `멤버 ${MEMBERS.length}명 중 ${doneCnt}명 투표 · ${MEMBERS.length - doneCnt}명 아직`;
+  document.getElementById('voterChips').innerHTML =
+    MEMBERS.map(n => `<span class="chip ${votedNames.has(n) ? 'done' : 'todo'}">${esc(n)}</span>`).join('') +
+    (others.length ? `<div class="muted" style="width:100%;margin-top:8px">멤버 명단 밖 투표자</div>` +
+      others.map(v => `<span class="chip">${esc(v.name)}</span>`).join('') : '');
 
   if (isTeacher) {
     document.getElementById('teacherCard').classList.remove('hidden');

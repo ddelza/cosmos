@@ -93,7 +93,9 @@ input:focus, textarea:focus { border-color: var(--gold); }
 .thumb { width: 26px; height: 37px; object-fit: cover; border-radius: 3px; vertical-align: middle; margin-right: 6px; background: #000; }
 .stat-big { font-size: 2rem; font-weight: 800; color: var(--gold); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { font-size: 0.8rem; background: rgba(255,255,255,0.07); border-radius: 999px; padding: 4px 10px; }
+.chip { font-size: 0.8rem; background: rgba(255,255,255,0.07); border-radius: 999px; padding: 4px 10px; border: 1px solid transparent; }
+.chip.done { color: #c9f2da; background: rgba(127,209,163,0.18); border-color: rgba(127,209,163,0.55); }
+.chip.todo { color: #ffc9c9; background: rgba(226,107,107,0.16); border-color: rgba(226,107,107,0.5); }
 .suggest { font-size: 0.86rem; background: rgba(0,0,0,0.25); border-radius: 8px; padding: 9px 11px; margin-bottom: 6px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
 table.grid { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 table.grid th, table.grid td { border-bottom: 1px solid var(--line); padding: 6px 4px; text-align: center; }
