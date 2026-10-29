@@ -184,9 +184,14 @@ const $ = id => document.getElementById(id);
       <div class="names">${names.map(p => SC.chip(p)).join('') || '<span class="slot-empty">배정 전</span>'}</div></div>`;
   }).join('');
 
+  const whereOf = s => {
+    const place = s.place === 'lab' ? '과학실' : SC.PLACES[s.place].name;
+    const detail = s.label.replace(/ ?(대장 )?(엔지니어|보조|큐레이터|심부름꾼)$/, '').replace(/^옥상 /, '');
+    return !detail || detail === place || s.role === 'door' || s.role === 'lect' || s.role === 'safe' ? place : `${place} · ${detail}`;
+  };
   const list = SC.ROSTER.slice().sort((a, b) => a.name.localeCompare(b.name, 'ko')).map(p => {
     const id = SC.slotOf(staff, p.key), s = id && SC.slot(id);
-    return `<tr><td><b>${SC.esc(p.name)}</b></td><td>${p.id}</td><td>${s ? SC.role(s.role).name : '설명꾼'}</td><td>${s ? (s.place === 'lab' ? '과학실' : SC.PLACES[s.place].name) + ' · ' + s.label.replace(/ (엔지니어|보조|큐레이터|심부름꾼)$/, '') : '옥상·데크'}</td></tr>`;
+    return `<tr><td><b>${SC.esc(p.name)}</b></td><td>${p.id}</td><td>${s ? SC.role(s.role).name : '설명꾼'}</td><td>${s ? whereOf(s) : '옥상·데크'}</td></tr>`;
   });
   const half = Math.ceil(list.length / 2), head = '<tr><th>이름</th><th>학번</th><th>역할</th><th>자리</th></tr>';
   $('whoTables').innerHTML = `<table class="who">${head}${list.slice(0, half).join('')}</table><table class="who">${head}${list.slice(half).join('')}</table>`;
