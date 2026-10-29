@@ -2,10 +2,10 @@
 * { box-sizing: border-box; }
 :root {
   --bg: #0a0f22; --bg2: #0f1630; --surface: #151d3b; --surface2: #1c2650; --text: #e9edf9; --muted: #95a1c6;
-  --line: #2b3765; --accent: #9db8ff; --teamA: #4fa8ff; --teamB: #ffad4a; --teamAll: #7c8fd6;
+  --line: #2b3765; --accent: #9db8ff; --teamA: #4fa8ff; --teamA2: #1f5fae; --teamB: #ffad4a; --teamB2: #b8621a; --teamAll: #7c8fd6;
   --ok: #6ee7a8; --warn: #ffd166; --sky1: #0b1230; --sky2: #1b2a5c; --wall: #19224a; --deck: #1f2a55;
 }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; overflow-x: clip; }
 body {
   margin: 0; background: var(--bg); color: var(--text); line-height: 1.5;
   font-family: Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
@@ -113,7 +113,8 @@ h2 { font-size: 1.15rem; margin: 0 0 4px; }
 .fl-deck2 .dots { grid-template-columns: repeat(6, 9px); }
 .dots i { width: 9px; height: 9px; border-radius: 50%; background: #2e3866; transition: background .25s; }
 .dots.g72 i { width: 10px; height: 10px; border-radius: 3px; }
-.dots i.on.t-A { background: var(--teamA); } .dots i.on.t-B { background: var(--teamB); } .dots i.on.t-all { background: var(--teamAll); }
+.dots i.on.t-A { background: var(--teamA); } .dots i.on.t-B { background: var(--teamB); }
+.dots i.on.t-A.s2 { background: var(--teamA2); } .dots i.on.t-B.s2 { background: var(--teamB2); } .dots i.on.t-all { background: var(--teamAll); }
 
 /* 자리와 이름표 */
 .slot { position: relative; border: 1.5px dashed color-mix(in srgb, var(--rc) 55%, transparent); border-radius: 9px; padding: 3px 4px 4px;
@@ -162,6 +163,7 @@ svg.flow .swap circle { fill: var(--surface2); stroke: var(--text); stroke-width
 svg.flow .swap text { fill: var(--text); font-size: 13px; font-weight: 800; }
 svg.flow .bar { cursor: pointer; }
 svg.flow .bar-t { fill: #0a0f22; font-size: 11.5px; font-weight: 700; pointer-events: none; }
+svg.flow .bar-t.dk { fill: #fff; }
 svg.flow .now { stroke: #fff; stroke-width: 2; }
 .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .8rem; color: var(--muted); margin-top: 8px; }
 .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }

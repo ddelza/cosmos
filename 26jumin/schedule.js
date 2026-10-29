@@ -31,12 +31,12 @@
     { place: 'lab',   from: 0,   to: 6,  team: 'all', label: '별과 우주 강의' },
     { place: 'lab',   from: 6,   to: 8,  team: 'all', label: '안전교육' },
     { place: 'lab',   from: 8,   to: 10, team: 'move', label: '이동' },
-    { place: 'roof',  from: 10, to: 35, team: 'A', label: 'A팀 · 12명 × 3조' },
+    { place: 'roof',  from: 10, to: 35, team: 'A', label: 'A팀 · 3조 (조마다 ①6+②6)' },
     { place: 'deck3', from: 10, to: 22, team: 'B', sub: 1, label: 'B-① 쌍안경' },
     { place: 'deck2', from: 10, to: 22, team: 'B', sub: 2, label: 'B-② 망원경' },
     { place: 'deck3', from: 23, to: 35, team: 'B', sub: 2, label: 'B-② 쌍안경' },
     { place: 'deck2', from: 23, to: 35, team: 'B', sub: 1, label: 'B-① 망원경' },
-    { place: 'roof',  from: 35, to: 60, team: 'B', label: 'B팀 · 12명 × 3조' },
+    { place: 'roof',  from: 35, to: 60, team: 'B', label: 'B팀 · 3조 (조마다 ①6+②6)' },
     { place: 'deck3', from: 35, to: 47, team: 'A', sub: 1, label: 'A-① 쌍안경' },
     { place: 'deck2', from: 35, to: 47, team: 'A', sub: 2, label: 'A-② 망원경' },
     { place: 'deck3', from: 48, to: 60, team: 'A', sub: 2, label: 'A-② 쌍안경' },
@@ -44,7 +44,7 @@
   ];
 
   SC.PLACES = {
-    roof:  { name: '옥상',      floor: 'RF', sub: '주망원경 5대 · 36명이 12명씩 3조' },
+    roof:  { name: '옥상',      floor: 'RF', sub: '주망원경 5대 · 36명이 12명씩 3조 (조마다 ①6+②6)' },
     lab:   { name: '3층 과학실', floor: '3F', sub: '입장 · 강의 · 안전교육 · 의자 72개' },
     deck3: { name: '3층 데크',  floor: '3F', sub: '쌍안경 6개 · 3명이 1개' },
     deck2: { name: '2층 데크',  floor: '2F', sub: '굴절망원경 3대 · 6명씩 토성 찾기' },
@@ -254,7 +254,11 @@
       badge.innerHTML = fl.map(f => `<em class="t-${f.team}">${SC.flowLabel(f, st.part)}</em>`).join('');
       if (!fl.length) badge.innerHTML = '<em class="idle">관객 없음</em>';
       const f = fl[0]; if (!f || f.team === 'move') return;
-      sec.querySelectorAll('.dots i').forEach(d => d.classList.add('on', 't-' + f.team));
+      // 데크: ①은 밝은 색, ②는 어두운 색 / 옥상: 조마다 ①출신 6명 + ②출신 6명
+      sec.querySelectorAll('.dots').forEach(g => g.querySelectorAll('i').forEach((d, i) => {
+        d.classList.add('on', 't-' + f.team);
+        if (f.team === 'A' || f.team === 'B') d.classList.add(f.sub ? 's' + f.sub : (i < 6 ? 's1' : 's2'));
+      }));
     });
     return st;
   };
@@ -265,7 +269,7 @@
     const W = 760, L = 96, R = 24, top = 26, laneH = 38, lanes = SC.PLACE_ORDER;
     const x = t => L + (t + 10) / 70 * (W - L - R);
     const H = top + lanes.length * laneH + 6;
-    const fill = f => f.team === 'A' ? 'var(--teamA)' : f.team === 'B' ? 'var(--teamB)' : f.team === 'all' ? 'var(--teamAll)' : 'var(--line)';
+    const fill = f => f.team === 'A' ? `var(--teamA${f.sub === 2 ? '2' : ''})` : f.team === 'B' ? `var(--teamB${f.sub === 2 ? '2' : ''})` : f.team === 'all' ? 'var(--teamAll)' : 'var(--line)';
     let s = `<svg class="flow" viewBox="0 0 ${W} ${H}" role="img" aria-label="${n}부 흐름">`;
     [-10, 0, 10, 22, 35, 47, 60].forEach(t => {
       s += `<line x1="${x(t)}" y1="${top - 4}" x2="${x(t)}" y2="${H - 4}" class="grid"/>`;
@@ -279,12 +283,12 @@
       else s += `<text x="${L - 8}" y="${mid + 4}" class="lane" text-anchor="end">${SC.PLACES[k].name}</text>`;
       SC.FLOW.filter(f => f.place === k).forEach(f => {
         const x1 = x(f.from) + 1, w = x(f.to) - x(f.from) - 2;
-        s += `<g class="bar" data-t="${start + f.from}"><rect x="${x1}" y="${y + 5}" width="${w}" height="${laneH - 10}" rx="6" fill="${fill(f)}" ${f.sub === 2 ? 'opacity=".72"' : ''}/>`;
+        s += `<g class="bar" data-t="${start + f.from}"><rect x="${x1}" y="${y + 5}" width="${w}" height="${laneH - 10}" rx="6" fill="${fill(f)}"/>`;
         const full = f.team === 'all' || f.team === 'move' ? f.label : `${n}${f.label}`;
         const short = full.replace(/ ·.*/, '').replace('별과 우주 ', '');
         const lbl = tw(full) + 10 <= w ? full : tw(short) + 10 <= w ? short : '';
         s += `<title>${SC.fmt(start + f.from)}~${SC.fmt(start + f.to)} ${esc(SC.flowLabel(f, n))}</title>`;
-        if (lbl) s += `<text x="${x1 + w / 2}" y="${mid + 4}" class="bar-t" text-anchor="middle">${esc(lbl)}</text>`;
+        if (lbl) s += `<text x="${x1 + w / 2}" y="${mid + 4}" class="bar-t${f.sub === 2 ? ' dk' : ''}" text-anchor="middle">${esc(lbl)}</text>`;
         s += '</g>';
       });
     });

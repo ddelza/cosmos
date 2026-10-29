@@ -10,7 +10,7 @@
 @page { size: A4; margin: 11mm 11mm 12mm; }
 body.print {
   --bg: #ffffff; --bg2: #f4f6fb; --surface: #ffffff; --surface2: #eef1f8; --text: #151a2e; --muted: #5d6685;
-  --line: #d4d9e8; --accent: #2b3f8c; --teamA: #3d8fe6; --teamB: #f29a2e; --teamAll: #8c9ad6;
+  --line: #d4d9e8; --accent: #2b3f8c; --teamA: #3d8fe6; --teamA2: #1d5aa3; --teamB: #f29a2e; --teamB2: #a8590f; --teamAll: #8c9ad6;
   --sky1: #dfe7fb; --sky2: #eef2fc; --wall: #f3f5fb; --deck: #eef1fa; --warn: #a86b00;
   font-size: 12.5px; background: #fff;
 }
@@ -98,7 +98,7 @@ body.print {
   <h2>2. 한 부(60분)의 흐름 — 1·2·3부 모두 같음</h2>
   <p class="sub" style="margin:0 0 4px">72명을 <b>A팀 36명 / B팀 36명</b>으로 나눠 25분씩 옥상 ↔ 데크를 바꿉니다. 데크에서는 다시 <b>18명씩(①·②)</b> 나눠 12분씩 3층 쌍안경 ↔ 2층 망원경을 바꿉니다. (아래 시각은 1부 기준, 2부 +70분, 3부 +140분)</p>
   <div class="card" id="flow"></div>
-  <div class="legend"><span><i style="background:var(--teamAll)"></i>전체 72명</span><span><i style="background:var(--teamA)"></i>A팀 36명</span><span><i style="background:var(--teamB)"></i>B팀 36명</span><span>진한 색 ① / 옅은 색 ② (18명씩)</span></div>
+  <div class="legend"><span><i style="background:var(--teamAll)"></i>전체 72명</span><span><i style="background:var(--teamA)"></i>A-① 18명</span><span><i style="background:var(--teamA2)"></i>A-② 18명</span><span><i style="background:var(--teamB)"></i>B-① 18명</span><span><i style="background:var(--teamB2)"></i>B-② 18명</span></div>
   <table class="daytable" id="partTable"></table>
 
 </div>
@@ -113,7 +113,8 @@ body.print {
     <div class="card"><h3>🌌 옥상 (25분)</h3><ul>
       <li>주망원경 5대: NexStar 102SLT · 돕소니안 10인치 · ASKAR FRA400 · Seestar S50 · Celestron C8</li>
       <li>엔지니어가 대상을 찾으면 보조가 손을 들고 대상 이름을 큐레이터에게 크게 알림</li>
-      <li>36명을 12명씩 3조로, 조마다 큐레이터 2명 — 한 명은 망원경 탐색 확인·안내, 한 명은 별자리·대상 설명과 질문 받기 (번갈아 해도, 고정해도 됨)</li></ul></div>
+      <li>36명을 12명씩 3조로 — 조마다 데크의 ①출신 6명 + ②출신 6명</li>
+      <li>조마다 큐레이터 2명 — 한 명은 망원경 탐색 확인·안내, 한 명은 별자리·대상 설명과 질문 받기 (번갈아 해도, 고정해도 됨)</li></ul></div>
     <div class="card"><h3>🔭 데크 (12분 + 12분)</h3><ul>
       <li>36명 → 18명씩 둘로 나눠 3층 ↔ 2층 교대</li>
       <li><b>3층 데크</b>: 쌍안경 6개, 3명이 1개 — 플레이아데스, 안드로메다, 알비레오(쌍성) 등 밝은 대상</li>
