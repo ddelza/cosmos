@@ -357,7 +357,8 @@ function fmtKo(n) {
   if (n < 1e4) return Math.round(n / 10) * 10 + '';
   if (n < 1e8) { const m = Math.floor(n / 1e4), c = Math.floor(n % 1e4 / 1e3); return m + '만' + (c && m < 100 ? ' ' + c + '천' : ''); }
   if (n < 1e12) { const e = Math.floor(n / 1e8), m = Math.floor(n % 1e8 / 1e7); return e + '억' + (m && e < 100 ? ' ' + m + '천만' : ''); }
-  return Math.floor(n / 1e12) + '조';
+  if (n < 1e16) return Math.floor(n / 1e12) + '조';
+  return Math.floor(n / 1e16) + '경';
 }
 
 function goTo(i) {
