@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관측회 운영 안내 (인쇄용)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="schedule.css">
+<style>
+@page { size: A4; margin: 11mm 11mm 12mm; }
+body.print {
+  --bg: #ffffff; --bg2: #f4f6fb; --surface: #ffffff; --surface2: #eef1f8; --text: #151a2e; --muted: #5d6685;
+  --line: #d4d9e8; --accent: #2b3f8c; --teamA: #3d8fe6; --teamB: #f29a2e; --teamAll: #8c9ad6;
+  --sky1: #dfe7fb; --sky2: #eef2fc; --wall: #f3f5fb; --deck: #eef1fa; --warn: #a86b00;
+  font-size: 12.5px; background: #fff;
+}
+.print .page { width: 188mm; margin: 0 auto; padding: 0; break-after: page; }
+.print .page:last-child { break-after: auto; }
+.print h1 { font-size: 22px; margin: 0 0 4px; }
+.print h2 { font-size: 15px; margin: 14px 0 6px; padding-bottom: 3px; border-bottom: 2px solid var(--accent); color: var(--accent); }
+.print .sub { color: var(--muted); margin: 0 0 8px; }
+.print .stats { grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+.print .stat { padding: 7px 10px; } .print .stat b { font-size: 17px; }
+.print .notice { color: #7a4f00; background: #fff6dc; border-color: #f0d48a; margin-top: 8px; padding: 7px 10px; font-size: 12px; }
+.print .daytable { font-size: 12px; margin-top: 4px; }
+.print .daytable td { padding: 5px 6px; }
+.print .card { padding: 9px 11px; border-radius: 10px; box-shadow: none; }
+.print .places { grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 8px; }
+.print .places ul { font-size: 11.5px; padding-left: 15px; }
+.print .places .card h3 { font-size: 12.5px; }
+.print svg.flow { min-width: 0; }
+.print svg.flow .bar-t { fill: #fff; }
+.print .legend { margin-top: 4px; font-size: 11px; }
+
+/* 배치도: 넓은 화면 배치로 고정한 뒤 축소 */
+.print .mapbox { width: 1100px; zoom: .64; }
+.print .bldg { grid-template-columns: 34px 1.05fr 1fr; grid-template-areas: "st roof roof" "st lab deck3" "st in2 deck2" "gr gr gr"; }
+.print .stairs { grid-row: 1 / 4; color: #6a739a; background: repeating-linear-gradient(180deg, #e3e8f6 0 10px, #d6ddf0 10px 20px); }
+.print .fl-in2 { display: block; }
+.print .fl-lab, .print .fl-in2 { border-right: 3px solid #b9c3e3; }
+.print .fl, .print .fl:not(.busy) { opacity: 1; border-top-color: #b9c3e3; }
+.print .fl-roof { border-bottom-color: #b9c3e3; }
+.print .scopes { grid-template-columns: repeat(5, 1fr); }
+.print .groups, .print .stations { align-items: start; }
+.print .runner .slot { flex: none; }
+.print .groups { grid-template-columns: repeat(3, 1fr) 120px; }
+.print .groups .runner, .print .runner { grid-column: auto; flex-direction: column; }
+.print .stations { grid-template-columns: repeat(4, 1fr); }
+.print .fl-deck3, .print .fl-deck2 { background: var(--deck); }
+.print .fl-roof { background: transparent; }
+.print .bldg { background: linear-gradient(180deg, var(--sky1), var(--sky2)); }
+.print .scope, .print .grp, .print .st { background: rgba(255,255,255,.7); }
+.print .fl-deck2 .stations { grid-template-columns: repeat(3, 1fr) 110px; }
+.print .ic { color: #5568b8; } .print .dots i { background: #d3d9ec; }
+.print .bldg::before { display: none; }
+.print .fl-tag { background: #e3e8f8; }
+.print .chip { background: #1f2b5c; color: #fff; font-size: 15px; }
+.print .chip small { color: #b9c3ea; }
+.print .slot { min-height: 46px; }
+.print .slot-label { filter: brightness(.7) saturate(1.4); font-size: 12px; }
+.print .slot-empty { color: #9aa2bd; }
+.print .guest { display: none; }
+
+.print .roles { grid-template-columns: 1fr 1fr; gap: 7px; }
+.print .role { break-inside: avoid; }
+.print .role ul { font-size: 11.5px; padding-left: 15px; }
+.print .role .clock-t { font-size: 10.5px; }
+.print .role .lbl { filter: brightness(.7) saturate(1.4); }
+.print .role .names .chip { font-size: 11.5px; }
+.print .who { width: 100%; border-collapse: collapse; font-size: 11px; }
+.print .who td, .print .who th { border-bottom: 1px solid var(--line); padding: 2.6px 5px; text-align: left; }
+.print .who th { background: var(--surface2); }
+.print .who .tw { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.print .must { background: #ffd166; }
+.btnbar { text-align: center; padding: 12px; }
+@media print { .btnbar { display: none; } }
+</style>
+</head>
+<body class="print">
+<div class="btnbar"><button class="btn primary" onclick="print()">🖨️ 인쇄 / PDF로 저장</button> <a href="schedule.html">← 안내 페이지</a></div>
+
+<div class="page">
+  <div style="color:var(--accent);font-weight:700;font-size:12px">광수중학교 천체관측동아리 코스모스</div>
+  <h1>2026 주민 천체관측회 운영 안내</h1>
+  <p class="sub"><span id="dateLabel"></span> 16:10 ~ 22:30 · 3층 과학실 · 옥상 · 3층 데크 · 2층 데크</p>
+  <div class="stats">
+    <div class="stat"><b>3부</b><span>18:20 · 19:30 · 20:40</span></div>
+    <div class="stat"><b>72명 × 3</b><span>부마다 손님 최대 72명, 총 216명</span></div>
+    <div class="stat"><b id="statNeed"></b><span>필수 역할</span></div>
+    <div class="stat"><b>설명꾼</b><span>필수 역할 외 모두</span></div>
+  </div>
+  <div class="notice">⚠️ <b>필수 역할</b>에 배정된 사람은 11월 3일(화) <b>16:10 ~ 22:30 끝까지</b> 참석해야 합니다. 끝까지 있기 어렵거나 필수 역할이 아닌 사람은 옥상·데크 곳곳에서 손님 질문을 받고 천체를 설명하는 <b>설명꾼</b>이 됩니다.</div>
+
+  <h2>1. 하루 전체 시간표</h2>
+  <p class="sub" style="margin:0">사이사이 10분은 쉬는 시간이자 만일을 대비한 여유 시간입니다.</p>
+  <table class="daytable" id="dayTable"></table>
+
+  <h2>2. 한 부(60분)의 흐름 — 1·2·3부 모두 같음</h2>
+  <p class="sub" style="margin:0 0 4px">72명을 <b>A팀 36명 / B팀 36명</b>으로 나눠 25분씩 옥상 ↔ 데크를 바꿉니다. 데크에서는 다시 <b>18명씩(①·②)</b> 나눠 12분씩 3층 쌍안경 ↔ 2층 망원경을 바꿉니다. (아래 시각은 1부 기준, 2부 +70분, 3부 +140분)</p>
+  <div class="card" id="flow"></div>
+  <div class="legend"><span><i style="background:var(--teamAll)"></i>전체 72명</span><span><i style="background:var(--teamA)"></i>A팀 36명</span><span><i style="background:var(--teamB)"></i>B팀 36명</span><span>진한 색 ① / 옅은 색 ② (18명씩)</span></div>
+  <table class="daytable" id="partTable"></table>
+
+</div>
+
+<div class="page">
+  <h2 style="margin-top:0">3. 공간별 활동</h2>
+  <div class="places">
+    <div class="card"><h3>🔬 과학실 (첫 10분)</h3><ul>
+      <li>부 시작 10분 전부터 입장 — 문지기가 사전신청 여부 확인, 명부에 이름 기록, 사전신청자에게 상품</li>
+      <li>앞쪽 자리부터 앉도록 안내</li>
+      <li>0~6분 이문혁 <b>별과 우주 강의</b> → 6~8분 <b>안전교육</b> → 8~10분 이동</li></ul></div>
+    <div class="card"><h3>🌌 옥상 (25분)</h3><ul>
+      <li>주망원경 5대: NexStar 102SLT · 돕소니안 10인치 · ASKAR FRA400 · Seestar S50 · Celestron C8</li>
+      <li>엔지니어가 대상을 찾으면 보조가 손을 들고 대상 이름을 큐레이터에게 크게 알림</li>
+      <li>36명을 12명씩 3조로, 조마다 큐레이터 2명 — 한 명은 망원경 탐색 확인·안내, 한 명은 별자리·대상 설명과 질문 받기 (번갈아 해도, 고정해도 됨)</li></ul></div>
+    <div class="card"><h3>🔭 데크 (12분 + 12분)</h3><ul>
+      <li>36명 → 18명씩 둘로 나눠 3층 ↔ 2층 교대</li>
+      <li><b>3층 데크</b>: 쌍안경 6개, 3명이 1개 — 플레이아데스, 안드로메다, 알비레오(쌍성) 등 밝은 대상</li>
+      <li><b>2층 데크</b>: 90mm·70mm 굴절망원경 3대, 6명씩 줄 서서 토성 직접 찾기</li>
+      <li>처음 3분은 기본 사용법 교육</li></ul></div>
+  </div>
+  <h2>4. 준비 시간 (16:10 ~ 18:10)</h2>
+  <table class="daytable">
+    <tr><td>주망원경 엔지니어·보조</td><td colspan="2">옥상에 망원경 세팅, 광축 정렬</td></tr>
+    <tr><td>문지기</td><td colspan="2">굿즈(상품) 준비, 사전신청 확인 연습</td></tr>
+    <tr><td>쌍안경·망원경 큐레이터</td><td colspan="2">3층 데크에 쌍안경 6개, 2층 데크에 굴절망원경 3대 세팅</td></tr>
+    <tr><td>나머지 모두</td><td colspan="2">과학실 책상 치우고 의자만 72개 세팅</td></tr>
+  </table>
+  <h2>5. 이름으로 찾기</h2>
+  <div class="who"><div class="tw" id="whoTables"></div></div>
+</div>
+
+<div class="page">
+  <h2 style="margin-top:0">6. 공간 배치도 · 역할 자리</h2>
+  <p class="sub">● = 손님 자리. 실제 건물 모양과는 다를 수 있는 개념도입니다.</p>
+  <div class="mapbox" id="map"></div>
+</div>
+
+<div class="page">
+  <h2 style="margin-top:0">7. 역할별 할 일</h2>
+  <p class="sub">시각표는 1부 / 2부 / 3부 순서입니다.</p>
+  <div class="roles" id="roles"></div>
+</div>
+
+<script src="session.js"></script>
+<script src="schedule.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+(async function () {
+  let staff = {};
+  try { staff = await SC.loadStaff(); } catch (e) { }
+  $('dateLabel').textContent = SC.DATE_LABEL;
+  $('statNeed').textContent = SC.SLOTS.length + '명';
+  const detail = {
+    prep: '망원경·쌍안경 세팅, 굿즈 준비, 과학실 의자 72개',
+    entry: '손님 입장 · 사전신청 확인 · 상품 · 앞자리부터 착석',
+    part: '강의 6분 → 안전교육 2분 → A팀 옥상 / B팀 데크 25분 → 바꿔서 25분',
+    end: '장비·의자 정리, 뒷풀이',
+  };
+  $('dayTable').innerHTML = SC.DAY.map(d => `<tr class="${d.key === 'entry' ? 'gap' : ''}"><td>${SC.fmt(d.from)} ~ ${SC.fmt(d.to)}</td><td>${d.label}</td><td>${detail[d.key]}</td></tr>`).join('');
+  $('flow').innerHTML = SC.flowSvg(1, null);
+  const rows = [[-10, 0, '입장 · 접수 (과학실)', ''], [0, 6, '별과 우주 강의', ''], [6, 8, '안전교육', ''], [8, 10, '이동', 'A팀 → 옥상, B팀 → 데크'],
+    [10, 35, '1차 25분', 'A팀 옥상 / B-① 3층 쌍안경 → B-② (12분 뒤 교대) / B-② 2층 망원경 → B-①'],
+    [35, 60, '2차 25분', 'B팀 옥상 / A-① 3층 쌍안경 → A-② / A-② 2층 망원경 → A-①']];
+  $('partTable').innerHTML = `<tr><td><b>1부 / 2부 / 3부</b></td><td></td><td></td></tr>` + rows.map(([a, b, l, d]) =>
+    `<tr><td>${SC.PARTS.map(p => SC.fmt(p.start + a)).join(' / ')}</td><td>${l} (${b - a}분)</td><td>${d}</td></tr>`).join('');
+
+  SC.renderMap($('map'), staff);
+
+  const assigned = new Set(Object.values(staff));
+  $('roles').innerHTML = SC.ROLES.map(r => {
+    const names = r.optional ? SC.ROSTER.filter(p => !assigned.has(p.key))
+      : SC.SLOTS.filter(s => s.role === r.key).map(s => staff[s.id]).filter(Boolean).map(SC.person).filter(Boolean);
+    const where = r.place === 'multi' ? '옥상 · 3층 데크 · 2층 데크 각 1명' : r.place === 'any' ? '옥상 · 데크 곳곳' : SC.PLACES[r.place].name;
+    return `<div class="card role" style="--rc:${r.color}">
+      <div class="role-h"><b>${r.name}</b>${r.optional ? '<span class="opt">자유 참석</span>' : '<span class="must">필수</span>'}<span class="cnt">${r.optional ? '' : r.need + '명'}</span></div>
+      <div class="where">📍 ${where}</div>
+      <div class="lbl">준비</div><ul><li>${r.prep}</li></ul>
+      <div class="lbl">각 부 진행 중</div><ul>${r.during.map(x => `<li>${x}</li>`).join('')}</ul>
+      <table class="clock-t"><tr><th></th><th>1부</th><th>2부</th><th>3부</th></tr>
+        ${SC.roleClock(r).map(c => `<tr><td>${c.txt}</td>${c.times.map(t => `<td>${t}</td>`).join('')}</tr>`).join('')}</table>
+      <div class="names">${names.map(p => SC.chip(p)).join('') || '<span class="slot-empty">배정 전</span>'}</div></div>`;
+  }).join('');
+
+  const list = SC.ROSTER.slice().sort((a, b) => a.name.localeCompare(b.name, 'ko')).map(p => {
+    const id = SC.slotOf(staff, p.key), s = id && SC.slot(id);
+    return `<tr><td><b>${SC.esc(p.name)}</b></td><td>${p.id}</td><td>${s ? SC.role(s.role).name : '설명꾼'}</td><td>${s ? (s.place === 'lab' ? '과학실' : SC.PLACES[s.place].name) + ' · ' + s.label.replace(/ (엔지니어|보조|큐레이터|심부름꾼)$/, '') : '옥상·데크'}</td></tr>`;
+  });
+  const half = Math.ceil(list.length / 2), head = '<tr><th>이름</th><th>학번</th><th>역할</th><th>자리</th></tr>';
+  $('whoTables').innerHTML = `<table class="who">${head}${list.slice(0, half).join('')}</table><table class="who">${head}${list.slice(half).join('')}</table>`;
+  document.body.dataset.ready = '1';
+})();
+</script>
+</body>
+</html>

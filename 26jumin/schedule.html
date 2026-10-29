@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관측회 운영 안내 · 2026 주민 천체관측회</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="schedule.css">
+</head>
+<body>
+<div class="wrap" id="app">
+
+  <header class="hero">
+    <div class="kicker">코스모스 · 2026 주민 공개 천체관측회</div>
+    <h1>관측회 운영 안내</h1>
+    <p><span id="dateLabel"></span> · 3층 과학실 · 3층 데크 · 2층 데크 · 옥상 &nbsp;|&nbsp; <a href="schedule-print.html">인쇄용(PDF) 보기</a> · <a href="index.html">기획판으로</a></p>
+    <div class="stats">
+      <div class="stat"><b>3부</b><span>18:20 · 19:30 · 20:40 시작</span></div>
+      <div class="stat"><b>72명 × 3</b><span>부마다 손님 최대 72명, 총 216명</span></div>
+      <div class="stat"><b id="statNeed">35자리</b><span>필수 역할</span></div>
+      <div class="stat"><b id="statFill">-</b><span>배정 완료</span></div>
+    </div>
+    <div class="notice">⚠️ <b>필수 역할</b>에 배정된 사람은 11월 3일(화) <b>16:10 ~ 22:30 끝까지</b> 참석해야 해요. 끝까지 있기 어렵거나 필수 역할이 아닌 사람은 <b>설명꾼</b>이 됩니다.</div>
+  </header>
+
+  <section class="sec finder">
+    <h2>🔎 내 역할 찾기</h2>
+    <p class="sec-hint">이름을 입력하면 내 자리와 시각별 할 일이 나와요.</p>
+    <input id="findInput" type="text" placeholder="이름 또는 학번" autocomplete="off">
+    <div class="find-res" id="findRes"></div>
+    <div id="myCard"></div>
+  </section>
+
+  <section class="sec">
+    <h2>🕓 하루 전체 시간표</h2>
+    <p class="sec-hint">사이사이 10분은 쉬는 시간이자 만일을 대비한 여유 시간이에요. 막대를 누르면 아래 배치도가 그 시각으로 움직여요.</p>
+    <div class="daybar" id="dayBar"></div>
+    <table class="daytable" id="dayTable"></table>
+  </section>
+
+  <section class="sec" id="mapSec">
+    <h2>🏫 공간 배치도 · 역할 자리</h2>
+    <p class="sec-hint">시각을 움직이면 손님(●)이 어디에 있는지 보여요. <span style="color:var(--teamA)">■ A팀</span> <span style="color:var(--teamB)">■ B팀</span> <span style="color:var(--teamAll)">■ 전체</span> · 이름표를 누르면 그 사람의 할 일이 나와요.</p>
+    <div class="timebox">
+      <div class="time-row">
+        <div class="clock" id="clock">18:20</div>
+        <div class="phase" id="phase"></div>
+        <input type="range" id="slider" step="1" aria-label="시각">
+        <button class="qbtn" id="playBtn">▶ 재생</button>
+      </div>
+      <div class="quick" id="quick" style="margin-top:6px"></div>
+    </div>
+    <div class="edit-bar" style="margin-top:12px">
+      <span class="fill-meter" id="fillMeter"></span>
+      <span class="save-state" id="saveState"></span>
+      <span style="margin-left:auto"></span>
+      <button class="btn" id="editBtn">✏️ 역할 배정하기 (선생님)</button>
+    </div>
+    <div class="map-layout">
+      <div id="map"></div>
+      <aside class="pool card" id="pool">
+        <h3>명단 <span id="poolCount" style="color:var(--muted);font-weight:500"></span></h3>
+        <p class="hint">이름표를 끌어다 자리에 놓으세요. 자리에서 여기로 끌어 오면 배정이 풀려요. (휴대폰: 이름 누르고 → 자리 누르기)<br>여기 남은 사람 = <b>설명꾼</b></p>
+        <input id="poolFilter" type="text" placeholder="이름·부서 거르기" autocomplete="off">
+        <div class="pool-list" id="poolList"></div>
+        <div class="pool-meta">자리끼리 끌면 서로 바뀌어요. 바꾸는 즉시 저장돼요.</div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>⏱️ 한 부(60분)는 이렇게 흘러가요</h2>
+    <p class="sec-hint">1·2·3부 모두 똑같아요. 72명을 A팀 36명, B팀 36명으로 나눠 25분씩 옥상 ↔ 데크를 바꿔요. 데크에서는 다시 18명씩(①·②) 나눠 12분씩 3층 쌍안경 ↔ 2층 망원경을 바꿔요.</p>
+    <div class="part-tabs" id="partTabs"></div>
+    <div class="card flow-wrap" id="flow"></div>
+    <div class="legend"><span><i style="background:var(--teamAll)"></i>전체 72명</span><span><i style="background:var(--teamA)"></i>A팀 36명</span><span><i style="background:var(--teamB)"></i>B팀 36명</span><span>진한 색 ① / 옅은 색 ② (18명씩)</span></div>
+    <div class="places">
+      <div class="card"><h3>🔬 과학실 (첫 10분)</h3><ul>
+        <li>부 시작 10분 전부터 입장 — 문지기가 사전신청 확인, 명부에 이름, 사전신청자 상품</li>
+        <li>앞쪽 자리부터 앉기</li>
+        <li>0~6분 이문혁 <b>별과 우주 강의</b>, 6~8분 <b>안전교육</b>, 8~10분 이동</li></ul></div>
+      <div class="card"><h3>🌌 옥상 (25분)</h3><ul>
+        <li>주망원경 5대: 102SLT · 돕소니안 10인치 · FRA400 · Seestar S50 · C8</li>
+        <li>엔지니어가 대상을 찾으면 → 보조가 손 들고 대상 이름을 크게 외침</li>
+        <li>36명을 12명씩 3조, 조마다 큐레이터 2명: 한 명은 망원경 확인·안내, 한 명은 별자리·대상 설명과 질문 받기</li></ul></div>
+      <div class="card"><h3>🔭 데크 (12분 + 12분)</h3><ul>
+        <li>36명 → 18명씩 둘로 나눠 3층 ↔ 2층을 바꿈</li>
+        <li><b>3층</b>: 쌍안경 6개, 3명이 1개 — 플레이아데스, 안드로메다, 알비레오 쌍성</li>
+        <li><b>2층</b>: 굴절망원경(90·70mm) 3대, 6명씩 줄 서서 토성 직접 찾기</li>
+        <li>처음 3분은 기본 사용법 교육</li></ul></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>🙋 역할별 할 일</h2>
+    <p class="sec-hint">시각표는 1부 / 2부 / 3부 순서예요.</p>
+    <div class="roles" id="roles"></div>
+  </section>
+
+  <div class="foot">광수중학교 천체관측동아리 코스모스 · 지도교사 김병선</div>
+</div>
+
+<div class="modal" id="loginModal">
+  <div class="card">
+    <h2>선생님 확인</h2>
+    <p class="sec-hint" style="margin:0">배정은 선생님만 바꿀 수 있어요.</p>
+    <input id="tId" type="tel" placeholder="학번(교사 번호)" maxlength="4">
+    <input id="tName" type="text" placeholder="이름">
+    <div class="err" id="tErr"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn" id="tCancel">취소</button><button class="btn primary" id="tOk" style="flex:1">확인</button>
+    </div>
+  </div>
+</div>
+
+<script src="session.js"></script>
+<script src="schedule.js"></script>
+<script>
+const TEACHER_NAME = '김병선';
+const $ = id => document.getElementById(id);
+const S = { staff: {}, editing: false, T: SC.hm('18:20'), part: 1, me: null, sel: null, playing: null };
+
+// ── 그리기 ──
+function renderDay() {
+  const total = SC.DAY_TO - SC.DAY_FROM;
+  $('dayBar').innerHTML = SC.DAY.map(d => `<div class="seg ${d.key}" data-t="${d.from}" style="flex:${d.to - d.from}" title="${SC.fmt(d.from)}~${SC.fmt(d.to)} ${d.label}">
+    ${d.to - d.from >= 40 ? `<span>${d.label}</span><small>${SC.fmt(d.from)}~${SC.fmt(d.to)}</small>` : ''}</div>`).join('');
+  const detail = {
+    prep: '주망원경: 옥상 세팅·광축 정렬 / 문지기: 굿즈 준비·사전신청 확인 연습 / 쌍안경·망원경 큐레이터: 3층 데크 쌍안경, 2층 데크 망원경 세팅 / 나머지: 과학실 책상 치우고 의자 72개',
+    entry: '손님 입장 · 사전신청 확인 · 상품 · 앞자리부터 착석 (스태프는 쉬는 시간·여유 시간)',
+    part: '강의 6분 → 안전교육 2분 → A팀 옥상 / B팀 데크 25분 → 서로 바꿔 25분',
+    end: '장비·의자 정리, 뒷풀이',
+  };
+  $('dayTable').innerHTML = SC.DAY.map(d => `<tr class="${d.key === 'entry' ? 'gap' : ''}"><td>${SC.fmt(d.from)} ~ ${SC.fmt(d.to)}</td><td>${d.label}${d.key === 'part' ? ' (손님 72명)' : ''}</td><td>${detail[d.key]}</td></tr>`).join('');
+}
+
+function renderQuick() {
+  const q = [['준비', '16:10'], ['1부 입장', '18:10'], ['1부 강의', '18:20'], ['1부 옥상↔데크', '18:30'], ['1부 교대', '18:55'], ['2부', '19:30'], ['3부', '20:40'], ['정리', '21:40']];
+  $('quick').innerHTML = q.map(([l, t]) => `<button class="qbtn" data-t="${SC.hm(t)}">${l}</button>`).join('') +
+    (isEventDay() ? '<button class="qbtn" data-now="1">지금</button>' : '');
+}
+function isEventDay() { const d = new Date(); return d.toISOString().slice(0, 10) === SC.EVENT_DAY || `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` === SC.EVENT_DAY; }
+
+function renderMap() {
+  SC.renderMap($('map'), S.staff);
+  paintTime();
+  markMe();
+}
+
+function paintTime() {
+  const st = SC.paintGuests($('map'), S.T);
+  $('map').classList.add('timeon');
+  $('clock').textContent = SC.fmt(S.T);
+  $('phase').textContent = st.title;
+  $('slider').value = S.T;
+  document.querySelectorAll('#dayBar .seg').forEach(s => {
+    const d = SC.DAY.find(x => x.from === +s.dataset.t);
+    s.classList.toggle('cur', S.T >= d.from && S.T < d.to);
+  });
+  if (st.part && st.part !== S.part) { S.part = st.part; renderTabs(); }
+  renderFlow();
+}
+
+function renderTabs() {
+  $('partTabs').innerHTML = [1, 2, 3].map(n => `<button class="qbtn${n === S.part ? ' on' : ''}" data-part="${n}">${n}부 · ${SC.fmt(SC.PARTS[n - 1].start)}</button>`).join('');
+}
+function renderFlow() { $('flow').innerHTML = SC.flowSvg(S.part, S.T); }
+
+function renderRoles() {
+  const assigned = new Set(Object.values(S.staff));
+  $('roles').innerHTML = SC.ROLES.map(r => {
+    const slots = SC.SLOTS.filter(s => s.role === r.key);
+    const names = r.optional ? SC.ROSTER.filter(p => !assigned.has(p.key)) : slots.map(s => S.staff[s.id]).filter(Boolean).map(SC.person).filter(Boolean);
+    const where = r.place === 'multi' ? '옥상 · 3층 데크 · 2층 데크 각 1명' : r.place === 'any' ? '옥상 · 데크 곳곳' : SC.PLACES[r.place].name;
+    const cnt = r.optional ? `${names.length}명` : `${names.length} / ${r.need}명`;
+    const clock = SC.roleClock(r);
+    return `<div class="card role" style="--rc:${r.color}">
+      <div class="role-h"><b>${r.name}</b>${r.optional ? '<span class="opt">자유 참석</span>' : '<span class="must">필수 · 끝까지</span>'}<span class="cnt${!r.optional && names.length === r.need ? ' full' : ''}">${cnt}</span></div>
+      <div class="where">📍 ${where}</div>
+      <div class="lbl">준비 16:10~18:10</div><ul><li>${r.prep}</li></ul>
+      <div class="lbl">각 부 진행 중</div><ul>${r.during.map(x => `<li>${x}</li>`).join('')}</ul>
+      <table class="clock-t"><tr><th></th><th>1부</th><th>2부</th><th>3부</th></tr>
+        ${clock.map(c => `<tr><td>${c.txt}</td>${c.times.map(t => `<td>${t}</td>`).join('')}</tr>`).join('')}</table>
+      <div class="names">${names.map(p => SC.chip(p)).join('') || '<span class="slot-empty">아직 배정 전</span>'}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderPool() {
+  const assigned = new Set(Object.values(S.staff));
+  const q = $('poolFilter').value.trim();
+  const free = SC.ROSTER.filter(p => !assigned.has(p.key));
+  const shown = free.filter(p => !q || (p.name + p.id + p.dept).includes(q));
+  $('poolCount').textContent = `· 남은 ${free.length}명`;
+  $('poolList').innerHTML = shown.map(p => `<span class="chip${S.sel === p.key ? ' sel' : ''}" data-person="${SC.esc(p.key)}" title="${SC.esc(p.dept)}">${SC.esc(p.name)}${p.id ? `<small>${p.id}</small>` : ''}</span>`).join('') || '<span class="slot-empty">모두 배정됨</span>';
+}
+
+function renderCounts() {
+  const n = SC.SLOTS.filter(s => S.staff[s.id]).length;
+  $('statNeed').textContent = `${SC.SLOTS.length}자리`;
+  $('statFill').textContent = `${n} / ${SC.SLOTS.length}`;
+  $('fillMeter').innerHTML = `필수 자리 <b>${n}</b> / ${SC.SLOTS.length} 채움 · 설명꾼 ${SC.ROSTER.length - n}명`;
+}
+
+function renderAll() { renderMap(); renderRoles(); renderPool(); renderCounts(); if (S.me) showMe(S.me); }
+
+// ── 내 역할 찾기 ──
+function personPlan(p) {
+  const slotId = SC.slotOf(S.staff, p.key);
+  const s = slotId && SC.slot(slotId);
+  const r = SC.role(s ? s.role : 'talk');
+  const where = s ? (s.place === 'lab' ? '3층 과학실' : SC.PLACES[s.place].name) + ' · ' + s.label : '옥상 · 데크 곳곳';
+  return { s, r, where };
+}
+function showMe(key) {
+  const p = SC.person(key); if (!p) return;
+  S.me = key;
+  const { s, r, where } = personPlan(p);
+  const rows = [['16:10~18:10', `<b>준비</b> — ${r.prep}`]];
+  SC.PARTS.forEach(pt => {
+    rows.push([`${SC.fmt(pt.start - 10)}~${SC.fmt(pt.start + 60)}`, `<b>${pt.n}부</b> — ` + r.timing.map(([a, b, t]) => `${SC.fmt(pt.start + a)}~${SC.fmt(pt.start + b)} ${t}`).join(' → ')]);
+  });
+  rows.push(['21:40~22:30', '<b>뒷정리 & 뒷풀이</b>']);
+  $('myCard').innerHTML = `<div class="card mycard" style="--rc:${r.color}">
+    <div class="role-h"><h3>${SC.esc(p.name)} — ${r.name}</h3>${r.optional ? '<span class="opt">자유 참석</span>' : '<span class="must">필수 · 끝까지</span>'}</div>
+    <div class="where" style="color:var(--muted);font-size:.85rem;margin-top:2px">📍 ${SC.esc(where)}</div>
+    <ul style="font-size:.86rem;margin:8px 0 0;padding-left:18px">${r.during.map(x => `<li>${x}</li>`).join('')}</ul>
+    <ul class="mytl">${rows.map(([a, b]) => `<li><span>${a}</span><span>${b}</span></li>`).join('')}</ul>
+    ${s ? '<button class="btn" style="margin-top:10px" id="goMap">배치도에서 보기</button>' : ''}
+  </div>`;
+  markMe();
+}
+function markMe() {
+  document.querySelectorAll('#map .chip.me').forEach(c => c.classList.remove('me'));
+  if (S.me) document.querySelectorAll(`#map .chip[data-person="${CSS.escape(S.me)}"]`).forEach(c => c.classList.add('me'));
+}
+$('findInput').addEventListener('input', () => {
+  const q = $('findInput').value.trim();
+  const hits = q ? SC.ROSTER.filter(p => p.name.includes(q) || (p.id && p.id.startsWith(q))) : [];
+  $('findRes').innerHTML = hits.slice(0, 12).map(p => SC.chip(p)).join('') || (q ? '<span class="slot-empty">명단에 없어요</span>' : '');
+  if (hits.length === 1) showMe(hits[0].key);
+});
+
+// ── 시간 조작 ──
+function setT(t) { S.T = Math.max(SC.DAY_FROM, Math.min(SC.DAY_TO, t)); paintTime(); }
+$('slider').min = SC.DAY_FROM; $('slider').max = SC.DAY_TO;
+$('slider').addEventListener('input', e => { stopPlay(); setT(+e.target.value); });
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-t]');
+  if (t && !e.target.closest('#map')) { stopPlay(); setT(+t.dataset.t); if (t.closest('#dayBar') || t.closest('#flow')) $('mapSec').scrollIntoView({ behavior: 'smooth' }); return; }
+  if (e.target.closest('[data-now]')) { const d = new Date(); setT(d.getHours() * 60 + d.getMinutes()); return; }
+  const pt = e.target.closest('[data-part]');
+  if (pt) { S.part = +pt.dataset.part; renderTabs(); renderFlow(); return; }
+  if (e.target.id === 'goMap') { $('mapSec').scrollIntoView({ behavior: 'smooth' }); return; }
+  // 보기 모드: 이름표 누르면 내 일정
+  const chip = e.target.closest('.chip[data-person]');
+  if (chip && !S.editing) { showMe(chip.dataset.person); $('findInput').value = SC.person(chip.dataset.person).name; $('myCard').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+});
+function stopPlay() { if (S.playing) { clearInterval(S.playing); S.playing = null; $('playBtn').textContent = '▶ 재생'; } }
+$('playBtn').onclick = () => {
+  if (S.playing) return stopPlay();
+  if (S.T >= SC.DAY_TO - 1) S.T = SC.hm('18:05');
+  $('playBtn').textContent = '⏸ 멈춤';
+  S.playing = setInterval(() => { if (S.T >= SC.DAY_TO) return stopPlay(); setT(S.T + 1); }, 180);
+};
+
+// ── 편집(선생님) ──
+function setEditing(on) {
+  S.editing = on; S.sel = null;
+  $('app').classList.toggle('editing', on);
+  $('editBtn').textContent = on ? '✓ 배정 끝내기' : '✏️ 역할 배정하기 (선생님)';
+  renderPool();
+}
+$('editBtn').onclick = () => {
+  if (S.editing) return setEditing(false);
+  const me = getJmStudent();
+  if (me && me.isTeacher) return setEditing(true);
+  $('loginModal').classList.add('show'); $('tId').focus();
+};
+$('tCancel').onclick = () => $('loginModal').classList.remove('show');
+$('tOk').onclick = () => {
+  if ($('tId').value.trim() === TEACHER_ID && $('tName').value.trim() === TEACHER_NAME) {
+    setJmStudent({ id: TEACHER_ID, name: TEACHER_NAME, isTeacher: true });
+    $('loginModal').classList.remove('show'); setEditing(true);
+  } else $('tErr').textContent = '선생님 정보가 맞지 않아요.';
+};
+$('tName').addEventListener('keydown', e => { if (e.key === 'Enter') $('tOk').click(); });
+$('poolFilter').addEventListener('input', renderPool);
+
+async function assign(key, target) {
+  const from = SC.slotOf(S.staff, key), patch = {};
+  if (target.pool) { if (!from) return; patch[from] = null; }
+  else {
+    if (from === target.slot) return;
+    const other = S.staff[target.slot];
+    patch[target.slot] = key;
+    if (from) patch[from] = other || null;
+  }
+  Object.entries(patch).forEach(([k, v]) => { if (v) S.staff[k] = v; else delete S.staff[k]; });
+  S.sel = null;
+  renderAll();
+  $('saveState').className = 'save-state'; $('saveState').textContent = '저장 중…';
+  try { await SC.patchStaff(patch); $('saveState').textContent = '저장됨 ✓'; }
+  catch (e) { $('saveState').className = 'save-state err'; $('saveState').textContent = e.message + ' — 새로고침해 주세요'; }
+}
+
+// 끌어다 놓기 (마우스·터치 공통 pointer 이벤트)
+let drag = null, scrollV = 0, scrollRaf = null;
+function dropTarget(x, y) {
+  const el = document.elementFromPoint(x, y); if (!el) return null;
+  const slot = el.closest('.slot[data-slot]'); if (slot) return { slot: slot.dataset.slot, el: slot };
+  const pool = el.closest('#pool'); if (pool) return { pool: true, el: pool };
+  return null;
+}
+function autoScroll() { if (!drag || !scrollV) { scrollRaf = null; return; } window.scrollBy(0, scrollV); scrollRaf = requestAnimationFrame(autoScroll); }
+document.addEventListener('pointerdown', e => {
+  if (!S.editing || e.button > 0) return;
+  const chip = e.target.closest('.chip[data-person]');
+  if (!chip || !chip.closest('#map, #pool')) return;
+  e.preventDefault();
+  drag = { key: chip.dataset.person, chip, x0: e.clientX, y0: e.clientY, from: (chip.closest('.slot') || {}).dataset?.slot || null, moved: false, over: null };
+});
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 6) return;
+  if (!drag.moved) {
+    drag.moved = true;
+    drag.ghost = drag.chip.cloneNode(true); drag.ghost.classList.add('ghost'); drag.ghost.classList.remove('me', 'sel');
+    document.body.appendChild(drag.ghost); drag.chip.classList.add('dragging');
+  }
+  drag.ghost.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+  const t = dropTarget(e.clientX, e.clientY);
+  if (drag.over && (!t || t.el !== drag.over)) drag.over.classList.remove('over');
+  drag.over = t ? t.el : null; if (drag.over) drag.over.classList.add('over');
+  scrollV = e.clientY < 70 ? -14 : e.clientY > innerHeight - 70 ? 14 : 0;
+  if (scrollV && !scrollRaf) scrollRaf = requestAnimationFrame(autoScroll);
+});
+function endDrag(e, cancel) {
+  if (!drag) return;
+  const d = drag; drag = null; scrollV = 0;
+  if (d.ghost) d.ghost.remove(); d.chip.classList.remove('dragging'); if (d.over) d.over.classList.remove('over');
+  if (cancel) return;
+  if (d.moved) { const t = dropTarget(e.clientX, e.clientY); if (t) assign(d.key, t); return; }
+  // 끌지 않고 누르기: 선택 → 자리 누르기 (터치용)
+  if (S.sel && S.sel !== d.key && d.from) return assign(S.sel, { slot: d.from });
+  S.sel = S.sel === d.key ? null : d.key;
+  document.querySelectorAll('.chip.sel').forEach(c => c.classList.remove('sel'));
+  if (S.sel) document.querySelectorAll(`.chip[data-person="${CSS.escape(S.sel)}"]`).forEach(c => c.classList.add('sel'));
+}
+document.addEventListener('pointerup', e => endDrag(e, false));
+document.addEventListener('pointercancel', e => endDrag(e, true));
+document.addEventListener('click', e => {
+  if (!S.editing || !S.sel || e.target.closest('.chip')) return;
+  const slot = e.target.closest('.slot[data-slot]');
+  if (slot) return assign(S.sel, { slot: slot.dataset.slot });
+  if (e.target.closest('#pool')) return assign(S.sel, { pool: true });
+});
+
+// ── 시작 ──
+(async function init() {
+  $('dateLabel').textContent = SC.DATE_LABEL;
+  renderDay(); renderQuick(); renderTabs();
+  if (isEventDay()) { const d = new Date(); const now = d.getHours() * 60 + d.getMinutes(); if (now >= SC.DAY_FROM && now <= SC.DAY_TO) S.T = now; }
+  renderAll();
+  try { S.staff = await SC.loadStaff(); renderAll(); }
+  catch (e) { $('saveState').className = 'save-state err'; $('saveState').textContent = '배정 정보를 불러오지 못했어요.'; }
+  const me = getJmStudent();
+  if (me && !me.isTeacher) { const p = SC.ROSTER.find(x => x.name === me.name); if (p) { $('findInput').value = p.name; showMe(p.key); } }
+})();
+document.addEventListener('visibilitychange', async () => {
+  if (document.hidden || S.editing) return;
+  try { S.staff = await SC.loadStaff(); renderAll(); } catch (e) { }
+});
+</script>
+</body>
+</html>
