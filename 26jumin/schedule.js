@@ -46,7 +46,7 @@
   SC.PLACES = {
     roof:  { name: '옥상',      floor: 'RF', sub: '주망원경 5대 · 36명이 12명씩 3조 (조마다 ①6+②6)' },
     lab:   { name: '3층 과학실', floor: '3F', sub: '입장 · 강의 · 안전교육 · 의자 72개' },
-    deck3: { name: '3층 데크',  floor: '3F', sub: '쌍안경 6개 · 3명이 1개' },
+    deck3: { name: '3층 데크',  floor: '3F', sub: '쌍안경 6개 · 3명이 1개 · 대장이 레이저로 안내' },
     deck2: { name: '2층 데크',  floor: '2F', sub: '굴절망원경 3대 · 6명씩 토성 찾기' },
   };
   SC.PLACE_ORDER = ['lab', 'roof', 'deck3', 'deck2'];
@@ -92,9 +92,13 @@
       prep: '과학실 책상 치우고 의자 72개 세팅',
       during: ['2명이 한 조(관객 12명)를 맡음 — 3조 × 2명', '한 명: 각 망원경이 대상을 찾았는지 계속 확인하고 조를 데려가기', '다른 한 명: 별자리·오늘 볼 대상 설명, 관객 질문 받기', '두 사람이 역할을 번갈아 해도, 고정해도 됨'],
       timing: [[10, 35, 'A팀 조 맡기'], [35, 60, 'B팀 조 맡기']] },
+    { key: 'blead', name: '쌍안경 대장 큐레이터', place: 'deck3', need: 1, color: '#3fd68a',
+      prep: '3층 데크에 쌍안경 6개 세팅, 레이저 포인터 점검',
+      during: ['레이저 포인터로 하늘의 대상(플레이아데스, 안드로메다, 알비레오 쌍성 등)을 찍어 주기', '18명 전체에게 지금 볼 대상과 위치 설명', '12분마다 다음 18명으로 교대'],
+      timing: [[10, 22, 'B-① 18명'], [23, 35, 'B-② 18명'], [35, 47, 'A-① 18명'], [48, 60, 'A-② 18명']] },
     { key: 'bcur', name: '쌍안경 큐레이터', place: 'deck3', need: 6, color: '#6ee7a8',
       prep: '3층 데크에 쌍안경 6개 세팅',
-      during: ['쌍안경 1개를 맡아 관객 3명 안내', '처음 3분: 쌍안경 기본 사용법 교육', '플레이아데스, 안드로메다, 알비레오(쌍성) 같은 밝은 대상 보여 주기', '12분마다 다음 18명으로 교대'],
+      during: ['쌍안경 1개를 맡아 관객 3명 안내', '처음 3분: 초점 맞추기 등 쌍안경 사용법 알려 주기', '대장 큐레이터가 레이저로 찍어 준 대상을 쌍안경으로 찾도록 돕기', '12분마다 다음 18명으로 교대'],
       timing: [[10, 22, 'B-① 18명'], [23, 35, 'B-② 18명'], [35, 47, 'A-① 18명'], [48, 60, 'A-② 18명']] },
     { key: 'tcur', name: '망원경 큐레이터', place: 'deck2', need: 6, color: '#ff9f7a',
       prep: '2층 데크에 굴절망원경(90mm·70mm) 3대 세팅',
@@ -121,6 +125,7 @@
     add(`sc_${s.key}_ast`, 'ast', 'roof', `${s.name} 보조`);
   });
   [1, 2, 3].forEach(g => [1, 2].forEach(i => add(`rc_${g}_${i}`, 'rcur', 'roof', `옥상 ${g}조 큐레이터`)));
+  add('bc_lead', 'blead', 'deck3', '쌍안경 대장 큐레이터');
   [1, 2, 3, 4, 5, 6].forEach(b => add(`bc_${b}`, 'bcur', 'deck3', `쌍안경 ${b}번 큐레이터`));
   [1, 2, 3].forEach(t => [1, 2].forEach(i => add(`tc_${t}_${i}`, 'tcur', 'deck2', `망원경 ${t}번 큐레이터`)));
   add('run_roof', 'run', 'roof', '옥상 심부름꾼');
@@ -177,6 +182,7 @@
     sct: '<svg viewBox="0 0 48 48"><rect x="13" y="6" width="22" height="18" rx="3" transform="rotate(-25 24 15)" fill="currentColor" opacity=".9"/><path d="M14 22v8h20v-8" stroke="currentColor" stroke-width="3" fill="none"/><path d="M24 30l-8 14M24 30l8 14M24 30v14" stroke="currentColor" stroke-width="2" fill="none"/></svg>',
     bino: '<svg viewBox="0 0 48 48"><rect x="6" y="16" width="14" height="22" rx="6" fill="currentColor"/><rect x="28" y="16" width="14" height="22" rx="6" fill="currentColor"/><rect x="18" y="20" width="12" height="7" fill="currentColor" opacity=".6"/><rect x="9" y="10" width="8" height="8" rx="2" fill="currentColor" opacity=".7"/><rect x="31" y="10" width="8" height="8" rx="2" fill="currentColor" opacity=".7"/></svg>',
     board: '<svg viewBox="0 0 48 48"><rect x="4" y="8" width="40" height="24" rx="2" fill="currentColor" opacity=".85"/><path d="M14 32l-4 10M34 32l4 10" stroke="currentColor" stroke-width="2"/></svg>',
+    laser: '<svg viewBox="0 0 48 48"><rect x="4" y="30" width="20" height="7" rx="3" transform="rotate(-35 14 33)" fill="currentColor"/><path d="M22 26 42 6" stroke="#5cff8a" stroke-width="2.5" stroke-linecap="round"/><circle cx="42" cy="6" r="3" fill="#5cff8a"/></svg>',
     door: '<svg viewBox="0 0 48 48"><rect x="12" y="4" width="24" height="40" rx="2" fill="currentColor" opacity=".85"/><circle cx="30" cy="25" r="2" fill="var(--bg)"/></svg>',
     bag: '<svg viewBox="0 0 48 48"><path d="M10 16h28l-3 26H13z" fill="currentColor" opacity=".85"/><path d="M18 16a6 6 0 0 1 12 0" stroke="currentColor" stroke-width="3" fill="none"/></svg>',
   };
@@ -222,7 +228,8 @@
       </section>
       <section class="fl fl-deck3" data-place="deck3">
         ${head('deck3')}
-        <div class="stations">${[1, 2, 3, 4, 5, 6].map(b => `
+        <div class="stations">
+          <div class="st lead"><div class="ic">${SC.ICON.laser}</div><div class="st-name">대장 · 레이저 포인터로 대상 찍기</div>${slot('bc_lead', '대장 큐레이터')}</div>${[1, 2, 3, 4, 5, 6].map(b => `
           <div class="st"><div class="ic">${SC.ICON.bino}</div><div class="st-name">쌍안경 ${b}</div>${dots(3)}${slot(`bc_${b}`, '큐레이터')}</div>`).join('')}
           <div class="st runner"><div class="ic sm">${SC.ICON.bag}</div>${slot('run_d3', '심부름꾼')}</div>
         </div>

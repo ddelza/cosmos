@@ -17,7 +17,7 @@
     <div class="stats">
       <div class="stat"><b>3부</b><span>18:20 · 19:30 · 20:40 시작</span></div>
       <div class="stat"><b>72명 × 3</b><span>부마다 손님 최대 72명, 총 216명</span></div>
-      <div class="stat"><b id="statNeed">35자리</b><span>필수 역할</span></div>
+      <div class="stat"><b id="statNeed">36자리</b><span>필수 역할</span></div>
       <div class="stat"><b id="statFill">-</b><span>배정 완료</span></div>
     </div>
     <div class="notice">⚠️ <b>필수 역할</b>에 배정된 사람은 11월 3일(화) <b>16:10 ~ 22:30 끝까지</b> 참석해야 해요. 끝까지 있기 어렵거나 필수 역할이 아닌 사람은 <b>설명꾼</b>이 됩니다.</div>
@@ -86,7 +86,7 @@
         <li>조마다 큐레이터 2명: 한 명은 망원경 확인·안내, 한 명은 별자리·대상 설명과 질문 받기</li></ul></div>
       <div class="card"><h3>🔭 데크 (12분 + 12분)</h3><ul>
         <li>36명 → 18명씩 둘로 나눠 3층 ↔ 2층을 바꿈</li>
-        <li><b>3층</b>: 쌍안경 6개, 3명이 1개 — 플레이아데스, 안드로메다, 알비레오 쌍성</li>
+        <li><b>3층</b>: 쌍안경 6개, 3명이 1개 — <b>대장 큐레이터</b>가 레이저 포인터로 플레이아데스, 안드로메다, 알비레오 쌍성 등을 찍어 주고, 쌍안경 큐레이터는 초점 맞추기 등 사용법을 알려 줌</li>
         <li><b>2층</b>: 굴절망원경(90·70mm) 3대, 6명씩 줄 서서 토성 직접 찾기</li>
         <li>처음 3분은 기본 사용법 교육</li></ul></div>
     </div>
@@ -127,7 +127,7 @@ function renderDay() {
   $('dayBar').innerHTML = SC.DAY.map(d => `<div class="seg ${d.key}" data-t="${d.from}" style="flex:${d.to - d.from}" title="${SC.fmt(d.from)}~${SC.fmt(d.to)} ${d.label}">
     ${d.to - d.from >= 40 ? `<span>${d.label}</span><small>${SC.fmt(d.from)}~${SC.fmt(d.to)}</small>` : ''}</div>`).join('');
   const detail = {
-    prep: '주망원경: 옥상 세팅·광축 정렬 / 문지기: 굿즈 준비·사전신청 확인 연습 / 쌍안경·망원경 큐레이터: 3층 데크 쌍안경, 2층 데크 망원경 세팅 / 나머지: 과학실 책상 치우고 의자 72개',
+    prep: '주망원경: 옥상 세팅·광축 정렬 / 문지기: 굿즈 준비·사전신청 확인 연습 / 쌍안경(대장 포함)·망원경 큐레이터: 3층 데크 쌍안경·레이저 포인터, 2층 데크 망원경 세팅 / 나머지: 과학실 책상 치우고 의자 72개',
     entry: '손님 입장 · 사전신청 확인 · 상품 · 앞자리부터 착석 (스태프는 쉬는 시간·여유 시간)',
     part: '강의 6분 → 안전교육 2분 → A팀 옥상 / B팀 데크 25분 → 서로 바꿔 25분',
     end: '장비·의자 정리, 뒷풀이',

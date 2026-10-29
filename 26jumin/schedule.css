@@ -96,6 +96,9 @@ h2 { font-size: 1.15rem; margin: 0 0 4px; }
 .scope-name, .st-name, .grp-name { font-size: .78rem; font-weight: 700; margin-bottom: 6px; }
 .grp-name small { color: var(--muted); font-weight: 500; }
 .groups { display: grid; grid-template-columns: repeat(3, 1fr) 120px; gap: 8px; margin-top: 8px; }
+.st.lead { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; text-align: left; border-color: color-mix(in srgb, #3fd68a 45%, var(--line)); }
+.st.lead { flex-wrap: wrap; }
+.st.lead .ic { margin: 0; flex: none; } .st.lead .st-name { margin: 0; flex: 1 1 120px; } .st.lead .slot { flex: 1 1 160px; max-width: 220px; margin: 0; }
 .runner { display: flex; flex-direction: column; justify-content: center; border-style: dashed; }
 .stations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .fl-deck2 .stations { grid-template-columns: repeat(3, 1fr) 110px; }
