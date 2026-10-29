@@ -156,7 +156,12 @@
     const r = await fetch(await SC.staffUrl(), { method: 'PATCH', body: JSON.stringify(patch) });
     if (!r.ok) throw new Error('저장 실패 (' + r.status + ')');
   };
-  SC.slotOf = (staff, key) => Object.keys(staff).find(id => staff[id] === key) || null;
+  // 한 칸에 2명까지 — 값은 1명이면 문자열, 2명이면 배열
+  SC.SLOT_MAX = 2;
+  SC.people = (staff, id) => { const v = staff[id]; return v == null ? [] : typeof v === 'object' ? Object.values(v).filter(Boolean) : [v]; };
+  SC.packSlot = arr => arr.length === 0 ? null : arr.length === 1 ? arr[0] : arr;
+  SC.assignedKeys = staff => Object.keys(staff).flatMap(id => SC.people(staff, id));
+  SC.slotOf = (staff, key) => Object.keys(staff).find(id => SC.people(staff, id).includes(key)) || null;
 
   // ── 시각 → 상태 ──
   SC.stateAt = T => {
@@ -194,10 +199,10 @@
 
   SC.renderMap = (el, staff) => {
     const slot = (id, short) => {
-      const s = SC.slot(id), r = SC.role(s.role), p = staff[id] && SC.person(staff[id]);
-      return `<div class="slot${p ? ' filled' : ''}" data-slot="${id}" style="--rc:${r.color}">
+      const s = SC.slot(id), r = SC.role(s.role), ps = SC.people(staff, id).map(SC.person).filter(Boolean);
+      return `<div class="slot${ps.length ? ' filled' : ''}" data-slot="${id}" style="--rc:${r.color}">
         <span class="slot-label">${esc(short || r.name)}</span>
-        ${p ? SC.chip(p) : '<span class="slot-empty">비어 있음</span>'}</div>`;
+        ${ps.length ? ps.map(p => SC.chip(p)).join('') : '<span class="slot-empty">비어 있음</span>'}</div>`;
     };
     const dots = (n, cls = '') => `<span class="dots ${cls}">${'<i></i>'.repeat(n)}</span>`;
     const head = k => `<div class="fl-head"><span class="fl-tag">${SC.PLACES[k].floor}</span><b>${SC.PLACES[k].name}</b>

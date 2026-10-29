@@ -169,10 +169,10 @@ const $ = id => document.getElementById(id);
 
   SC.renderMap($('map'), staff);
 
-  const assigned = new Set(Object.values(staff));
+  const assigned = new Set(SC.assignedKeys(staff));
   $('roles').innerHTML = SC.ROLES.map(r => {
     const names = r.optional ? SC.ROSTER.filter(p => !assigned.has(p.key))
-      : SC.SLOTS.filter(s => s.role === r.key).map(s => staff[s.id]).filter(Boolean).map(SC.person).filter(Boolean);
+      : SC.SLOTS.filter(s => s.role === r.key).flatMap(s => SC.people(staff, s.id)).map(SC.person).filter(Boolean);
     const where = r.place === 'multi' ? '옥상 · 3층 데크 · 2층 데크 각 1명' : r.place === 'any' ? '옥상 · 데크 곳곳' : SC.PLACES[r.place].name;
     return `<div class="card role" style="--rc:${r.color}">
       <div class="role-h"><b>${r.name}</b>${r.optional ? '<span class="opt">자유 참석</span>' : '<span class="must">필수</span>'}<span class="cnt">${r.optional ? '' : r.need + '명'}</span></div>
