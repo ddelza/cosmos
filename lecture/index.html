@@ -17,6 +17,11 @@
 
   #heading{position:fixed;left:24px;top:18px;font-size:clamp(13px,1vw,18px);color:var(--dim);font-weight:600;letter-spacing:-.01em;line-height:1.45}
   #heading b{color:var(--ink);font-size:1.3em}
+  /* 크기 과장 안내 (2·3단계) */
+  #note{display:table;margin-top:8px;font-size:.9em;color:#c9b48a;font-weight:700;
+    background:rgba(40,32,14,.55);border:1px solid rgba(230,200,130,.3);border-radius:8px;padding:4px 10px;
+    opacity:0;transition:opacity .45s;pointer-events:none}
+  #note.on{opacity:1}
 
   /* 현재 단계 카드 */
   #card{position:fixed;left:50%;top:22px;transform:translateX(-50%);text-align:center;
@@ -48,6 +53,7 @@
   .chip .d{font-size:clamp(12px,.95vw,17px);color:var(--red);font-weight:800;white-space:nowrap}
   .chip.cur{opacity:1;background:rgba(40,52,96,.9);border-color:#8fa8ff;box-shadow:0 0 18px rgba(120,150,255,.35);transform:translateY(-3px)}
   .chip.done{opacity:.85}
+  .chip.goal{opacity:.8;border-color:rgba(143,168,255,.6);border-style:dashed}
   .arrow{font-size:clamp(11px,.85vw,16px);color:#ff8a7a;font-weight:800;white-space:nowrap;opacity:.45;transition:opacity .3s}
   .arrow.done{opacity:1}
 
@@ -65,7 +71,9 @@
     box-shadow:0 20px 80px rgba(0,0,0,.6)}
   .pimg{display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;padding:18px;min-height:0}
   .frame{position:relative;display:inline-block;cursor:zoom-in;line-height:0}
-  .frame img{display:block;max-width:calc(95vw * .55);max-height:calc(90vh - 80px);border-radius:8px;opacity:0;transition:opacity .35s}
+  /* 사진 칸 = 상자 너비의 1.35/2.35, 위아래 여백(18px×2)과 출처 줄을 뺀 높이 */
+  .frame img{display:block;max-width:calc(min(1700px, 95vw) * 1.35 / 2.35 - 36px);max-height:calc(min(960px, 90vh) - 90px);
+    border-radius:8px;opacity:0;transition:opacity .35s}
   .frame img.ok{opacity:1}
   .mark{position:absolute;transform:translate(-50%,-50%);width:54px;height:54px;border:3px solid;border-radius:50%;pointer-events:none}
   .mark span{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:6px;white-space:nowrap;line-height:1.2;
@@ -86,7 +94,7 @@
   .pbody th,.pbody td{border:1px solid rgba(150,170,230,.3);padding:.3em .5em;text-align:center}
   .pbody th{background:rgba(70,90,160,.35)}
   .cbar{height:22px;border-radius:11px;margin:.6em 0 .2em;background:linear-gradient(90deg,#7fa8ff,#dfe8ff,#fff6cf,#ffc06a,#ff6a4a)}
-  .clab{display:flex;justify-content:space-between;font-size:.72em;color:var(--dim);font-weight:700}
+  .clab{display:flex;justify-content:space-between;gap:.8em;font-size:.72em;color:var(--dim);font-weight:700}
   .pnav{display:flex;align-items:center;justify-content:space-between;margin-top:14px;gap:10px}
   .pnav button{background:#22305c;border:1px solid var(--line);border-radius:12px;padding:10px 20px;font-size:clamp(15px,1.1vw,20px);font-weight:700}
   .pnav button:disabled{opacity:.3;cursor:default}
@@ -97,10 +105,20 @@
   #panel.zoom .pbox{grid-template-columns:1fr}
   #panel.zoom .ptext{display:none}
   #panel.zoom .frame{cursor:zoom-out}
-  #panel.zoom .frame img{max-width:calc(95vw - 40px)}
+  #panel.zoom .frame img{max-width:calc(min(1700px, 95vw) - 36px)}
+  /* 교실 프로젝터(1024~1280 폭): 진행 표시를 왼쪽에 붙이고 줄여서 오른쪽 버튼과 안 겹치게 */
+  @media (min-width:901px) and (max-width:1300px){
+    #timeline{left:12px;transform:none;gap:2px;max-width:calc(100vw - 214px)}
+    .chip{min-width:min-content;padding:5px 5px;flex:0 1 auto}
+    .chip .t,.chip .d{white-space:normal;word-break:keep-all;line-height:1.2}
+    .chip .t,.chip .d{font-size:12px}
+    .arrow{font-size:11px;white-space:normal;word-break:keep-all;text-align:center;line-height:1.15;flex:0 1 auto}
+  }
   @media (max-width:900px){
     .pbox{grid-template-columns:1fr;grid-template-rows:auto 1fr}
     .frame img{max-width:88vw;max-height:38vh}
+    #panel.zoom .frame img{max-width:88vw;max-height:calc(90vh - 90px)}
+    #note{display:none}
     #timeline{max-width:96vw;overflow:auto;bottom:84px}
     .chip{min-width:84px;padding:6px 8px}
     #scale{bottom:170px}
@@ -111,7 +129,8 @@
 <body>
 <canvas id="cv"></canvas>
 
-<div id="heading"><b>우주의 크기 가늠해 보기</b><br>한 칸 갈 때마다 몇 배씩 멀어질까?</div>
+<div id="heading"><b>우주의 크기 가늠해 보기</b><br>한 칸 갈 때마다 몇 배씩 멀어질까?
+  <div id="note">※ 천체 크기는 보기 쉽게 키움<br>(거리 비율은 실제)</div></div>
 <div id="hint">→ / 스페이스 : 다음 &nbsp; ← : 이전<br>천체를 클릭하면 설명이 나와요</div>
 <div id="card"><div class="no"></div><div class="tt"></div><div class="dd"></div><div class="ss"></div></div>
 <div id="counter"></div>
@@ -160,13 +179,17 @@ const U_R   = 4.65e10;                         // 관측 가능한 우주 반지
 
 const STAGES = [
   { a: EARTH, b: MOON, title: '지구 ↔ 달', dist: '약 38만 km', sub: '빛으로 약 1.3초', chip: '38만 km', line: '38만 km' },
-  { a: EARTH, b: SUN, title: '지구 ↔ 태양', dist: '1 AU (약 1억 5천만 km)', sub: '빛으로 약 8분 20초', chip: '1 AU', line: '1 AU', ratio: '×390' },
-  { a: SUN, b: PROX, title: '태양 ↔ 가장 가까운 별', dist: '약 4.2 광년', sub: '프록시마 센타우리 · 빛으로 약 4년 3개월', chip: '4.2 광년', line: '4.2 광년', ratio: '×27만' },
-  { a: { x: GC.x - 5e4 * LY, y: GC.y }, b: { x: GC.x + 5e4 * LY, y: GC.y }, title: '우리은하 지름', dist: '약 3만 pc (약 10만 광년)', sub: '빛으로 약 10만 년', chip: '약 10만 광년', line: '지름 약 10만 광년', ratio: '×2만 3천', fit: [0.5, 0.68], diam: true },
-  { a: GC, b: M31, title: '우리은하 ↔ 안드로메다은하', dist: '약 250만 광년', sub: '가장 가까운 큰 은하 · 빛으로 약 250만 년', chip: '250만 광년', line: '약 250만 광년', ratio: '×25' },
-  { a: GC, b: VIRGO, title: '우리은하 ↔ 처녀자리 은하단', dist: '약 5,400만 광년', sub: '가장 가까운 큰 은하단 · 은하 약 1,300~2,000개', chip: '5,400만 광년', line: '약 5,400만 광년', ratio: '×22' },
-  { a: { x: GC.x - U_R * LY, y: GC.y }, b: { x: GC.x + U_R * LY, y: GC.y }, title: '관측 가능한 우주', dist: '지름 약 930억 광년', sub: '은하 수천억 개 이상 · 우주의 나이 약 138억 년', chip: '지름 930억 광년', line: '지름 약 930억 광년', ratio: '×1,700', fit: [0.5, 0.68], diam: true },
+  { a: EARTH, b: SUN, title: '지구 ↔ 태양', dist: '1 AU (약 1억 5천만 km)', sub: '빛으로 약 8분 20초', chip: '1 AU', line: '1 AU', ratio: '×390', rv: 390, note: true },
+  { a: SUN, b: PROX, title: '태양 ↔ 가장 가까운 별', dist: '약 4.2 광년', sub: '프록시마 센타우리 · 빛으로 약 4년 3개월', chip: '4.2 광년', line: '4.2 광년', ratio: '×27만', rv: 27e4, note: true },
+  { a: { x: GC.x - 5e4 * LY, y: GC.y }, b: { x: GC.x + 5e4 * LY, y: GC.y }, title: '우리은하 지름', dist: '약 3만 pc (약 10만 광년)', sub: '빛으로 약 10만 년', chip: '약 10만 광년', line: '지름 약 10만 광년', ratio: '×2만 4천', rv: 24000, fit: [0.5, 0.68], diam: true, room: [2.4, 0.6] },
+  { a: GC, b: M31, title: '우리은하 ↔ 안드로메다은하', dist: '약 250만 광년', sub: '가장 가까운 큰 은하 · 빛으로 약 250만 년', chip: '250만 광년', line: '약 250만 광년', ratio: '×25', rv: 25 },
+  { a: GC, b: VIRGO, title: '우리은하 ↔ 처녀자리 은하단', dist: '약 5,400만 광년', sub: '가장 가까운 큰 은하단 · 은하 약 1,300~2,000개', chip: '5,400만 광년', line: '약 5,400만 광년', ratio: '×22', rv: 22 },
+  { a: { x: GC.x - U_R * LY, y: GC.y }, b: { x: GC.x + U_R * LY, y: GC.y }, title: '관측 가능한 우주', dist: '지름 약 930억 광년', sub: '은하 수천억 개 이상 · 우주의 나이 약 138억 년', chip: '지름 930억 광년', line: '지름 약 930억 광년', ratio: '×1,700', rv: 1700, fit: [0.5, 0.68], diam: true, room: [0.6, 2.4] },
 ];
+// rv: ratio 라벨의 숫자 (인접 단계 이동 때 카운터가 라벨을 넘지 않게)
+// room: 지름 단계에서 그림 위·아래에 비워 둘 이름표 자리 (글자 크기 배수)
+const LD = STAGES.map(s => Math.log(dist(s.a, s.b))); // 단계별 실제 거리 (ln km)
+let LOGS = [];                                        // 단계별 카메라 배율 (ln S)
 const CHIP_TITLES = ['지구 ↔ 달', '지구 ↔ 태양', '가장 가까운 별', '우리은하 지름', '안드로메다은하', '처녀자리 은하단', '관측 가능한 우주'];
 
 // ───────── 캔버스 ─────────
@@ -177,12 +200,38 @@ function resize() {
   W = innerWidth; H = innerHeight;
   cv.width = W * DPR; cv.height = H * DPR;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  if (!anim) cam = stageCam(cur);
+  ctx.imageSmoothingQuality = 'high';
+  updateLogs();
+  if (!anim) cam = stageCam(cur); // 이동 중이면 stepAnim이 새 화면 기준 목표를 다시 계산
+}
+// 상단 카드 아래 ~ 하단 진행 표시 위: 지름 단계 그림이 들어갈 칸 (resize·goTo 때만 재서 BAND에 둠)
+let BAND = [0, 0];
+function safeBand() {
+  const c = document.getElementById('card'), tl = document.getElementById('timeline');
+  const top = c.offsetTop + c.offsetHeight + 8, bot = tl.getBoundingClientRect().top - 8;
+  return bot - top > H * 0.4 ? [top, bot] : [0, H];
 }
 function stageCam(i) {
   const s = STAGES[i], c = mid(s.a, s.b);
   const [fw, fh] = s.fit || [0.58, 1.1];
-  return { x: c.x, y: c.y, S: dist(s.a, s.b) / Math.min(fw * W, fh * H) };
+  if (!s.diam) return { x: c.x, y: c.y, S: dist(s.a, s.b) / Math.min(fw * W, fh * H) };
+  // 지름 단계: 카드·이름표에 가리지 않게 남는 칸 안에 맞추고 중심을 그만큼 내림
+  const [top, bot] = BAND, t = top + s.room[0] * fs(), b = bot - s.room[1] * fs();
+  const S = dist(s.a, s.b) / Math.min(fw * W, fh * H, b - t);
+  return { x: c.x, y: c.y - ((t + b) / 2 - H / 2) * S, S };
+}
+function updateLogs() {
+  // 카드 높이는 도착할 단계(cur) 내용으로 잰 뒤 되돌림 (화면에 그려지기 전이라 깜빡이지 않음)
+  const c = document.getElementById('card'), keep = c.innerHTML;
+  fillCard(cur); BAND = safeBand(); c.innerHTML = keep;
+  LOGS = STAGES.map((_, i) => Math.log(stageCam(i).S));
+}
+// 지금 카메라 배율(S)이 보여 주는 '실제 길이': 단계별 (ln S, ln 거리)를 꺾은선으로 이음
+function realLen(S) {
+  const L = Math.log(S), n = LOGS.length;
+  let k = 0; while (k < n - 2 && L > LOGS[k + 1]) k++;
+  const f = (L - LOGS[k]) / (LOGS[k + 1] - LOGS[k]); // 양 끝 밖은 끝 구간 기울기로 연장
+  return Math.exp(LD[k] + (LD[k + 1] - LD[k]) * f);
 }
 const toScreen = p => ({ x: W / 2 + (p.x - cam.x) / cam.S, y: H / 2 + (p.y - cam.y) / cam.S });
 
@@ -233,7 +282,17 @@ function renderGalaxyTexture(g, size = 1800) {
       x.fillRect(o + d[i] * k - s / 2, o + d[i + 1] * k - s / 2, s, s);
     }
   }
-  return { tex: c, half };
+  return { tex: c, half, mips: makeMips(c) };
+}
+// 작게 그릴 때 반짝이지 않도록 미리 줄여 둔 그림 (큰 것부터)
+function makeMips(src) {
+  const out = [];
+  for (let s = src.width >> 2; s >= 32; s >>= 2) {
+    const m = document.createElement('canvas'); m.width = m.height = s;
+    const mx = m.getContext('2d'); mx.imageSmoothingQuality = 'high';
+    mx.drawImage(out.length ? out[out.length - 1] : src, 0, 0, s, s); out.push(m);
+  }
+  return out;
 }
 function makeMilkyWay() {
   const r = rng(7), g = galaxyBuilder(), tanP = Math.tan(14 * D2R), r0 = 4500;
@@ -337,9 +396,11 @@ function renderUniverse(size = 2048) {
   g.addColorStop(0, 'rgba(255,120,60,0)'); g.addColorStop(.8, 'rgba(255,130,70,.35)');
   g.addColorStop(.95, 'rgba(255,170,110,.6)'); g.addColorStop(1, 'rgba(255,120,60,0)');
   x.fillStyle = g; x.beginPath(); x.arc(o, o, R, 0, 7); x.fill();
-  return { tex: c, half: U_R / 0.98 };
+  return { tex: c, half: U_R / 0.98, mips: makeMips(c) };
 }
-const UNIVERSE = { pos: GC, R: U_R, ...renderUniverse() };
+// 만드는 데 시간이 걸려서 첫 화면이 뜬 뒤에 만듦 (그 전엔 그리기 건너뜀)
+const UNIVERSE = { pos: GC, R: U_R, tex: null, half: U_R / 0.98 };
+(window.requestIdleCallback || (f => setTimeout(f, 300)))(() => Object.assign(UNIVERSE, renderUniverse()), { timeout: 1500 });
 const fieldAlpha = () => 1 - smooth(6.9, 7.7, Math.log10(cam.S / LY));
 
 // ───────── 배경 별 ─────────
@@ -351,59 +412,106 @@ const FLOW_STARS = Array.from({ length: 240 }, () => ({ ang: bgR() * 6.283, p: b
 let cur = 0, cam = { x: 0, y: 0, S: 1 }, anim = null, counterTimer = null;
 const counterEl = document.getElementById('counter');
 
+// 만·억은 버림(올라가는 도중 라벨을 앞지르지 않게), 조·경은 반올림 (10 미만이면 소수 한 자리)
+const comma = x => String(x).replace(/\B(?=(\d{3})+$)/g, ',');
+const dec1 = x => x.toFixed(1).replace(/\.0$/, '');
 function fmtKo(n) {
-  if (n < 10) return n.toFixed(1).replace(/\.0$/, '');
-  if (n < 1000) return String(Math.round(n));
-  if (n < 1e4) return Math.round(n / 10) * 10 + '';
-  if (n < 1e8) { const m = Math.floor(n / 1e4), c = Math.floor(n % 1e4 / 1e3); return m + '만' + (c && m < 100 ? ' ' + c + '천' : ''); }
-  if (n < 1e12) { const e = Math.floor(n / 1e8), m = Math.floor(n % 1e8 / 1e7); return e + '억' + (m && e < 100 ? ' ' + m + '천만' : ''); }
-  if (n < 1e16) return Math.floor(n / 1e12) + '조';
-  return Math.floor(n / 1e16) + '경';
+  if (n < 9.95) return dec1(n);
+  if (n < 999.5) return String(Math.round(n));
+  if (n < 9995) return comma(Math.round(n / 10) * 10);
+  if (n < 1e4) return '1만';
+  if (n < 1e8) { const m = Math.floor(n / 1e4), c = Math.floor(n % 1e4 / 1e3); return comma(m) + '만' + (c && m < 100 ? ' ' + c + '천' : ''); }
+  if (n < 1e12) { const e = Math.floor(n / 1e8), m = Math.floor(n % 1e8 / 1e7); return comma(e) + '억' + (m && e < 100 ? ' ' + m + '천만' : ''); }
+  if (n < 9.95e12) return dec1(n / 1e12) + '조';
+  const j = Math.round(n / 1e12);
+  if (j < 1e4) return comma(j) + '조';
+  const g = n / 1e16;
+  return (g < 9.95 ? dec1(g) : comma(Math.round(g))) + '경';
 }
+
+// ln S 공간의 속도 곡선: 느리게 출발해 점점 빨라지다가(t^n) 마지막 15%에 짧게 착지
+const EASE = (() => {
+  const n = 2.5, a = 0.85, b = 0.03, va = b + a ** n;
+  const A1 = b * a + a ** (n + 1) / (n + 1), A2 = va * (1 - a) * 0.5, tot = A1 + A2;
+  return t => {
+    if (t <= a) return (b * t + t ** (n + 1) / (n + 1)) / tot;
+    const u = (t - a) / (1 - a);
+    return (A1 + va * (1 - a) * (u - u ** 3 + u ** 4 / 2)) / tot;
+  };
+})();
+// 이동 중 t에서의 ln S. kick: 끊기 전 속도를 이어받는 항 (에르미트 h10 = t(1-t)², 양 끝에서 0)
+const animL = (a, t) => a.L0 + (LOGS[a.i] - a.L0) * EASE(t) + a.kick * t * (1 - t) ** 2;
 
 function goTo(i) {
   i = clamp(i, 0, STAGES.length - 1);
-  if (i === cur && !anim) return;
-  const from = { ...cam }, to = stageCam(i);
-  const dec = Math.abs(Math.log10(to.S / from.S));
-  anim = { from, to, i, t0: performance.now(), dur: clamp(1700 + dec * 750, 1800, 6500), prev: cur };
+  if (anim ? anim.i === i : i === cur) return;
+  const base = anim ? anim.base : cur;
   cur = i;
+  updateLogs(); // 카드 높이를 도착할 단계 내용으로 재서 지름 단계 위치 계산
+  const now = performance.now(), L0 = Math.log(cam.S), dL = LOGS[i] - L0;
+  const dur = clamp(1600 + 2000 * Math.sqrt(Math.abs(dL) / Math.LN10), 2500, 12000);
+  let kick = 0;
+  if (anim) { // 중간에 끊음: 지금 속도(ln S / ms)를 그대로 이어받기
+    const t = clamp((now - anim.t0) / anim.dur, 0, 1), h = 1e-3;
+    const v = (animL(anim, Math.min(1, t + h)) - animL(anim, Math.max(0, t - h))) / ((Math.min(1, t + h) - Math.max(0, t - h)) * anim.dur);
+    kick = v * dur - dL * EASE(1e-6) / 1e-6;
+    // 너무 크게 튕겨 나가지 않게 제한 (h10 최댓값 4/27). 반대 방향이면 거의 바로 돌아섬
+    const same = Math.sign(v) === Math.sign(dL);
+    const lim = (same ? 0.25 * Math.abs(dL) + 0.7 : 0.3) * 27 / 4;
+    kick = clamp(kick, -lim, lim);
+  }
+  anim = { from: { ...cam }, i, base, t0: now, dur, L0, kick, at: -1 };
   document.getElementById('card').classList.add('hide');
+  document.getElementById('note').classList.remove('on');
   clearTimeout(counterTimer);
   counterEl.classList.add('on');
-  updateTimeline();
 }
-const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
 function stepAnim(now) {
   if (!anim) return;
-  const t = clamp((now - anim.t0) / anim.dur, 0, 1), e = ease(t);
-  const { from, to } = anim;
-  const S = Math.exp(Math.log(from.S) + (Math.log(to.S) - Math.log(from.S)) * e);
-  const w = Math.abs(to.S - from.S) < 1e-9 ? e : (S - from.S) / (to.S - from.S);
+  const t = clamp((now - anim.t0) / anim.dur, 0, 1), from = anim.from;
+  const to = stageCam(anim.i); // 매번 다시 계산: 이동 중 창 크기가 바뀌어도 새 화면 기준으로 도착
+  const L = t >= 1 ? LOGS[anim.i] : animL(anim, t), S = Math.exp(L);
+  const w = Math.abs(to.S - from.S) < 1e-9 ? EASE(t) : clamp((S - from.S) / (to.S - from.S), 0, 1);
   cam = { x: from.x + (to.x - from.x) * w, y: from.y + (to.y - from.y) * w, S };
-  // 배율 표시
-  const zoomOut = to.S >= from.S, ratio = zoomOut ? S / from.S : from.S / S;
-  let txt = (zoomOut ? '× ' : '÷ ') + fmtKo(ratio);
-  let small = zoomOut ? '배 멀리' : '배 가까이';
-  if (t >= 1) {
-    if (zoomOut && anim.i === anim.prev + 1) txt = STAGES[anim.i].ratio.replace('×', '× ');
-    if (!zoomOut && anim.i === anim.prev - 1) txt = '÷ ' + STAGES[anim.prev].ratio.replace('×', '');
+  // 배율 표시: 처음 멈춰 있던 단계(base)의 실제 거리와 지금 화면이 보여 주는 실제 길이의 비
+  const r = realLen(S) / Math.exp(LD[anim.base]);
+  const out = Math.abs(Math.log(r)) < 1e-6 ? anim.i > anim.base : r > 1;
+  let v = out ? r : 1 / r;
+  const adj = Math.abs(anim.i - anim.base) === 1, j = Math.max(anim.i, anim.base);
+  if (adj) v = Math.min(v, STAGES[j].rv); // 바로 옆 단계: 라벨 값을 넘었다가 되돌아오지 않게
+  let txt = (out ? '× ' : '÷ ') + fmtKo(v);
+  if (t >= 1 && adj) txt = (anim.i > anim.base ? '× ' : '÷ ') + STAGES[j].ratio.replace('×', '');
+  counterEl.innerHTML = txt + '<small>' + (out ? '배 멀리' : '배 가까이') + '</small>';
+  // 여러 단계를 지나갈 때: 출발 단계에서 목표 쪽으로, 지나간 단계의 칩을 한 칸씩 켬
+  if (anim.at < 0) { // 출발점에 가장 가까운 단계부터 (중간에 끊고 다시 출발한 경우 포함)
+    let k0 = 0; LOGS.forEach((g, k) => { if (Math.abs(g - anim.L0) < Math.abs(LOGS[k0] - anim.L0)) k0 = k; });
+    anim.at = k0; updateTimeline(k0, anim.i);
   }
-  counterEl.innerHTML = txt + '<small>' + small + '</small>';
+  let at = anim.at;
+  if (anim.i > at) while (at < anim.i && L >= LOGS[at + 1] - 1e-3) at++;
+  else while (at > anim.i && L <= LOGS[at - 1] + 1e-3) at--;
+  if (t >= 1) at = anim.i;
+  if (at !== anim.at) { anim.at = at; updateTimeline(at, anim.i); }
   if (t >= 1) {
-    anim = null; cam = to; showCard();
-    counterTimer = setTimeout(() => counterEl.classList.remove('on'), 1600);
+    const back = anim.i === anim.base;
+    anim = null; cam = stageCam(cur); showCard();
+    if (back) counterEl.classList.remove('on'); // 제자리로 돌아옴
+    else counterTimer = setTimeout(() => counterEl.classList.remove('on'), 1600);
   }
 }
 
-function showCard() {
-  const s = STAGES[cur], c = document.getElementById('card');
-  c.querySelector('.no').textContent = `${cur + 1} / ${STAGES.length}`;
+function fillCard(i) {
+  const s = STAGES[i], c = document.getElementById('card');
+  c.querySelector('.no').textContent = `${i + 1} / ${STAGES.length}`;
   c.querySelector('.tt').textContent = s.title;
   c.querySelector('.dd').textContent = s.dist;
   c.querySelector('.ss').textContent = s.sub;
-  c.classList.remove('hide');
+}
+function showCard() {
+  fillCard(cur);
+  document.getElementById('card').classList.remove('hide');
+  document.getElementById('note').classList.toggle('on', !!STAGES[cur].note);
 }
 
 function buildTimeline() {
@@ -416,10 +524,11 @@ function buildTimeline() {
     tl.appendChild(c);
   });
 }
-function updateTimeline() {
+// at: 지금 화면에 해당하는 단계 (이동 중엔 방금 지나간 단계), goal: 도착할 단계
+function updateTimeline(at = cur, goal = at) {
   const chips = document.querySelectorAll('.chip'), arrows = document.querySelectorAll('.arrow');
-  chips.forEach((c, i) => { c.classList.toggle('cur', i === cur); c.classList.toggle('done', i < cur); });
-  arrows.forEach((a, i) => a.classList.toggle('done', i < cur));
+  chips.forEach((c, i) => { c.classList.toggle('cur', i === at); c.classList.toggle('done', i < at); c.classList.toggle('goal', i === goal && i !== at); });
+  arrows.forEach((a, i) => a.classList.toggle('done', i < at));
 }
 
 // ───────── 천체 ─────────
@@ -487,15 +596,21 @@ const fs = () => clamp(W / 85, 15, 26);
 function galaxyAlpha(g) { const diam = 2 * g.R * LY / cam.S; return smooth(40000, 4000, diam); }
 
 function drawGalaxy(g, alpha) {
-  if (alpha < 0.01) return;
+  if (alpha < 0.01 || !g.tex) return; // 아직 그림을 만드는 중이면 건너뜀
   const k = LY / cam.S, c = toScreen(g.pos), h = g.half * k;
   if (c.x + h < 0 || c.x - h > W || c.y + h < 0 || c.y - h > H) return;
-  if (g.dot && h < 3.5) { // 몇 픽셀보다 작아지면 점으로
-    ctx.globalAlpha = alpha; ctx.fillStyle = '#fff1d6';
-    ctx.beginPath(); ctx.arc(c.x, c.y, 2, 0, 7); ctx.fill(); ctx.globalAlpha = 1; return;
+  // 몇 픽셀보다 작아지면 점으로 (사이 구간은 서서히 바꿈)
+  const ta = g.dot ? smooth(2.5, 6, h) : 1;
+  if (ta < 1) {
+    ctx.globalAlpha = alpha * (1 - ta); ctx.fillStyle = '#fff1d6';
+    ctx.beginPath(); ctx.arc(c.x, c.y, 2, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    if (ta < 0.01) return;
   }
-  ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = alpha;
-  ctx.drawImage(g.tex, c.x - h, c.y - h, h * 2, h * 2);
+  // 화면 크기에 맞는 가장 작은 미리 줄인 그림을 골라 반짝임 방지
+  let tex = g.tex;
+  for (const m of g.mips || []) if (m.width >= h * 2 * DPR) tex = m;
+  ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = alpha * ta;
+  ctx.drawImage(tex, c.x - h, c.y - h, h * 2, h * 2);
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
 }
 
@@ -547,7 +662,7 @@ function drawBackground(now) {
 function drawDistanceLines() {
   const L = Math.log10(cam.S);
   STAGES.forEach((s, i) => {
-    const a = 1 - smooth(0.05, 0.4, Math.abs(L - Math.log10(stageCam(i).S)));
+    const a = 1 - smooth(0.05, 0.4, Math.abs(L - LOGS[i] / Math.LN10));
     if (a < 0.02) return;
     const p = toScreen(s.a), q = toScreen(s.b);
     ctx.globalAlpha = a * 0.9;
@@ -591,10 +706,14 @@ function drawBodies(now) {
   for (const [b, st] of states) {
     if (st.alpha < 0.02) continue;
     const { p, rpx, alpha } = st;
-    let name = b.name, color = '#e8eeff';
-    if (b.id === 'sun' && Math.log10(cam.S) > 13.2) { name = '태양계 (우리가 있는 곳)'; color = '#ff8a7a'; }
-    const dy = (b.star ? rpx * 1.6 : rpx) + fs() * 0.95;
-    label(name, p.x, b.lab === 'above' ? p.y - dy : p.y + dy, alpha * (b.small ? 0.8 : 1), color, b.small ? fs() * 0.8 : fs());
+    const dy = (b.star ? rpx * 1.6 : rpx) + fs() * 0.95, y = b.lab === 'above' ? p.y - dy : p.y + dy;
+    if (b.id === 'sun') { // 은하 규모로 갈수록 '태양' → '태양계' 이름표로 서서히 바뀜
+      const g = smooth(12.95, 13.45, Math.log10(cam.S));
+      label(b.name, p.x, y, alpha * (1 - g), '#e8eeff', fs());
+      label('태양계 (우리가 있는 곳)', p.x, y, alpha * g, '#ff8a7a', fs());
+      continue;
+    }
+    label(b.name, p.x, y, alpha * (b.small ? 0.8 : 1), '#e8eeff', b.small ? fs() * 0.8 : fs());
   }
 }
 
@@ -631,14 +750,15 @@ function drawScale() {
   // 150px 근처의 깔끔한 길이 고르기
   const km = cam.S * 150;
   let unit, uKm;
-  if (km < 5e8) { unit = 'km'; uKm = 1; } else if (km < 0.05 * LY) { unit = 'AU'; uKm = AU; } else { unit = '광년'; uKm = LY; }
+  if (km < 0.05 * AU) { unit = 'km'; uKm = 1; } else if (km < 0.05 * LY) { unit = 'AU'; uKm = AU; } else { unit = '광년'; uKm = LY; }
   const v = km / uKm, p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p;
   const nice = (f >= 5 ? 5 : f >= 2 ? 2 : 1) * p;
-  const px = nice * uKm / cam.S;
-  const el = document.getElementById('scale');
-  el.querySelector('.bar').style.width = px + 'px';
-  el.querySelector('.lab').textContent = (nice >= 1 ? fmtKo(nice) : String(+nice.toPrecision(2))) + ' ' + unit;
+  const px = (nice * uKm / cam.S).toFixed(1) + 'px';
+  const lab = (nice >= 1 ? fmtKo(nice) : String(+nice.toPrecision(2))) + ' ' + unit;
+  if (px !== scaleLast.px) scaleBar.style.width = scaleLast.px = px; // 바뀔 때만 DOM 갱신
+  if (lab !== scaleLast.lab) scaleLab.textContent = scaleLast.lab = lab;
 }
+const scaleBar = document.querySelector('#scale .bar'), scaleLab = document.querySelector('#scale .lab'), scaleLast = {};
 
 function frame(now) {
   stepAnim(now);
@@ -716,11 +836,12 @@ const PANELS = {
       marks: [{ x: 13.9, y: 20.1, t: '베텔게우스 (붉은 별)', c: '#ff8a5c' }, { x: 73.1, y: 80.5, t: '리겔 (파란 별)', c: '#8fc4ff' }],
       body: `<ul>
         <li>별은 <b>색</b>이 서로 다름 → 표면 온도가 다르기 때문</li></ul>
-        <div class="cbar"></div><div class="clab"><span>표면 온도 높음 · 젊음</span><span>표면 온도 낮음 · 늙음</span></div>
+        <div class="cbar"></div><div class="clab"><span>표면 온도 높음 · 수명 짧음</span><span>표면 온도 낮음 · 수명 김</span></div>
+        <div class="clab" style="justify-content:center">(수명은 주계열성 기준)</div>
         <ul>
-        <li><b class="b">파란 별</b> : 표면 온도가 높고, 비교적 <b class="b">젊은 별</b></li>
-        <li><b class="r">빨간 별</b> : 표면 온도가 낮고, 나이가 많은 <b class="r">늙은 별</b></li></ul>
-        <div class="ex">오리온자리 : 왼쪽 위 붉은 <b class="r">베텔게우스</b>, 오른쪽 아래 파란 <b class="b">리겔</b></div>` },
+        <li><b class="b">파란 별</b> : 표면 온도가 높음. 질량이 커서 연료를 빨리 써 <b class="b">수명이 짧음</b><br>→ 그래서 지금 보이는 파란 별은 대부분 <b class="b">젊은 별</b></li>
+        <li><b class="r">빨간 별</b> : 표면 온도가 낮음. (주계열성이면) 연료를 천천히 써서 <b class="r">수명이 김</b></li></ul>
+        <div class="ex">색 비교 예 — 오리온자리 : 왼쪽 위 붉은 <b class="r">베텔게우스</b>, 오른쪽 아래 파란 <b class="b">리겔</b><br>(베텔게우스는 일생의 마지막 단계에 들어 크게 부푼 별 — 나이는 태양보다 젊음. ‘수명이 긴 빨간 별’의 예는 아님)</div>` },
     { tag: '성단', title: '산개 성단', img: 'pleiades', cap: '플레이아데스 성단 (M45, 좀생이별)',
       credit: 'NASA, ESA, AURA/Caltech, Palomar Observatory · ' + PD,
       body: `<ul>
@@ -791,7 +912,7 @@ const PANELS = {
         <li>거리 약 <b class="r">250만 광년</b> → 지금 보는 빛은 <b>250만 년 전</b>에 출발한 빛!</li>
         <li>지름 약 22만 광년 — 우리은하보다 큼</li>
         <li>가을철 밤하늘에서 <b>맨눈으로 볼 수 있는</b> 가장 먼 천체 중 하나</li></ul>
-        <div class="ex">약 40~50억 년 뒤에는 우리은하와 부딪혀 하나로 합쳐질 것으로 예상</div>` },
+        <div class="ex">앞으로 100억 년 안에 우리은하와 충돌해 하나로 합쳐질 가능성 약 50% (최근 연구)</div>` },
   ],
   cluster: [
     { tag: '은하단', title: '은하군과 은하단', img: 'virgo', cap: '처녀자리 은하단의 중심부 — 둥근 빛 대부분이 별이 아니라 은하!',
@@ -799,7 +920,7 @@ const PANELS = {
       marks: [{ x: 66.4, y: 85, t: 'M87 (거대 타원 은하)', c: '#ffd27a' }],
       body: `<ul>
         <li>은하들도 서로 모여 <b>무리</b>를 이룸</li>
-        <li><b>은하군</b> : 은하 수십 개 정도가 모인 작은 집단<br>→ 우리은하는 안드로메다은하 등 50여 개 은하와 함께 <b class="b">국부 은하군</b>에 속함 (지름 약 1,000만 광년)</li>
+        <li><b>은하군</b> : 은하 수십 개 정도가 모인 작은 집단<br>→ 우리은하는 안드로메다은하 등 수십 개(지금까지 80개 이상 발견)의 은하와 함께 <b class="b">국부 은하군</b>에 속함 (지름 약 1,000만 광년)</li>
         <li><b>은하단</b> : 은하 <b class="r">수백 ~ 수천 개</b>가 모인 거대한 집단</li></ul>
         <div class="ex">처녀자리 은하단 : 가장 가까운 큰 은하단 — 거리 약 5,400만 광년, 은하 약 1,300~2,000개</div>` },
     { tag: '은하단', title: '은하단 SMACS 0723', img: 'webbfield', cap: '제임스 웹 우주 망원경의 첫 딥 필드 (2022)',
@@ -835,16 +956,21 @@ function renderPanel() {
   panel.querySelector('.cap').textContent = d.cap;
   panel.querySelector('.pbody').innerHTML = d.body;
   panel.querySelector('.credit').textContent = '사진: ' + d.credit;
-  const im = panel.querySelector('.frame img');
-  if (!im.src.endsWith('img/' + d.img + '.jpg')) { im.classList.remove('ok'); im.onload = () => im.classList.add('ok'); im.src = 'img/' + d.img + '.jpg'; }
-  const fr = panel.querySelector('.frame');
+  const im = panel.querySelector('.frame img'), fr = panel.querySelector('.frame');
   fr.querySelectorAll('.mark').forEach(m => m.remove());
-  (d.marks || []).forEach(m => {
-    const el = document.createElement('div'); el.className = 'mark';
-    el.style.left = m.x + '%'; el.style.top = m.y + '%'; el.style.borderColor = m.c;
-    el.innerHTML = `<span style="color:${m.c}">${m.t}</span>`;
-    fr.appendChild(el);
-  });
+  // 표시는 새 사진이 다 뜬 뒤에 붙임 (이전 사진 크기 위에 잠깐 엉뚱하게 뜨지 않게)
+  const addMarks = () => {
+    if (d !== PANELS[pGroup]?.[pIdx]) return; // 그사이 다른 쪽으로 넘어감
+    fr.querySelectorAll('.mark').forEach(m => m.remove()); // 두 번 불려도 겹치지 않게
+    (d.marks || []).forEach(m => {
+      const el = document.createElement('div'); el.className = 'mark';
+      el.style.left = m.x + '%'; el.style.top = m.y + '%'; el.style.borderColor = m.c;
+      el.innerHTML = `<span style="color:${m.c}">${m.t}</span>`;
+      fr.appendChild(el);
+    });
+  };
+  if (!im.src.endsWith('img/' + d.img + '.jpg')) { im.classList.remove('ok'); im.onload = () => { im.classList.add('ok'); addMarks(); }; im.src = 'img/' + d.img + '.jpg'; }
+  else if (im.complete) addMarks(); // 아직 받는 중이면 위 onload가 붙임
   const dots = panel.querySelector('.dots'); dots.innerHTML = '';
   list.forEach((_, i) => { const e = document.createElement('i'); if (i === pIdx) e.className = 'on'; e.onclick = () => { pIdx = i; renderPanel(); }; dots.appendChild(e); });
   panel.querySelector('.pp').disabled = pIdx === 0;
@@ -869,6 +995,8 @@ document.querySelectorAll('button').forEach(b => b.addEventListener('mouseup', (
 addEventListener('keydown', e => {
   const k = e.key;
   const NEXT = ['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'], PREV = ['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'];
+  if (k === 'f' || k === 'F') { if (!e.repeat) toggleFull(); return; } // 패널이 열려 있어도 전체 화면
+  if (e.repeat) { if (NEXT.includes(k) || PREV.includes(k)) e.preventDefault(); return; } // 리모컨 누르고 있을 때 자동 반복 무시
   if (pGroup) {
     if (NEXT.includes(k)) { e.preventDefault(); panelNext(); }
     else if (PREV.includes(k)) { e.preventDefault(); panelPrev(); }
@@ -878,14 +1006,13 @@ addEventListener('keydown', e => {
   if (NEXT.includes(k)) { e.preventDefault(); goTo(cur + 1); }
   else if (PREV.includes(k)) { e.preventDefault(); goTo(cur - 1); }
   else if (k >= '1' && k <= String(STAGES.length)) goTo(+k - 1);
-  else if (k === 'f' || k === 'F') toggleFull();
 });
 addEventListener('resize', resize);
 
 buildTimeline();
+showCard(); updateTimeline(); // 카드 내용을 먼저 채워야 지름 단계 자리 계산이 맞음
 resize();
 cam = stageCam(0);
-showCard(); updateTimeline();
 requestAnimationFrame(frame);
 </script>
 </body>
