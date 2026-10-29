@@ -157,6 +157,9 @@ svg.flow { width: 100%; min-width: 620px; display: block; }
 svg.flow .grid { stroke: var(--line); stroke-dasharray: 3 3; }
 svg.flow .tick { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
 svg.flow .lane { fill: var(--text); font-size: 12.5px; font-weight: 700; }
+svg.flow .lane-sub { fill: var(--muted); font-size: 10.5px; }
+svg.flow .swap circle { fill: var(--surface2); stroke: var(--text); stroke-width: 1.5; }
+svg.flow .swap text { fill: var(--text); font-size: 13px; font-weight: 800; }
 svg.flow .bar { cursor: pointer; }
 svg.flow .bar-t { fill: #0a0f22; font-size: 11.5px; font-weight: 700; pointer-events: none; }
 svg.flow .now { stroke: #fff; stroke-width: 2; }

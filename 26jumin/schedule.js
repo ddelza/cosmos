@@ -33,14 +33,14 @@
     { place: 'lab',   from: 8,   to: 10, team: 'move', label: '이동' },
     { place: 'roof',  from: 10, to: 35, team: 'A', label: 'A팀 · 12명 × 3조' },
     { place: 'deck3', from: 10, to: 22, team: 'B', sub: 1, label: 'B-① 쌍안경' },
-    { place: 'deck2', from: 10, to: 22, team: 'B', sub: 2, label: 'B-② 토성 찾기' },
+    { place: 'deck2', from: 10, to: 22, team: 'B', sub: 2, label: 'B-② 망원경' },
     { place: 'deck3', from: 23, to: 35, team: 'B', sub: 2, label: 'B-② 쌍안경' },
-    { place: 'deck2', from: 23, to: 35, team: 'B', sub: 1, label: 'B-① 토성 찾기' },
+    { place: 'deck2', from: 23, to: 35, team: 'B', sub: 1, label: 'B-① 망원경' },
     { place: 'roof',  from: 35, to: 60, team: 'B', label: 'B팀 · 12명 × 3조' },
     { place: 'deck3', from: 35, to: 47, team: 'A', sub: 1, label: 'A-① 쌍안경' },
-    { place: 'deck2', from: 35, to: 47, team: 'A', sub: 2, label: 'A-② 토성 찾기' },
+    { place: 'deck2', from: 35, to: 47, team: 'A', sub: 2, label: 'A-② 망원경' },
     { place: 'deck3', from: 48, to: 60, team: 'A', sub: 2, label: 'A-② 쌍안경' },
-    { place: 'deck2', from: 48, to: 60, team: 'A', sub: 1, label: 'A-① 토성 찾기' },
+    { place: 'deck2', from: 48, to: 60, team: 'A', sub: 1, label: 'A-① 망원경' },
   ];
 
   SC.PLACES = {
@@ -271,18 +271,28 @@
       s += `<line x1="${x(t)}" y1="${top - 4}" x2="${x(t)}" y2="${H - 4}" class="grid"/>`;
       s += `<text x="${x(t)}" y="${top - 10}" class="tick" text-anchor="middle">${fmt(start + t)}</text>`;
     });
+    const tw = str => [...str].reduce((a, c) => a + (c.charCodeAt(0) < 128 ? 7 : 12.5), 0);
+    const laneSub = { deck3: '쌍안경 6개', deck2: '망원경 · 토성' };
     lanes.forEach((k, i) => {
-      const y = top + i * laneH;
-      s += `<text x="${L - 8}" y="${y + laneH / 2 + 4}" class="lane" text-anchor="end">${SC.PLACES[k].name}</text>`;
+      const y = top + i * laneH, mid = y + laneH / 2;
+      if (laneSub[k]) s += `<text x="${L - 8}" y="${mid - 2}" class="lane" text-anchor="end">${SC.PLACES[k].name}</text><text x="${L - 8}" y="${mid + 11}" class="lane-sub" text-anchor="end">${laneSub[k]}</text>`;
+      else s += `<text x="${L - 8}" y="${mid + 4}" class="lane" text-anchor="end">${SC.PLACES[k].name}</text>`;
       SC.FLOW.filter(f => f.place === k).forEach(f => {
         const x1 = x(f.from) + 1, w = x(f.to) - x(f.from) - 2;
         s += `<g class="bar" data-t="${start + f.from}"><rect x="${x1}" y="${y + 5}" width="${w}" height="${laneH - 10}" rx="6" fill="${fill(f)}" ${f.sub === 2 ? 'opacity=".72"' : ''}/>`;
-        let lbl = f.team === 'all' || f.team === 'move' ? f.label : `${n}${f.label}`;
-        if (lbl.length * 9 + 8 > w) lbl = lbl.replace(/ ·.*| 쌍안경| 토성 찾기|별과 우주 /g, '');
+        const full = f.team === 'all' || f.team === 'move' ? f.label : `${n}${f.label}`;
+        const short = full.replace(/ ·.*/, '').replace('별과 우주 ', '');
+        const lbl = tw(full) + 10 <= w ? full : tw(short) + 10 <= w ? short : '';
         s += `<title>${SC.fmt(start + f.from)}~${SC.fmt(start + f.to)} ${esc(SC.flowLabel(f, n))}</title>`;
-        if (lbl.length * 11 + 6 <= w) s += `<text x="${x1 + w / 2}" y="${y + laneH / 2 + 4}" class="bar-t" text-anchor="middle">${esc(lbl)}</text>`;
+        if (lbl) s += `<text x="${x1 + w / 2}" y="${mid + 4}" class="bar-t" text-anchor="middle">${esc(lbl)}</text>`;
         s += '</g>';
       });
+    });
+    // 과학실의 짧은 칸(안전교육·이동) 설명, 데크 3층↔2층 교대 표시
+    s += `<text x="${x(10) + 8}" y="${top + laneH / 2 + 4}" class="lane-sub">← 강의 6분 → 안전교육 2분 → 이동 2분</text>`;
+    const yb = top + 3 * laneH;
+    [22.5, 47.5].forEach(t => {
+      s += `<g class="swap"><circle cx="${x(t)}" cy="${yb}" r="10"/><text x="${x(t)}" y="${yb + 4.5}" text-anchor="middle">⇅</text></g>`;
     });
     if (nowT != null && nowT >= start - 10 && nowT <= start + 60)
       s += `<line x1="${x(nowT - start)}" y1="${top - 4}" x2="${x(nowT - start)}" y2="${H - 2}" class="now"/>`;
