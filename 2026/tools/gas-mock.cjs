@@ -54,7 +54,7 @@ function loadGas(opts = {}) {
     CacheService: { getScriptCache: () => ({ get: (k) => (cache.has(k) ? cache.get(k) : null), put: (k, v) => cache.set(k, v), remove: (k) => cache.delete(k), removeAll: (ks) => ks.forEach((k) => cache.delete(k)) }) },
     LockService: { getScriptLock: () => ({ waitLock: () => {}, releaseLock: () => {} }) },
     SpreadsheetApp: {
-      openById: (id) => (id === props.SHEET_ID ? { getSheetByName: (n) => (n === '신청' ? sheet : null), insertSheet: () => sheet, getUrl: () => 'https://sheet', getId: () => id } : null),
+      openById: (id) => (id === props.SHEET_ID ? { getSheetByName: (n) => (n === '신청(11.27)' ? sheet : null), insertSheet: () => sheet, getUrl: () => 'https://sheet', getId: () => id } : null),
       getActiveSpreadsheet: () => null, create: () => null,
     },
     DriveApp: {

@@ -34,7 +34,8 @@
     "dynamic": true,
     "body": "Moon",
     "wikiTitleEn": "Moon",
-    "source": "Wikipedia(거리 = 평균 근지점·원지점)"
+    "source": "Wikipedia(거리 = 평균 근지점·원지점)",
+    "featured": true
   },
   {
     "id": "mercury",
@@ -179,7 +180,8 @@
     "dynamic": true,
     "body": "Uranus",
     "wikiTitleEn": "Uranus",
-    "source": "Wikipedia(지름 = 적도 지름; 위성 수 2025년 기준)"
+    "source": "Wikipedia(지름 = 적도 지름; 위성 수 2025년 기준)",
+    "featured": true
   },
   {
     "id": "neptune",
@@ -1802,7 +1804,6 @@
     "distanceLy": 22200,
     "sizeArcmin": 16.5,
     "wikiTitleEn": "Messier 13",
-    "featured": true,
     "source": "좌표·크기: OpenNGC; 등급: Harris 2010; 거리: 문헌(Wikipedia와 대조)"
   },
   {
@@ -2183,7 +2184,8 @@
     "distanceLy": 1500,
     "sizeArcmin": 35,
     "wikiTitleEn": "Messier 34",
-    "source": "좌표·등급: OpenNGC; 크기: Wikipedia; 거리: 문헌(Wikipedia와 대조)"
+    "source": "좌표·등급: OpenNGC; 크기: Wikipedia; 거리: 문헌(Wikipedia와 대조)",
+    "featured": true
   },
   {
     "id": "m35",
@@ -2217,7 +2219,8 @@
     "distanceLy": 4100,
     "sizeArcmin": 12,
     "wikiTitleEn": "Messier 36",
-    "source": "좌표·등급: OpenNGC; 크기: Wikipedia; 거리: 문헌(Wikipedia와 대조)"
+    "source": "좌표·등급: OpenNGC; 크기: Wikipedia; 거리: 문헌(Wikipedia와 대조)",
+    "featured": true
   },
   {
     "id": "m37",
@@ -2237,7 +2240,8 @@
     "distanceLy": 4500,
     "sizeArcmin": 24,
     "wikiTitleEn": "Messier 37",
-    "source": "좌표·등급: OpenNGC; 크기: Wikipedia; 거리: 문헌(Wikipedia와 대조)"
+    "source": "좌표·등급: OpenNGC; 크기: Wikipedia; 거리: 문헌(Wikipedia와 대조)",
+    "featured": true
   },
   {
     "id": "m38",
@@ -2254,7 +2258,8 @@
     "distanceLy": 3480,
     "sizeArcmin": 21,
     "wikiTitleEn": "Messier 38",
-    "source": "좌표·등급: OpenNGC; 크기·거리: Wikipedia"
+    "source": "좌표·등급: OpenNGC; 크기·거리: Wikipedia",
+    "featured": true
   },
   {
     "id": "m39",
@@ -3694,7 +3699,8 @@
     "distanceLy": 7600,
     "sizeArcmin": 14.4,
     "wikiTitleEn": "NGC 7789",
-    "source": "좌표·등급·크기: OpenNGC; 거리: 문헌(Wikipedia와 대조)"
+    "source": "좌표·등급·크기: OpenNGC; 거리: 문헌(Wikipedia와 대조)",
+    "featured": true
   },
   {
     "id": "ngc663",

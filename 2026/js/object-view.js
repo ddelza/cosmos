@@ -677,9 +677,9 @@
     var feat = CN.isEventFeatured(state, o), nfeat = CN.isNightlyFeatured(state, o);
     box.innerHTML =
       '<label class="field">추천</label><div class="chips">' +
-      '<button class="chip' + (feat ? ' on' : '') + '" data-feat aria-pressed="' + feat + '">★ 관측회 추천 (11/3 행사)</button>' +
+      '<button class="chip' + (feat ? ' on' : '') + '" data-feat aria-pressed="' + feat + '">★ 관측회 추천 (' + esc(CN.dateShort(state.config.eventDate)) + ' 행사)</button>' +
       '<button class="chip' + (nfeat ? ' on' : '') + '" data-nfeat aria-pressed="' + nfeat + '">★ 코스모스 추천 (밤하늘 관측 도우미)</button></div>' +
-      '<div class="hint">관측회 추천은 「시간대별 천체 미리보기」(11/3 행사) 맨 위에, 코스모스 추천은 「밤하늘 관측 도우미」 맨 위에 고정돼요. 둘은 따로 켜고 꺼요.</div>' +
+      '<div class="hint">관측회 추천은 「시간대별 천체 미리보기」(' + esc(CN.dateShort(state.config.eventDate)) + ' 행사) 맨 위에, 코스모스 추천은 「밤하늘 관측 도우미」 맨 위에 고정돼요. 둘은 따로 켜고 꺼요.</div>' +
       '<label class="field">관측 장소</label><div class="chips">' + Object.keys(CN.PLACES).map(function (k) { var on = !!(meta.places || {})[k]; return '<button class="chip' + (on ? ' on' : '') + '" data-place="' + k + '" aria-pressed="' + on + '">' + CN.PLACES[k] + '</button>'; }).join('') + '</div>' +
       '<label class="field">눈으로 보기(안시) 난이도</label><select data-lv="eye">' + lvOpts(meta.eye || seedD.eye) + '</select>' +
       '<label class="field">사진 찍기(촬영) 난이도</label><select data-lv="photo">' + lvOpts(meta.photo || seedD.photo) + '</select>' +

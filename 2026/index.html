@@ -6,12 +6,15 @@
 <meta name="theme-color" content="#0a0405">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <title>2026 광수중학교 주민 공개 천체관측회</title>
-<meta name="description" content="2026년 11월 3일(화) 저녁, 광수중학교 천체관측동아리 코스모스와 함께 토성과 가을 밤하늘을 관측해요.">
+<meta name="description" content="일정 변경: 11월 27일(금) 저녁으로 연기되었어요. 광수중학교 천체관측동아리 코스모스와 함께 토성과 달, 가을·겨울 밤하늘을 관측해요.">
 <meta property="og:title" content="2026 광수중학교 주민 공개 천체관측회">
-<meta property="og:description" content="11월 3일(화) 저녁 · 광수중학교 과학실·3층 데크·옥상 · 사전신청과 시간대별 천체 미리보기">
-<meta property="og:image" content="https://ddelza.github.io/cosmos/2026/img/og.jpg">
+<meta property="og:description" content="[일정 변경] 11월 27일(금) 저녁 6시 20분 · 광수중학교 과학실·3층 데크·옥상 · 새 날짜로 다시 사전신청해 주세요">
+<meta property="og:image" content="https://ddelza.github.io/cosmos/2026/img/og.jpg?v=1127">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="css/site.css?v=20261016a">
+<link rel="stylesheet" href="css/site.css?v=20261102a">
 <style>
 .poster-wrap { position: relative; margin: 12px auto 0; max-width: 560px; }
 .poster-img { display: block; width: 100%; border-radius: 16px; border: 1px solid var(--line); }
@@ -58,6 +61,7 @@
 </head>
 <body>
 <main class="wrap">
+  <div id="change"></div>
   <section class="poster-wrap" id="poster"></section>
   <p class="scroll-hint">아래로 내려 사전신청과 관측 안내를 확인하세요 ↓</p>
   <div id="notice"></div>
@@ -75,12 +79,12 @@
   </nav>
 </main>
 
-<script src="js/core.js?v=20261016a"></script>
+<script src="js/core.js?v=20261102a"></script>
 <script>
 (function () {
   'use strict';
   var esc = CN.esc, admin = CN.isAdmin();
-  CN.topbar();
+  CN.topbar({ noChange: true }); // 메인은 아래 큰 안내로 대신
   var cfg;
 
   function defaultsInfo(c) {
@@ -92,6 +96,23 @@
     };
   }
 
+  function postponed() { return cfg.postponed && cfg.postponed.from && cfg.postponed.from !== cfg.eventDate; }
+  // 들어오자마자 보이는 일정 변경 안내 (맨 위)
+  function renderChange() {
+    var el = document.getElementById('change');
+    if (!postponed()) { el.innerHTML = ''; return; }
+    var old = CN.oldRegs().length;
+    el.innerHTML = '<section class="change-card" role="alert">' +
+      '<span class="lbl">📢 관측회 일정 변경</span>' +
+      '<div class="dates"><span class="old">' + esc(CN.dateShortW(cfg.postponed.from)) + '</span><span class="arrow">→</span><span class="new">' + esc(CN.dateShortW(cfg.eventDate)) + '</span></div>' +
+      '<div class="time">저녁 6시 20분 ~ 9시 40분 · 시간과 장소는 그대로예요</div>' +
+      '<p class="why">' + esc(cfg.postponed.reason || '날씨 때문에') + ' 관측회를 ' + esc(CN.dateShortW(cfg.eventDate)) + '로 미뤘어요.<br>' +
+      '<strong>' + esc(CN.dateShortW(cfg.postponed.from)) + ' 기준으로 하신 사전신청은 새 날짜로 이어지지 않아요.</strong> 번거로우시겠지만 새 날짜로 다시 신청해 주세요.' +
+      (old ? '<br>(이 기기에서 하신 예전 신청 ' + old + '건이 있어요)' : '') + '</p>' +
+      '<a class="btn" href="register.html">' + esc(CN.dateShortW(cfg.eventDate)) + '로 다시 신청하기</a>' +
+      '</section>';
+  }
+
   function renderPoster() {
     var el = document.getElementById('poster');
     var p = cfg.eventDate.split('-');
@@ -99,7 +120,8 @@
       '<div class="d">' + Number(p[1]) + '월 ' + Number(p[2]) + '일(' + CN.dateLabel(cfg.eventDate).slice(-2, -1) + ') 저녁 6시 20분</div><div class="p">광수중학교 과학실 · 3층 데크 · 옥상</div><div class="saturn">🪐</div></div>';
     var src = cfg.posterFileId ? CN.photoUrl(cfg.posterFileId, 1600) : 'img/poster.jpg?v=' + CN.VERSION;
     el.innerHTML = '<img class="poster-img no-night" id="posterImg" alt="2026 광수중학교 주민 공개 천체관측회 포스터" src="' + esc(src) + '" style="display:none">' + htmlPoster +
-      (admin ? '<label class="btn small poster-admin">포스터 바꾸기<input type="file" accept="image/*" hidden id="posterFile"></label>' : '');
+      (admin ? '<label class="btn small poster-admin">포스터 바꾸기<input type="file" accept="image/*" hidden id="posterFile"></label>' : '') +
+      (postponed() ? '<div class="ribbon">' + esc(CN.dateShortW(cfg.eventDate)) + '로 연기<small>' + esc(CN.dateShortW(cfg.postponed.from)) + ' → 변경</small></div>' : '');
     var img = document.getElementById('posterImg');
     img.onload = function () { img.style.display = 'block'; var h = document.getElementById('posterHtml'); if (h) h.remove(); };
     img.onerror = function () {
@@ -170,7 +192,7 @@
 
   CN.getConfig().then(function (c) {
     cfg = c;
-    renderPoster(); renderNotice(); renderInfo(); renderCta();
+    renderChange(); renderPoster(); renderNotice(); renderInfo(); renderCta();
     CN.footer({ loginLink: true });
   });
 })();

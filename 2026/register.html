@@ -8,7 +8,7 @@
 <title>사전신청 · 2026 광수중 주민 천체관측회</title>
 <meta property="og:title" content="사전신청 · 2026 광수중학교 주민 공개 천체관측회">
 <meta property="og:description" content="원하는 관측 시간대를 골라 신청해 주세요">
-<link rel="stylesheet" href="css/site.css?v=20261016a">
+<link rel="stylesheet" href="css/site.css?v=20261102a">
 <style>
 .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .role { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 10px; text-align: center; cursor: pointer; color: var(--text); font-family: inherit; font-size: 1rem; }
@@ -100,7 +100,7 @@
   <div id="done" style="display:none"></div>
 </main>
 
-<script src="js/core.js?v=20261016a"></script>
+<script src="js/core.js?v=20261102a"></script>
 <script>
 (function () {
   'use strict';
@@ -122,7 +122,13 @@
     };
   }
 
-  var mine = CN.myRegs();
+  var mine = CN.myRegs(), oldRegs = CN.oldRegs();
+  if (oldRegs.length && !mine.length) {
+    var ao = document.getElementById('already');
+    var pp = CN.DEFAULTS.postponed;
+    ao.innerHTML = '<strong>관측회가 ' + esc(CN.dateShortW(CN.DEFAULTS.eventDate)) + '로 연기되었어요.</strong> 이 기기에서 ' + esc(CN.dateShortW(pp.from)) + ' 기준으로 하신 신청(' + oldRegs.map(function (r) { return esc(r.who); }).join(', ') + ')은 새 날짜로 이어지지 않으니, 아래에서 다시 신청해 주세요.';
+    ao.classList.add('show');
+  }
   if (mine.length) {
     var a = document.getElementById('already');
     a.innerHTML = '이 기기에서 신청한 기록이 있어요: ' + mine.map(function (r) { return '<strong>' + esc(r.who) + '</strong>(' + esc(r.slot) + ')'; }).join(', ') +

@@ -5,13 +5,15 @@
   var CN = window.CN = {};
 
   // ===== 설정 =====
-  CN.VERSION = '20261016a';
+  CN.VERSION = '20261102a';
   CN.DB_URL = 'https://gwangsu-on-default-rtdb.firebaseio.com';
   CN.ROOT = 'years/2026/cosmosNight';          // 행사·천체 아카이브 데이터 (연도 바뀌어도 이 경로 고정)
   CN.ROSTER_YEAR = 2026;                        // 학생·교사 명단 연도
   CN.API_URL = 'https://script.google.com/macros/s/AKfycbwLUwLZlaqXJR4uL7FA3crSz6BzZ3u_z_dJsAYEKliJyMVWbvEhJnj4Sv3_AAq8isIn/exec';
   CN.DEFAULTS = {
-    eventDate: '2026-11-03',
+    eventDate: '2026-11-27',
+    // 일정 변경(연기) 안내: from과 eventDate가 다르면 모든 페이지 위에 안내 띠, 메인에 큰 안내
+    postponed: { from: '2026-11-03', reason: '관측회 날 흐리고 비가 온다는 예보가 있어' },
     previewTimes: ['18:30', '19:30', '20:30', '21:30'],
     slots: ['18:20~19:20', '19:30~20:30', '20:40~21:40'],
     notice: '',
@@ -154,7 +156,7 @@
 
   // ===== 이 기기에서 한 사전신청 (공개 설정을 바꿀 수 있도록 신청 번호를 기기에만 보관) =====
   var REGS_KEY = 'cn26regs';
-  CN.myRegs = function () {
+  CN.allMyRegs = function () {
     try {
       var list = JSON.parse(localStorage.getItem(REGS_KEY) || '[]');
       var old = JSON.parse(localStorage.getItem('cn26reg') || 'null'); // 예전 형식(신청 번호 없음)
@@ -162,14 +164,18 @@
       return Array.isArray(list) ? list : [];
     } catch (e) { return []; }
   };
+  var regDate = function (r) { return r.date || (CN.DEFAULTS.postponed && CN.DEFAULTS.postponed.from) || CN.DEFAULTS.eventDate; };
+  CN.myRegs = function () { return CN.allMyRegs().filter(function (r) { return regDate(r) === CN.DEFAULTS.eventDate; }); };
+  CN.oldRegs = function () { return CN.allMyRegs().filter(function (r) { return regDate(r) !== CN.DEFAULTS.eventDate; }); };
   CN.addMyReg = function (r) {
-    try { var list = CN.myRegs(); list.push(r); localStorage.setItem(REGS_KEY, JSON.stringify(list)); } catch (e) {}
+    r.date = r.date || CN.DEFAULTS.eventDate;
+    try { var list = CN.allMyRegs(); list.push(r); localStorage.setItem(REGS_KEY, JSON.stringify(list)); } catch (e) {}
   };
   CN.setRegPublic = async function (id, on) {
     var res = await CN.api('setPublic', { id: id, public: on ? 'Y' : 'N' });
     if (!res || !res.ok) throw new Error(res && res.error ? res.error : '공개 설정을 바꾸지 못했어요.');
     try {
-      var list = CN.myRegs().map(function (r) { if (r.id === id) r.public = !!on; return r; });
+      var list = CN.allMyRegs().map(function (r) { if (r.id === id) r.public = !!on; return r; });
       localStorage.setItem(REGS_KEY, JSON.stringify(list));
     } catch (e) {}
     return res;
@@ -191,6 +197,7 @@
     var p = dateStr.split('-');
     return Number(p[0]) + '년 ' + Number(p[1]) + '월 ' + Number(p[2]) + '일(' + w + ')';
   };
+  CN.dateShortW = function (dateStr) { var p = dateStr.split('-'); return Number(p[1]) + '월 ' + Number(p[2]) + '일(' + CN.dateLabel(dateStr).slice(-2, -1) + ')'; };
   CN.dateShort = function (dateStr) {
     var d = new Date(dateStr + 'T12:00:00+09:00');
     var p = dateStr.split('-');
@@ -392,6 +399,14 @@
       (CN.isAdmin() ? '<span class="admin-chip" title="관리자 모드">✎ ' + CN.esc(CN.adminLabel()) + '</span>' : '') +
       '<button class="icon-btn" id="nightBtn" aria-pressed="' + night + '" title="사진까지 붉게 보기 — 관측 중 눈의 암적응 보호">사진 붉게</button>';
     document.body.insertBefore(bar, document.body.firstChild);
+    var pp = CN.DEFAULTS.postponed;
+    if (pp && pp.from !== CN.DEFAULTS.eventDate && !opts.href && !opts.noChange) {
+      var strip = document.createElement('a');
+      strip.className = 'change-strip';
+      strip.href = CN.asset('register.html');
+      strip.innerHTML = '<b>📢 일정 변경</b> <s>' + CN.esc(CN.dateShortW(pp.from)) + '</s> → <strong>' + CN.esc(CN.dateShortW(CN.DEFAULTS.eventDate)) + '</strong> <span>· 새 날짜로 다시 신청해 주세요 ›</span>';
+      bar.parentNode.insertBefore(strip, bar.nextSibling);
+    }
     bar.querySelector('#nightBtn').onclick = function () {
       var on = !document.documentElement.classList.contains('night-photos');
       applyNight(on);

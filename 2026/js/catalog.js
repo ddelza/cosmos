@@ -136,7 +136,7 @@
       .sort(function (a, b) { return (a.order || 0) - (b.order || 0) || (a.at || 0) - (b.at || 0); });
   };
 
-  // 추천은 두 가지: 11/3 행사용 「관측회 추천」(meta.featured) / 밤하늘 관측 도우미용 「코스모스 추천」(meta.nightly)
+  // 추천은 두 가지: 행사(11/27)용 「관측회 추천」(meta.featured) / 밤하늘 관측 도우미용 「코스모스 추천」(meta.nightly)
   // 페이지가 window.CN_FEATURED_MODE = 'nightly' 로 정하면 isFeatured가 코스모스 추천을 씀
   CN.featuredMode = window.CN_FEATURED_MODE || 'event';
   CN.featuredLabel = function () { return CN.featuredMode === 'nightly' ? '코스모스 추천' : '관측회 추천'; };

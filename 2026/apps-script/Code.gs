@@ -14,7 +14,7 @@
  * 시트 열 순서를 바꾸지 마세요 (아래 COL 번호로 읽음). 행 삭제는 자유롭게 해도 됨.
  */
 
-var VERSION = '2026-10-13';
+var VERSION = '2026-11-02';
 var INITIAL_ADMIN_PW = ''; // ← setup 실행 전에만 적기 (저장소에는 올리지 않음)
 var ROLES = ['학생', '교사', '학부모', '일반주민'];
 var SLOTS = ['18:20~19:20', '19:30~20:30', '20:40~21:40'];
@@ -22,7 +22,10 @@ var HEADERS = ['제출시각', '신분', '이름/별칭', '학번', '자녀 이�
 var COL = { at: 1, role: 2, name: 3, studentNo: 4, childName: 5, relation: 6, slot: 7, party: 8, message: 9, consent: 10, phone: 11, pub: 12, id: 13 };
 var DEFAULT_CAPACITY = 72;
 var FIRST_SLOT = SLOTS[0]; // 첫 타임: 주민 우선 — 학생은 관리자가 열어 줄 때까지 신청 불가
-var SHEET_NAME = '신청';
+// 11/3 → 11/27(금) 연기(기상): 새 날짜 신청은 새 탭에 모음. 예전 「신청」 탭(11/3 신청자)은 그대로 둠
+var EVENT_DATE = '2026-11-27';
+var SHEET_NAME = '신청(11.27)';
+var OLD_SHEET_NAME = '신청';
 var ROOT_FOLDER_NAME = '2026 주민관측회 사진';
 var MAX_IMAGE_CHARS = 9 * 1024 * 1024; // base64 문자 수 상한(약 6.7MB 이미지)
 
@@ -76,7 +79,7 @@ function handle_(e) {
 
 function route_(action, p) {
   switch (action) {
-    case 'ping': return { ok: true, version: VERSION };
+    case 'ping': return { ok: true, version: VERSION, eventDate: EVENT_DATE, sheet: SHEET_NAME };
     case 'counts': return counts_();
     case 'register': return register_(p);
     case 'checkPw': return { ok: isAdmin_(p.pw) };
@@ -114,7 +117,7 @@ function getRegSheet_(ss) {
   ss = ss || openSheetFile_();
   if (!ss) throw new Error('setup()을 먼저 실행해 주세요.');
   var sh = ss.getSheetByName(SHEET_NAME);
-  if (!sh) sh = ss.insertSheet(SHEET_NAME);
+  if (!sh) sh = ss.insertSheet(SHEET_NAME, 0); // 새 탭을 맨 앞에
   var lastCol = sh.getLastColumn();
   var head = lastCol ? sh.getRange(1, 1, 1, lastCol).getValues()[0] : [];
   if (sh.getLastRow() === 0 || head.length < HEADERS.length || String(head[HEADERS.length - 1]) !== HEADERS[HEADERS.length - 1]) {
@@ -148,7 +151,8 @@ function capacity_() {
   var c = parseInt(PropertiesService.getScriptProperties().getProperty('CAPACITY'), 10);
   return c > 0 ? c : DEFAULT_CAPACITY;
 }
-function clearCaches_() { CacheService.getScriptCache().removeAll(['counts', 'publicList']); }
+var CACHE_COUNTS = 'counts:' + SHEET_NAME, CACHE_PUBLIC = 'publicList:' + SHEET_NAME;
+function clearCaches_() { CacheService.getScriptCache().removeAll([CACHE_COUNTS, CACHE_PUBLIC]); }
 
 // 신청 행 전체를 객체로 (2행부터)
 function readRows_(sh) {
@@ -235,7 +239,7 @@ function register_(p) {
     lock.releaseLock();
   }
   clearCaches_();
-  return { ok: true, id: id, counts: counts_() };
+  return { ok: true, id: id, eventDate: EVENT_DATE, counts: counts_() };
 }
 
 // 신청한 사람이 "공개할까요?"에 답함 — 신청 번호(id)를 아는 사람만 바꿀 수 있음
@@ -264,7 +268,7 @@ function setPublic_(p) {
 // 공개에 동의한 신청만: 이름·신분·인원·남긴 말 (학번·휴대폰·신청 번호는 절대 내보내지 않음)
 function publicList_() {
   var cache = CacheService.getScriptCache();
-  var hit = cache.get('publicList');
+  var hit = cache.get(CACHE_PUBLIC);
   if (hit) return JSON.parse(hit);
   var bySlot = {};
   SLOTS.forEach(function (s) { bySlot[s] = []; });
@@ -275,7 +279,7 @@ function publicList_() {
     bySlot[r.slot].push({ name: label, role: r.role, party: r.party, message: shown_(r.message), at: r.at instanceof Date ? r.at.getTime() : 0 });
   });
   var out = { ok: true, slots: bySlot };
-  cache.put('publicList', JSON.stringify(out), 60);
+  cache.put(CACHE_PUBLIC, JSON.stringify(out), 60);
   return out;
 }
 
@@ -307,7 +311,7 @@ function deleteReg_(p) {
 // 이름 없이 합계만 공개
 function counts_() {
   var cache = CacheService.getScriptCache();
-  var hit = cache.get('counts');
+  var hit = cache.get(CACHE_COUNTS);
   if (hit) return JSON.parse(hit);
 
   var bySlot = {}, byRole = {};
@@ -323,9 +327,9 @@ function counts_() {
     if (byRole[r.role]) { byRole[r.role].forms++; byRole[r.role].people += r.party; }
   });
   SLOTS.forEach(function (s) { bySlot[s].remaining = Math.max(0, cap - bySlot[s].people); });
-  var out = { ok: true, version: VERSION, regOpen: regOpen_(), capacity: cap, firstSlot: FIRST_SLOT,
+  var out = { ok: true, version: VERSION, eventDate: EVENT_DATE, regOpen: regOpen_(), capacity: cap, firstSlot: FIRST_SLOT,
     studentFirstOpen: studentFirstOpen_(), slots: bySlot, roles: byRole, total: total, publicForms: pubCount };
-  cache.put('counts', JSON.stringify(out), 60);
+  cache.put(CACHE_COUNTS, JSON.stringify(out), 60);
   return out;
 }
 

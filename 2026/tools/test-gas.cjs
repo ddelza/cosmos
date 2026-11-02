@@ -9,7 +9,7 @@ const base = { action: 'register', consent: 'Y' };
 
 // 1) 기본 집계
 let c = g.call({ action: 'counts' });
-check('counts 기본', c.ok && c.capacity === 72 && c.studentFirstOpen === false && c.firstSlot === S1 && c.version === '2026-10-13', c);
+check('counts 기본', c.ok && c.capacity === 72 && c.studentFirstOpen === false && c.firstSlot === S1 && c.version === '2026-11-02' && c.eventDate === '2026-11-27', c);
 
 // 2) 첫 타임 학생 차단 / 다른 시간대 학생 허용 / 첫 타임 주민 허용
 let r = g.call({ ...base, role: '학생', slot: S1, studentNo: '2115', name: '김학생' });
@@ -109,7 +109,7 @@ const up = g.call({ action: 'uploadPhoto', pw: 'test-pw', folder: 'm31', data: i
 check('업로드', up.ok && up.fileId);
 check('잘못된 폴더명 거절', !g.call({ action: 'uploadPhoto', pw: 'test-pw', folder: '../x', data: img }).ok);
 check('휴지통', g.call({ action: 'trashPhoto', pw: 'test-pw', fileId: up.fileId }).ok && g.files.get(up.fileId).trashed);
-check('ping', g.call({ action: 'ping' }).version === '2026-10-13');
+check('ping', g.call({ action: 'ping' }).version === '2026-11-02');
 check('모르는 요청', !g.call({ action: 'nope' }).ok);
 
 console.log(fail ? `\n실패 ${fail}건` : '\n모두 통과');
