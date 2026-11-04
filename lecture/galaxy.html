@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>은하수는 왜 방향마다 다를까</title>
+<style>
+  :root{
+    --bg:#03050c; --ink:#eef2ff; --dim:#9aa6c8; --red:#ff5b4d; --blue:#7fb6ff; --gold:#ffd36a;
+    --glass:rgba(14,20,40,.72); --line:rgba(150,170,230,.28);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;
+    font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;user-select:none}
+  #gl,#ov{position:fixed;inset:0;width:100%;height:100%;display:block}
+  #gl{cursor:grab;touch-action:none}
+  #gl.drag{cursor:grabbing}
+  #ov{pointer-events:none}
+  button{font:inherit;color:inherit;cursor:pointer}
+
+  #heading{position:fixed;left:24px;top:18px;font-size:clamp(13px,1vw,18px);color:var(--dim);font-weight:600;line-height:1.45}
+  #heading b{color:var(--ink);font-size:1.3em}
+  #heading a{color:var(--dim);text-decoration:none}
+  #heading a:hover{color:var(--ink)}
+
+  /* 현재 단계 카드 */
+  #card{position:fixed;left:50%;top:22px;transform:translateX(-50%);text-align:center;
+    background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:12px 34px 14px;
+    backdrop-filter:blur(6px);min-width:min(520px,80vw);max-width:min(980px,66vw);pointer-events:none}
+  #card .no{font-size:clamp(13px,.95vw,17px);color:var(--dim);font-weight:700;letter-spacing:.08em}
+  #card .tt{font-size:clamp(21px,2vw,36px);font-weight:800;margin-top:2px}
+  #card .dd{font-size:clamp(23px,2.4vw,44px);font-weight:900;margin-top:2px;line-height:1.2}
+  #card .ss{font-size:clamp(14px,1.1vw,20px);color:var(--dim);margin-top:4px;line-height:1.4}
+
+  /* 2단계: 두 방향 별 세기 */
+  #stats{position:fixed;left:24px;top:50%;transform:translateY(-50%);width:clamp(250px,23vw,400px);
+    background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:16px 18px;backdrop-filter:blur(6px);
+    opacity:0;transition:opacity .45s;pointer-events:none}
+  #stats.on{opacity:1;pointer-events:auto}
+  .row{margin-bottom:14px}
+  .row .k{font-size:clamp(14px,1.05vw,19px);font-weight:800}
+  .row .n{font-size:clamp(26px,2.5vw,44px);font-weight:900;line-height:1.15}
+  .row .n small{font-size:.5em;font-weight:700;color:var(--dim);margin-left:3px}
+  .row .bar{height:12px;border-radius:6px;background:rgba(150,170,230,.14);overflow:hidden;margin-top:5px}
+  .row .bar i{display:block;height:100%;width:0;border-radius:6px}
+  #rowC .k,#rowC .n{color:var(--gold)} #rowC .bar i{background:var(--gold)}
+  #rowA .k,#rowA .n{color:var(--blue)} #rowA .bar i{background:var(--blue)}
+  #stats p{margin:0 0 10px;font-size:clamp(13px,.95vw,17px);color:var(--dim);line-height:1.45}
+  #again{background:rgba(40,52,96,.9);border:1px solid var(--line);border-radius:10px;padding:7px 14px;font-size:clamp(13px,.95vw,17px);font-weight:700}
+  #again:hover{background:rgba(60,76,130,.95)}
+
+  /* 위에서 본 지도 */
+  #mini{position:fixed;right:18px;top:18px;width:clamp(150px,13vw,230px);background:var(--glass);border:1px solid var(--line);
+    border-radius:14px;padding:8px;opacity:0;transition:opacity .45s;pointer-events:none}
+  #mini.on{opacity:1}
+  #mini canvas{display:block;width:100%;aspect-ratio:1;border-radius:8px}
+  #mini div{font-size:clamp(12px,.85vw,15px);color:var(--dim);text-align:center;font-weight:700;margin-top:5px}
+
+  /* 360도 파노라마 */
+  #pano{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);width:min(980px,calc(100vw - 48px));
+    background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:7px 10px 6px;opacity:0;transition:opacity .45s;pointer-events:none}
+  #pano.on{opacity:1;pointer-events:auto}
+  #pano canvas{display:block;width:100%;height:clamp(64px,10vh,112px);border-radius:7px;cursor:ew-resize;touch-action:none}
+  #pano .ax{display:flex;justify-content:space-between;font-size:clamp(12px,.85vw,15px);font-weight:700;margin-top:4px;color:var(--dim)}
+  #pano .ax .c{color:var(--gold)} #pano .ax .a{color:var(--blue)}
+
+  /* 하단 진행 표시 */
+  #timeline{position:fixed;left:calc(50% - 95px);bottom:16px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;
+    max-width:calc(100vw - 230px)}
+  .chip{background:rgba(20,28,52,.7);border:1px solid var(--line);border-radius:12px;padding:9px 12px;text-align:center;
+    min-width:clamp(84px,8vw,150px);transition:all .3s;opacity:.62;font-size:clamp(12px,.95vw,17px);font-weight:700;white-space:nowrap}
+  .chip:hover{opacity:.9}
+  .chip.cur{opacity:1;background:rgba(40,52,96,.9);border-color:#8fa8ff;box-shadow:0 0 18px rgba(120,150,255,.35);transform:translateY(-3px)}
+
+  #ctrl{position:fixed;right:18px;bottom:18px;display:flex;gap:8px}
+  #ctrl button{width:52px;height:52px;border-radius:50%;background:rgba(20,28,52,.8);border:1px solid var(--line);font-size:22px}
+  #ctrl button:hover{background:rgba(50,64,110,.9)}
+
+  #hint{position:fixed;left:24px;bottom:24px;font-size:clamp(12px,.9vw,16px);color:var(--dim);font-weight:600;line-height:1.4;max-width:190px}
+
+  #wait{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--glass);border:1px solid var(--line);
+    border-radius:14px;padding:14px 24px;font-size:clamp(15px,1.2vw,21px);font-weight:700;display:none;text-align:center}
+  #wait.on{display:block}
+
+  @media (max-width:760px){
+    #heading,#hint,#mini{display:none}
+    #card{top:10px;padding:8px 14px 10px;max-width:calc(100vw - 24px);min-width:0;width:calc(100vw - 24px)}
+    #stats{top:auto;bottom:84px;left:12px;right:12px;width:auto;transform:none;padding:10px 14px}
+    #stats{display:grid;grid-template-columns:1fr 1fr;gap:12px} #stats p,#again{display:none} .row{margin-bottom:0}
+    #timeline{left:10px;transform:none;max-width:calc(100vw - 150px);overflow:hidden}
+    .chip{display:none;min-width:0} .chip.cur{display:block;transform:none}
+    #ctrl button{width:44px;height:44px;font-size:18px}
+    #ctrl #bFull{display:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="ov"></canvas>
+
+<div id="heading"><a href="index.html">← 우주의 크기</a><br><b>은하수는 왜 방향마다 다를까</b></div>
+
+<div id="card"><div class="no"></div><div class="tt"></div><div class="dd"></div><div class="ss"></div></div>
+
+<div id="stats">
+  <div class="row" id="rowC"><div class="k">은하 중심 방향</div><div class="n"><span>0</span><small>개</small></div><div class="bar"><i></i></div></div>
+  <div class="row" id="rowA"><div class="k">반대 방향</div><div class="n"><span>0</span><small>개</small></div><div class="bar"><i></i></div></div>
+  <p id="dotNote"></p>
+  <button id="again">다시 재기</button>
+</div>
+
+<div id="mini"><canvas width="460" height="460"></canvas><div>위에서 본 우리은하</div></div>
+
+<div id="pano">
+  <canvas></canvas>
+  <div class="ax"><span class="a">반대쪽 (마차부자리)</span><span class="c">은하 중심 (궁수자리)</span><span class="a">반대쪽 (마차부자리)</span></div>
+</div>
+
+<div id="timeline"></div>
+<div id="hint"></div>
+<div id="wait"></div>
+<div id="ctrl">
+  <button id="bPrev" title="이전">◀</button>
+  <button id="bNext" title="다음">▶</button>
+  <button id="bFull" title="전체 화면 (F)">⛶</button>
+</div>
+
+<script>
+// ───────── 우리은하 모형 (단위 kpc = 1000 pc) ─────────
+// 태양계는 (0,0,+8.5), 은하 중심은 원점, 북쪽 은하극은 +y. 은경 l은 은하 중심이 0°, 북쪽에서 내려다볼 때 시계 방향으로 도는 원반 기준
+const PI = Math.PI;
+const R_SUN = 8.5, R_DISK = 15, RD = 3.6, HZ = 0.3, HZ2 = 0.9, THICK = 0.1;
+const PITCH = 13 * PI / 180, ARM_K = 1 / Math.tan(PITCH), ARM_SIN = Math.sin(PITCH), ARM_SIG = 0.55;
+const BAR_ANG = 27 * PI / 180, BAR_A = 1.5, BAR_C = 0.7, BAR_Y = 0.45;
+const BULGE_FRAC = 0.17, N_DOT = 260000, N_STARS_MW = 2e11;
+const WEDGE_H = 8 * PI / 180, LUM_K = .3;
+const SUN = [0, 0, R_SUN];
+
+const glslConst = `
+const float PI=${PI}, R_SUN=${R_SUN.toFixed(3)}, RD=${RD.toFixed(3)}, HZ=${HZ.toFixed(3)}, HZ2=${HZ2.toFixed(3)}, THICK=${THICK.toFixed(3)};
+const float ARM_K=${ARM_K.toFixed(5)}, ARM_SIN=${ARM_SIN.toFixed(5)}, ARM_SIG=${ARM_SIG.toFixed(3)};
+const float BAR_S=${Math.sin(BAR_ANG).toFixed(5)}, BAR_C0=${Math.cos(BAR_ANG).toFixed(5)}, SA=${BAR_A.toFixed(3)}, SC=${BAR_C.toFixed(3)}, SY=${BAR_Y.toFixed(3)};
+`;
+
+let seed = 20261104;
+function rnd() { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }
+function gauss() { return Math.sqrt(-2 * Math.log(1 - rnd())) * Math.cos(2 * PI * rnd()); }
+const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+
+// 나선팔 세기: 네 팔 중 하나가 태양계 자리를 지나도록 맞춤 (반환: 원반 밀도 배율, 팔 안쪽 정도)
+function armOf(r, th) {
+  const q = PI / 2, ph = th - ARM_K * Math.log(Math.max(r, .3) / R_SUN) + PI / 2;
+  const dl = ph - q * Math.floor(ph / q + .5), d = r * ARM_SIN * dl;
+  return Math.exp(-d * d / (2 * ARM_SIG * ARM_SIG));
+}
+const armMix = (a, r) => { const m = smooth(2, 4, r); return 1 + m * (.22 + 1.4 * a - 1); };
+
+function makeDots() {
+  const pos = new Float32Array(N_DOT * 3), col = new Float32Array(N_DOT * 3), sz = new Float32Array(N_DOT);
+  const ax = -Math.sin(BAR_ANG), az = Math.cos(BAR_ANG); // 막대의 가까운 끝은 l>0 쪽
+  let i = 0;
+  while (i < N_DOT) {
+    let x, y, z, c;
+    if (rnd() < BULGE_FRAC) {
+      const a = gauss() * BAR_A, b = gauss() * BAR_C;
+      y = gauss() * BAR_Y; x = a * ax + b * az; z = a * az - b * ax;
+      const w = rnd() * .25;
+      c = [.6, .48 + w * .3, .31 + w * .6];
+    } else {
+      const r = -RD * Math.log((1 - rnd()) * (1 - rnd()));
+      if (r > R_DISK) continue;
+      const th = rnd() * 2 * PI, a = armOf(r, th);
+      if (rnd() * 1.62 > armMix(a, r) * (1 - smooth(13, 15, r))) continue;
+      const h = rnd() < THICK ? HZ2 : HZ, u = rnd() * .998 + .001;
+      y = h * .5 * Math.log(u / (1 - u));
+      x = r * Math.cos(th); z = -r * Math.sin(th);
+      const blue = smooth(.25, .8, a) * smooth(2.5, 5, r);
+      c = rnd() < .035 * blue ? [1, .42, .5] : [1 - .42 * blue, .9 - .12 * blue, .78 + .22 * blue];
+    }
+    pos.set([x, y, z], i * 3); col.set(c, i * 3);
+    sz[i] = rnd() < .03 ? 9 + rnd() * 8 : .9 + rnd() * rnd() * 2.2; // 3%는 넓게 번지는 빛
+    i++;
+  }
+  return { pos, col, sz };
+}
+const dots = makeDots();
+
+// 태양계에서 두 쐐기 안의 점까지 거리 (바닥 평면 기준)
+const wedgeDist = (() => {
+  const c = [], a = [];
+  for (let i = 0; i < N_DOT; i++) {
+    if (dots.sz[i] > 5) continue;
+    const dx = dots.pos[i * 3], dz = dots.pos[i * 3 + 2] - R_SUN, an = Math.abs(Math.atan2(dx, -dz)), d = Math.hypot(dx, dz);
+    if (an < WEDGE_H) c.push(d); else if (an > PI - WEDGE_H) a.push(d);
+  }
+  return { c: Float32Array.from(c).sort(), a: Float32Array.from(a).sort() };
+})();
+const countWithin = (arr, r) => { let lo = 0, hi = arr.length; while (lo < hi) { const m = lo + hi >> 1; if (arr[m] <= r) lo = m + 1; else hi = m; } return lo; };
+const edgeT = dir => { const b = SUN[0] * dir[0] + SUN[2] * dir[2], c = R_SUN * R_SUN - R_DISK * R_DISK; return -b + Math.sqrt(b * b - c); };
+
+// ───────── WebGL ─────────
+const cv = document.getElementById('gl'), ov = document.getElementById('ov'), g2 = ov.getContext('2d');
+const gl = cv.getContext('webgl2', { antialias: false, alpha: false, powerPreference: 'high-performance' });
+if (!gl) { const w = document.getElementById('wait'); w.textContent = '이 브라우저는 3D(WebGL2)를 지원하지 않습니다. 크롬이나 엣지로 열어 주세요.'; w.classList.add('on'); throw new Error('no webgl2'); }
+
+function prog(vs, fs) {
+  const p = gl.createProgram();
+  for (const [t, s] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
+    const h = gl.createShader(t); gl.shaderSource(h, s); gl.compileShader(h);
+    if (!gl.getShaderParameter(h, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(h));
+    gl.attachShader(p, h);
+  }
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const u = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) { const nm = gl.getActiveUniform(p, i).name; u[nm] = gl.getUniformLocation(p, nm); }
+  return { p, u };
+}
+const FS_VS = `#version 300 es
+out vec2 vUv;
+void main(){ vec2 q=vec2((gl_VertexID<<1)&2, gl_VertexID&2); vUv=q*2.-1.; gl_Position=vec4(vUv,0.,1.); }`;
+
+// 하늘 굽기: 태양계에서 사방으로 시선을 쏘아, 시선을 따라 만나는 별빛을 모두 더하고 먼지로 가린다
+const pBake = prog(FS_VS, `#version 300 es
+precision highp float;
+${glslConst}
+in vec2 vUv; out vec4 o;
+float hash(vec3 p){ p=fract(p*.3183099+.1); p*=17.; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+float vn(vec3 x){ vec3 i=floor(x), f=fract(x); f=f*f*(3.-2.*f);
+  return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
+             mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z); }
+float fbm(vec3 p){ return .55*vn(p)+.3*vn(p*2.1+3.)+.15*vn(p*4.3+7.); }
+float armOf(float r,float th){ float q=PI*.5, ph=th-ARM_K*log(max(r,.3)/R_SUN)+PI*.5; float dl=ph-q*floor(ph/q+.5); float d=r*ARM_SIN*dl; return exp(-d*d/(2.*ARM_SIG*ARM_SIG)); }
+float sech2(float y,float h){ float e=exp(-2.*abs(y)/h); return 4.*e/((1.+e)*(1.+e)); }
+void main(){
+  vec2 uv=vUv*.5+.5;
+  float l=(uv.x-.5)*2.*PI, b=(uv.y-.5)*PI;
+  vec3 d=vec3(-cos(b)*sin(l), sin(b), -cos(b)*cos(l));
+  vec3 s=vec3(0.,0.,R_SUN), sum=vec3(0.), tau=vec3(0.);
+  const int N=128; const float T0=.012, A=log(32./T0+1.)/float(N);
+  float jit=hash(vec3(uv*911.,1.));
+  for(int i=0;i<N;i++){
+    float fi=float(i)+jit;
+    float t=T0*(exp(A*fi)-1.), dt=T0*A*exp(A*fi);
+    vec3 p=s+d*t;
+    float r=length(p.xz), y=p.y;
+    if(abs(y)>2.6||(r>15.5&&dot(p.xz,d.xz)>0.)) break;
+    float edge=1.-smoothstep(13.,15.,r);
+    float th=atan(-p.z,p.x), a=armOf(r,th), m=smoothstep(2.,4.,r);
+    float arm=1.+m*(.22+1.4*a-1.);
+    float disk=exp(-r/RD)*edge*arm*((1.-THICK)*sech2(y,HZ)/HZ+THICK*sech2(y,HZ2)/HZ2);
+    float u=dot(p.xz,vec2(-BAR_S,BAR_C0)), v=dot(p.xz,vec2(BAR_C0,BAR_S));
+    float bulge=exp(-.5*(u*u/(SA*SA)+v*v/(SC*SC)+y*y/(SY*SY)));
+    float blue=smoothstep(.25,.8,a)*smoothstep(2.5,5.,r);
+    vec3 cd=mix(vec3(1.,.9,.78),vec3(.62,.78,1.),blue);
+    vec3 em=disk*cd*DISK_AMP+bulge*vec3(1.,.8,.55)*BULGE_AMP;
+    sum+=em*exp(-tau)*dt;
+    if(abs(y)<.45){
+      float n=fbm(p*vec3(1.7,2.6,1.7)+vec3(3.7,0.,1.3));
+      float dust=exp(-r/5.)*exp(-abs(y)/.15)*(.08+3.*smoothstep(.44,.66,n));
+      tau+=dust*DUST_K*vec3(.72,1.,1.35)*dt;
+    }
+  }
+  float lum=dot(sum,vec3(.3,.5,.2));
+  vec3 L=sum*sum*sum/(sum*sum+.64)*EXPO;
+  o=vec4(pow(1.-exp(-L),vec3(1./2.2)), pow(1.-exp(-lum*LUM_K),1./2.2));
+}`.replace('DISK_AMP', '1.0').replace('BULGE_AMP', '3.2').replace('DUST_K', '0.8').replace('EXPO', '0.55').replace('LUM_K', LUM_K.toFixed(2)));
+
+const pSky = prog(FS_VS, `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 o;
+uniform sampler2D uSky; uniform vec3 uR,uU,uF; uniform vec2 uTan; uniform float uA;
+float h(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
+void main(){
+  vec3 d=normalize(uF+uR*vUv.x*uTan.x+uU*vUv.y*uTan.y);
+  float l=atan(-d.x,-d.z), b=asin(clamp(d.y,-1.,1.));
+  vec3 c=texture(uSky,vec2(l/6.2831853+.5,b/3.1415927+.5)).rgb;
+  o=vec4((c+(h(gl_FragCoord.xy)-.5)/128.)*uA,1.);
+}`);
+
+const pStar = prog(`#version 300 es
+in vec3 aD; in vec3 aC; in float aS;
+uniform vec3 uR,uU,uF; uniform vec2 uTan; uniform float uPx;
+out vec3 vC;
+void main(){ gl_Position=vec4(dot(aD,uR)/uTan.x, dot(aD,uU)/uTan.y, 0., dot(aD,uF)); gl_PointSize=aS*uPx; vC=aC; }`,
+`#version 300 es
+precision highp float;
+in vec3 vC; out vec4 o; uniform float uA;
+void main(){ vec2 q=gl_PointCoord*2.-1.; float a=exp(-3.5*dot(q,q)); o=vec4(vC*a*uA,1.); }`);
+
+const pDot = prog(`#version 300 es
+in vec3 aP; in vec3 aC; in float aS;
+uniform mat4 uVP; uniform vec3 uEye; uniform float uPx,uW,uReach,uH;
+out vec4 vC;
+void main(){
+  gl_Position=uVP*vec4(aP,1.);
+  float dist=max(length(aP-uEye),.05);
+  float big=step(5.,aS);
+  float s=aS*uPx*44./dist;
+  float al=big>.5?.014:.17;
+  vec3 c=aC;
+  vec2 rel=aP.xz-vec2(0.,${R_SUN.toFixed(3)}); float an=abs(atan(rel.x,-rel.y)), ds=length(rel);
+  float inC=step(an,uH)*step(ds,uReach)*(1.-big), inA=step(3.14159265-uH,an)*step(ds,uReach)*(1.-big);
+  float hit=inC+inA;
+  vec3 hc=inC>.5?vec3(1.,.74,.2):vec3(.36,.68,1.);
+  c=mix(c*(1.-.72*uW),hc,hit*uW);
+  al=mix(al,.95,hit*uW);
+  s*=1.+.9*hit*uW;
+  gl_PointSize=clamp(s,uPx*.9,uPx*40.);
+  vC=vec4(c*al,1.);
+}`,
+`#version 300 es
+precision highp float;
+in vec4 vC; out vec4 o; uniform float uA;
+void main(){ vec2 q=gl_PointCoord*2.-1.; float r=dot(q,q); if(r>1.) discard; o=vec4(vC.rgb*(1.-r)*uA,1.); }`);
+
+const vaoDot = gl.createVertexArray();
+gl.bindVertexArray(vaoDot);
+function attr(p, name, data, n) {
+  const l = gl.getAttribLocation(p.p, name), b = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, n, gl.FLOAT, false, 0, 0);
+}
+attr(pDot, 'aP', dots.pos, 3); attr(pDot, 'aC', dots.col, 3); attr(pDot, 'aS', dots.sz, 1);
+const vaoEmpty = gl.createVertexArray(), vaoStar = gl.createVertexArray();
+let nStar = 0;
+
+// 하늘 지도 (경도×위도). 소프트웨어 렌더링 환경에서는 절반 해상도로
+const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+const renderer = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : '';
+const SOFT = /swiftshader|llvmpipe|software|basic render/i.test(renderer);
+const SKY_W = SOFT ? 1024 : 2048, SKY_H = SKY_W / 2, BAKE_ROWS = SOFT ? 8 : 32;
+const skyTex = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, skyTex);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, SKY_W, SKY_H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+const fbo = gl.createFramebuffer();
+gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, skyTex, 0);
+gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+let bakeRow = 0, skyReady = false;
+
+function bakeStep() {
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.viewport(0, 0, SKY_W, SKY_H);
+  gl.enable(gl.SCISSOR_TEST); gl.scissor(0, bakeRow, SKY_W, BAKE_ROWS);
+  gl.disable(gl.BLEND);
+  gl.useProgram(pBake.p); gl.bindVertexArray(vaoEmpty);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.disable(gl.SCISSOR_TEST);
+  bakeRow += BAKE_ROWS;
+  if (bakeRow >= SKY_H) finishSky();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
+
+// 구운 하늘을 읽어서 밝기 곡선·파노라마·낱별을 만든다
+const PROF_N = 360, profile = new Float32Array(PROF_N);
+let ratio = 0, panoImg = null;
+function finishSky() {
+  const px = new Uint8Array(SKY_W * SKY_H * 4);
+  gl.readPixels(0, 0, SKY_W, SKY_H, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  const lum = (x, y) => { const T = Math.pow(px[(y * SKY_W + x) * 4 + 3] / 255, 2.2); return -Math.log(1 - Math.min(T, .996)); };
+
+  // 은위 ±25° 안의 평균 밝기를 경도별로
+  const y0 = Math.round((.5 - 25 / 180) * SKY_H), y1 = Math.round((.5 + 25 / 180) * SKY_H);
+  for (let i = 0; i < PROF_N; i++) {
+    const x0 = Math.floor(i / PROF_N * SKY_W), x1 = Math.floor((i + 1) / PROF_N * SKY_W);
+    let s = 0, w = 0;
+    for (let y = y0; y < y1; y++) { const c = Math.cos((y / SKY_H - .5) * PI); for (let x = x0; x < x1; x++) { s += lum(x, y) * c; w += c; } }
+    profile[i] = s / w;
+  }
+  const mean = (a, b) => { let s = 0; for (let i = a; i < b; i++) s += profile[(i + PROF_N) % PROF_N]; return s / (b - a); };
+  ratio = mean(160, 200) / mean(-20, 20);
+
+  // 파노라마 (은위 ±32°, 왼쪽이 경도 증가 쪽이라 좌우를 뒤집는다)
+  const PW = 980, PH = 174; panoImg = document.createElement('canvas'); panoImg.width = PW; panoImg.height = PH;
+  const pc = panoImg.getContext('2d'), im = pc.createImageData(PW, PH);
+  for (let y = 0; y < PH; y++) for (let x = 0; x < PW; x++) {
+    const sx = Math.floor((1 - x / PW) * SKY_W) % SKY_W, sy = Math.round((.5 + (32 - 64 * y / PH) / 180) * SKY_H);
+    const o = (sy * SKY_W + sx) * 4, q = (y * PW + x) * 4;
+    im.data[q] = px[o]; im.data[q + 1] = px[o + 1]; im.data[q + 2] = px[o + 2]; im.data[q + 3] = 255;
+  }
+  pc.putImageData(im, 0, 0);
+
+  // 낱별: 밝은 곳일수록 많이 뽑아 하늘의 별 수가 곡선과 맞게 한다
+  const NS = 30000, D = new Float32Array(NS * 3), C = new Float32Array(NS * 3), S = new Float32Array(NS);
+  let n = 0;
+  while (n < NS) {
+    const sb = rnd() * 2 - 1, l = (rnd() - .5) * 2 * PI, cb = Math.sqrt(1 - sb * sb);
+    const x = Math.floor((l / (2 * PI) + .5) * SKY_W) % SKY_W, y = Math.min(SKY_H - 1, Math.floor((Math.asin(sb) / PI + .5) * SKY_H));
+    if (rnd() > .04 + Math.pow(lum(x, y) / .7, .9)) continue;
+    D.set([-cb * Math.sin(l), sb, -cb * Math.cos(l)], n * 3);
+    const m = Math.pow(rnd(), 7), t = rnd(), a = .07 + .9 * m + .1 * rnd();
+    C.set(t < .4 ? [a * .72, a * .84, a] : t < .8 ? [a, a, a * .94] : [a, a * .78, a * .55], n * 3);
+    S[n] = 1.3 + 3.2 * m;
+    n++;
+  }
+  nStar = NS;
+  gl.bindVertexArray(vaoStar);
+  attr(pStar, 'aD', D, 3); attr(pStar, 'aC', C, 3); attr(pStar, 'aS', S, 1);
+  skyReady = true;
+  window.__sky = { ratio, profile: Array.from(profile) };
+  showCard(); drawPano();
+}
+
+// ───────── 벡터 ─────────
+const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s], dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const norm = a => mul(a, 1 / Math.hypot(a[0], a[1], a[2])), mix = (a, b, t) => add(mul(a, 1 - t), mul(b, t));
+const RAD = PI / 180;
+const dirLB = (l, b) => [-Math.cos(b) * Math.sin(l), Math.sin(b), -Math.cos(b) * Math.cos(l)];
+
+// ───────── 카메라 ─────────
+const cam = { az: .7, el: .55, dist: 44, tz: 0, f: 0, l: 0, b: 0, fov: 46, w: 0, sp: 0 };
+
+function camBasis(c, lOff = 0) {
+  const ce = Math.cos(c.el), se = Math.sin(c.el), sa = Math.sin(c.az), ca = Math.cos(c.az);
+  const E0 = [c.dist * sa * ce, c.dist * se, c.dist * ca * ce], E = add(E0, [0, 0, c.tz]);
+  const Fo = norm(mul(E0, -1)), Uo = [-sa * se, ce, -ca * se];
+  const l = (c.l + lOff) * RAD, b = c.b * RAD, Fi = dirLB(l, b), Ui = [Math.sin(b) * Math.sin(l), Math.cos(b), Math.sin(b) * Math.cos(l)];
+  const e = smooth(0, 1, c.f);
+  const eye = add(SUN, mul(sub(E, SUN), Math.pow(1 - e, 2.5)));
+  const F = norm(mix(Fo, Fi, e));
+  const R = norm(cross(F, mix(Uo, Ui, e)));
+  return { eye, F, R, U: cross(R, F) };
+}
+function viewProj(B, fovY, asp) {
+  const t = 1 / Math.tan(fovY * RAD / 2), n = .02, f = 400, { R, U, F, eye } = B;
+  const a = t / asp, c = (f + n) / (n - f), d = 2 * f * n / (n - f);
+  const tx = -dot(R, eye), ty = -dot(U, eye), tz = dot(F, eye);
+  return new Float32Array([
+    a * R[0], t * U[0], -c * F[0], F[0],
+    a * R[1], t * U[1], -c * F[1], F[1],
+    a * R[2], t * U[2], -c * F[2], F[2],
+    a * tx, t * ty, c * tz + d, -tz]);
+}
+
+// ───────── 단계 ─────────
+const fmt = n => Math.round(n).toLocaleString('ko-KR');
+const STEPS = [
+  { chip: '① 밖에서 보기', no: '1 / 5', tt: '우리은하를 밖에서 보면',
+    dd: '<span style="color:var(--gold)">태양계는 원반 안쪽 나선팔에 있다</span>', ss: '지름 약 30000 pc · 태양계는 은하 중심에서 약 8500 pc',
+    hint: '드래그: 돌려 보기<br>휠: 확대·축소', cam: { f: 0, el: .55, dist: 44, tz: 0, fov: 46, w: 0, sp: 0 } },
+  { chip: '② 두 방향 재기', no: '2 / 5', tt: '태양계에서 같은 각도로 시선을 보내면',
+    dd: '<span style="color:var(--gold)">중심 쪽</span>은 길고 빽빽, <span style="color:var(--blue)">반대쪽</span>은 짧고 듬성', ss: '시선 안에 들어오는 별의 수를 세어 봅니다',
+    hint: '', cam: { f: 0, az: 0, el: 1.55, dist: 56, tz: -2, fov: 46, w: 1, sp: 0 } },
+  { chip: '③ 은하 중심 쪽', no: '3 / 5', tt: '지구에서 은하 중심 방향을 보면',
+    dd: '<span style="color:var(--gold)">은하수가 넓고 밝다</span>', ss: '궁수자리 쪽 · 여름철 밤하늘',
+    hint: '드래그: 둘러보기<br>휠: 확대·축소', cam: { f: 1, az: 0, el: .3, dist: 44, tz: 0, l: 0, b: 0, fov: 66, w: 0, sp: 0 } },
+  { chip: '④ 반대쪽', no: '4 / 5', tt: '뒤로 돌아 반대쪽을 보면',
+    dd: '<span style="color:var(--blue)">은하수가 희미하다</span>', ss: '마차부자리 쪽 · 겨울철 밤하늘',
+    hint: '드래그: 둘러보기<br>휠: 확대·축소', cam: { f: 1, az: 0, el: .3, dist: 44, tz: 0, l: 180, b: 0, fov: 66, w: 0, sp: 0 } },
+  { chip: '⑤ 나란히 비교', no: '5 / 5', tt: '같은 밝기 설정으로 두 방향을 나란히',
+    dd: '', ss: '모형 계산값 · 은하 중심 방향에는 별이 많아 은하수가 넓고 밝게 보이고, 반대쪽은 은하수가 희미하다',
+    hint: '', cam: { f: 1, az: 0, el: .3, dist: 44, tz: 0, l: 180, b: 0, fov: 66, w: 0, sp: 1 } },
+];
+let cur = 0, tween = null, spin = true, reach = 0, reachT0 = 0;
+const card = document.getElementById('card'), statsEl = document.getElementById('stats');
+const miniEl = document.getElementById('mini'), panoEl = document.getElementById('pano'), waitEl = document.getElementById('wait');
+
+function showCard() {
+  const s = STEPS[cur], q = card.children;
+  q[0].textContent = s.no; q[1].textContent = s.tt; q[3].textContent = s.ss;
+  q[2].innerHTML = cur === 4
+    ? (ratio ? `<span style="color:var(--gold)">중심 쪽</span>이 <span style="color:var(--blue)">반대쪽</span>보다 약 ${ratio.toFixed(1)}배 밝다` : '')
+    : s.dd;
+  document.getElementById('hint').innerHTML = s.hint;
+  statsEl.classList.toggle('on', cur === 1);
+  miniEl.classList.toggle('on', cur >= 2);
+  panoEl.classList.toggle('on', cur >= 2);
+  document.querySelectorAll('.chip').forEach((c, i) => c.classList.toggle('cur', i === cur));
+}
+function goTo(i) {
+  i = Math.max(0, Math.min(STEPS.length - 1, i));
+  if (i === cur && tween) return;
+  const prev = cur; cur = i; spin = i === 0;
+  const to = { ...STEPS[i].cam }, from = { ...cam };
+  if (W < 760 && to.f === 0) to.dist *= 1.25; // 세로 화면에서는 멀리서 본다
+  if (to.az !== undefined) from.az = Math.atan2(Math.sin(from.az), Math.cos(from.az));
+  if (to.l !== undefined) { from.l = ((from.l - to.l + 540) % 360 + 360) % 360 - 180 + to.l; }
+  const flying = Math.abs(to.f - cam.f) > .01;
+  tween = { from, to, t0: performance.now(), dur: flying ? 6000 : (prev === 2 && i === 3) ? 4200 : 1900 };
+  if (i === 1) startReach(flying ? 0 : 1600);
+  showCard();
+}
+function startReach(delay) { reach = 0; reachT0 = performance.now() + (delay || 1900); }
+
+const REACH_MS = 6500, REACH_MAX = R_SUN + R_DISK;
+function stepReach(now) {
+  if (cur !== 1) return;
+  reach = REACH_MAX * Math.min(1, Math.max(0, (now - reachT0) / REACH_MS));
+  const nc = countWithin(wedgeDist.c, reach), na = countWithin(wedgeDist.a, reach), top = wedgeDist.c.length;
+  document.querySelector('#rowC span').textContent = fmt(nc);
+  document.querySelector('#rowA span').textContent = fmt(na);
+  document.querySelector('#rowC i').style.width = nc / top * 100 + '%';
+  document.querySelector('#rowA i').style.width = na / top * 100 + '%';
+}
+document.getElementById('dotNote').textContent = `같은 각도(${Math.round(WEDGE_H * 2 / RAD)}°)의 시선 안에 든 점의 수. 점 1개 ≈ 실제 별 약 ${Math.round(N_STARS_MW / N_DOT / 1e4)}만 개. 먼 별은 어둡게 보이고 먼지에도 가려서, 눈에 보이는 밝기 차이는 이 숫자보다 작아요.`;
+document.getElementById('again').onclick = () => startReach(150);
+
+// ───────── 그리기 ─────────
+let W = 1, H = 1, DPR = 1;
+function resize() {
+  DPR = Math.min(devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR; ov.width = W * DPR; ov.height = H * DPR;
+  const pc = panoEl.querySelector('canvas'), r = pc.getBoundingClientRect();
+  pc.width = Math.max(1, r.width * DPR); pc.height = Math.max(1, r.height * DPR);
+  drawPano();
+}
+function drawView(B, x, y, w, h, c, skyA, dotA) {
+  gl.viewport(x * DPR, (H - y - h) * DPR, w * DPR, h * DPR);
+  gl.enable(gl.SCISSOR_TEST); gl.scissor(x * DPR, (H - y - h) * DPR, w * DPR, h * DPR);
+  const asp = w / h, tY = Math.tan(c.fov * RAD / 2), tX = tY * asp;
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+  if (skyA > .002) {
+    gl.useProgram(pSky.p); gl.bindVertexArray(vaoEmpty);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, skyTex);
+    gl.uniform1i(pSky.u.uSky, 0); gl.uniform3fv(pSky.u.uR, B.R); gl.uniform3fv(pSky.u.uU, B.U); gl.uniform3fv(pSky.u.uF, B.F);
+    gl.uniform2f(pSky.u.uTan, tX, tY); gl.uniform1f(pSky.u.uA, skyA);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.useProgram(pStar.p); gl.bindVertexArray(vaoStar);
+    gl.uniform3fv(pStar.u.uR, B.R); gl.uniform3fv(pStar.u.uU, B.U); gl.uniform3fv(pStar.u.uF, B.F);
+    gl.uniform2f(pStar.u.uTan, tX, tY); gl.uniform1f(pStar.u.uPx, DPR * Math.max(1, H / 900)); gl.uniform1f(pStar.u.uA, skyA);
+    gl.drawArrays(gl.POINTS, 0, nStar);
+  }
+  if (dotA > .002) {
+    gl.useProgram(pDot.p); gl.bindVertexArray(vaoDot);
+    gl.uniformMatrix4fv(pDot.u.uVP, false, viewProj(B, c.fov, asp));
+    gl.uniform3fv(pDot.u.uEye, B.eye); gl.uniform1f(pDot.u.uPx, DPR * Math.max(1, H / 900));
+    gl.uniform1f(pDot.u.uW, c.w); gl.uniform1f(pDot.u.uReach, reach); gl.uniform1f(pDot.u.uH, WEDGE_H); gl.uniform1f(pDot.u.uA, dotA);
+    gl.drawArrays(gl.POINTS, 0, N_DOT);
+  }
+  gl.disable(gl.SCISSOR_TEST);
+}
+
+// 3D 위치 → 화면 좌표 (뒤쪽이면 null)
+function proj(B, p, c, vx, vw, vh) {
+  const r = sub(p, B.eye), z = dot(r, B.F);
+  if (z < .02) return null;
+  const tY = Math.tan(c.fov * RAD / 2), tX = tY * vw / vh;
+  return [vx + vw / 2 * (1 + dot(r, B.R) / z / tX), vh / 2 * (1 - dot(r, B.U) / z / tY)];
+}
+function label(x, y, t, col, size, align = 'center') {
+  g2.font = `800 ${size}px Pretendard,"Malgun Gothic",sans-serif`; g2.textAlign = align; g2.textBaseline = 'middle';
+  g2.lineWidth = size / 4; g2.strokeStyle = 'rgba(3,5,12,.85)'; g2.lineJoin = 'round';
+  g2.strokeText(t, x, y); g2.fillStyle = col; g2.fillText(t, x, y);
+}
+const CONST = [['궁수자리', 4, -11], ['전갈자리', 352, 15], ['독수리자리', 48, -9], ['백조자리', 84, 2], ['카시오페이아자리', 123, -2],
+  ['마차부자리', 163, 5], ['오리온자리', 203, -14], ['남십자자리', 301, 0]];
+const GOLD = '#ffd36a', BLUE = '#7fb6ff', INK = '#eef2ff', DIM = '#b9c4e4';
+
+function wedgePts(center, r) {
+  const pts = [SUN];
+  for (let i = -6; i <= 6; i++) {
+    const a = center + i / 6 * WEDGE_H, d = [Math.sin(a), 0, -Math.cos(a)];
+    pts.push(add(SUN, mul(d, Math.min(r, edgeT(d)))));
+  }
+  return pts;
+}
+function drawOverlay(B, c, dotA, skyA, now) {
+  g2.setTransform(DPR, 0, 0, DPR, 0, 0);
+  g2.clearRect(0, 0, W, H);
+  const fs = Math.max(13, Math.min(24, W * .0125));
+  if (dotA > .15 && c.f < .6) {
+    const P = p => proj(B, p, c, 0, W, H);
+    g2.globalAlpha = Math.min(1, dotA * 1.2) * (1 - smooth(.2, .6, c.f));
+    if (c.w > .02) {
+      for (const [cen, col, fill] of [[0, GOLD, 'rgba(255,211,106,.1)'], [PI, BLUE, 'rgba(127,182,255,.1)']]) {
+        const q = wedgePts(cen, Math.max(reach, .01)).map(P);
+        if (q.some(v => !v)) continue;
+        g2.beginPath(); q.forEach((v, i) => i ? g2.lineTo(v[0], v[1]) : g2.moveTo(v[0], v[1])); g2.closePath();
+        g2.fillStyle = fill; g2.fill(); g2.strokeStyle = col; g2.lineWidth = 1.5; g2.stroke();
+      }
+      const tipC = P(add(SUN, [0, 0, -Math.min(reach, 23.5)])), tipA = P(add(SUN, [0, 0, Math.min(reach, 6.5)]));
+      if (tipC && reach > 9) label(tipC[0] + 10, tipC[1] + (reach >= 23.4 ? 2 : 0), reach >= 23.4 ? '약 23500 pc' : fmt(Math.round(reach * 10) * 100) + ' pc', GOLD, fs, 'left');
+      if (tipA && reach > 2) label(tipA[0] + 12, tipA[1] - 8, reach >= 6.5 ? '약 6500 pc (원반 끝)' : fmt(Math.round(reach * 10) * 100) + ' pc', BLUE, fs, 'left');
+    }
+    const s = P(SUN), o = P([0, 0, 0]);
+    if (s && o) {
+      if (cur === 0) {
+        g2.setLineDash([6, 5]); g2.strokeStyle = 'rgba(255,211,106,.8)'; g2.lineWidth = 1.5;
+        g2.beginPath(); g2.moveTo(s[0], s[1]); g2.lineTo(o[0], o[1]); g2.stroke(); g2.setLineDash([]);
+        label((s[0] + o[0]) / 2, (s[1] + o[1]) / 2 - fs * .9, '약 8500 pc', GOLD, fs * .92);
+      }
+      g2.strokeStyle = GOLD; g2.lineWidth = 2; g2.beginPath(); g2.arc(s[0], s[1], 7, 0, 7); g2.stroke();
+      g2.fillStyle = GOLD; g2.beginPath(); g2.arc(s[0], s[1], 2.4, 0, 7); g2.fill();
+      label(s[0] + 14, s[1] + fs * .1, '태양계', GOLD, fs * 1.08, 'left');
+      label(o[0], o[1] - fs * 1.5, '은하 중심', INK, fs);
+    }
+    g2.globalAlpha = 1;
+  }
+  if (skyA > .5) {
+    g2.globalAlpha = smooth(.5, 1, skyA);
+    const left = W * .5 * c.sp;
+    const views = c.sp > .02 ? [[camBasis(c, 180), 0, left, 180], [B, left, W - left, 0]] : [[B, 0, W, 0]];
+    for (const [Bv, x, w, off] of views) {
+      for (const [t, l, b] of CONST) {
+        const q = proj(Bv, add(Bv.eye, dirLB(l * RAD, b * RAD)), c, x, w, H);
+        if (!q || q[0] < x + 30 || q[0] > x + w - 30) continue;
+        g2.save(); g2.beginPath(); g2.rect(x, 0, w, H); g2.clip();
+        label(q[0], q[1], t, DIM, fs * .85); g2.restore();
+      }
+      const gc = proj(Bv, add(Bv.eye, dirLB(0, 0)), c, x, w, H);
+      if (gc && gc[0] > x + 20 && gc[0] < x + w - 20) {
+        g2.strokeStyle = GOLD; g2.lineWidth = 2; g2.beginPath(); g2.arc(gc[0], gc[1], 15, 0, 7); g2.stroke();
+        label(gc[0], gc[1] - 30, '은하 중심', GOLD, fs);
+      }
+    }
+    if (c.sp > .02) {
+      g2.strokeStyle = 'rgba(200,215,255,.55)'; g2.lineWidth = 2; g2.beginPath(); g2.moveTo(left, 0); g2.lineTo(left, H); g2.stroke();
+      g2.globalAlpha = c.sp;
+      const ty = H * .3;
+      label(left / 2, ty, '은하 중심 방향 (여름철)', GOLD, fs * 1.25);
+      label(left + (W - left) / 2, ty, '반대 방향 (겨울철)', BLUE, fs * 1.25);
+    }
+    g2.globalAlpha = 1;
+  }
+}
+
+// 위에서 본 지도 바탕은 점들을 한 번만 찍어 둔다
+const MS = 460, mapBase = document.createElement('canvas'); mapBase.width = mapBase.height = MS;
+(() => {
+  const mc = mapBase.getContext('2d'), im = mc.createImageData(MS, MS), acc = new Float32Array(MS * MS * 3);
+  const k = MS / 34;
+  for (let i = 0; i < N_DOT; i++) {
+    if (dots.sz[i] > 5) continue;
+    const x = Math.floor(MS / 2 + dots.pos[i * 3] * k), y = Math.floor(MS / 2 + dots.pos[i * 3 + 2] * k);
+    if (x < 0 || y < 0 || x >= MS || y >= MS) continue;
+    const o = (y * MS + x) * 3; acc[o] += dots.col[i * 3]; acc[o + 1] += dots.col[i * 3 + 1]; acc[o + 2] += dots.col[i * 3 + 2];
+  }
+  for (let i = 0; i < MS * MS; i++) { for (let j = 0; j < 3; j++) im.data[i * 4 + j] = 255 * Math.min(1, Math.sqrt(acc[i * 3 + j] / 7)); im.data[i * 4 + 3] = 255; }
+  mc.putImageData(im, 0, 0);
+})();
+const miniCv = miniEl.querySelector('canvas'), mctx = miniCv.getContext('2d');
+function drawMini(c) {
+  const k = MS / 34, sx = MS / 2, sy = MS / 2 + R_SUN * k;
+  mctx.drawImage(mapBase, 0, 0);
+  const asp = W / H, half = Math.atan(Math.tan(c.fov * RAD / 2) * (c.sp > .5 ? asp / 2 : asp));
+  const fan = (l, col) => {
+    const a = l * RAD, rr = 26 * k;
+    // 지도에서 오른쪽은 +x, 아래쪽은 +z
+    const ang = Math.atan2(-Math.cos(a), -Math.sin(a));
+    mctx.beginPath(); mctx.moveTo(sx, sy); mctx.arc(sx, sy, rr, ang - half, ang + half); mctx.closePath();
+    mctx.fillStyle = col + '38'; mctx.fill(); mctx.strokeStyle = col; mctx.lineWidth = 3; mctx.stroke();
+  };
+  if (c.sp > .5) { fan(c.l + 180, GOLD); fan(c.l, BLUE); } else fan(c.l, '#ffffff');
+  mctx.fillStyle = GOLD; mctx.beginPath(); mctx.arc(sx, sy, 8, 0, 7); mctx.fill();
+  mctx.font = '800 28px "Malgun Gothic",sans-serif'; mctx.textAlign = 'center'; mctx.fillStyle = '#fff';
+  mctx.fillText('태양계', sx, Math.min(MS - 10, sy + 42));
+}
+
+const panoCv = panoEl.querySelector('canvas'), pctx = panoCv.getContext('2d');
+function drawPano(c = cam) {
+  if (!panoImg) return;
+  const w = panoCv.width, h = panoCv.height;
+  pctx.drawImage(panoImg, 0, 0, w, h);
+  // 밝기 곡선
+  let top = 0; for (const v of profile) top = Math.max(top, v);
+  pctx.beginPath();
+  for (let i = 0; i <= w; i += 2) {
+    const l = (.5 - i / w) * 360, v = profile[Math.floor(((l + 180) % 360 + 360) % 360 / 360 * PROF_N) % PROF_N];
+    const y = h - 3 - v / top * (h * .9);
+    i ? pctx.lineTo(i, y) : pctx.moveTo(i, y);
+  }
+  pctx.strokeStyle = 'rgba(255,211,106,.9)'; pctx.lineWidth = 1.6 * DPR; pctx.stroke();
+  const box = (l, col) => {
+    const half = Math.atan(Math.tan(c.fov * RAD / 2) * (W / H) * (c.sp > .5 ? .5 : 1)) / RAD;
+    const m = ((l + 180) % 360 + 360) % 360 - 180, x = (.5 - m / 360) * w, bw = half * 2 / 360 * w;
+    pctx.strokeStyle = col; pctx.lineWidth = 2 * DPR;
+    for (const o of [-w, 0, w]) pctx.strokeRect(x + o - bw / 2, 1, bw, h - 2);
+  };
+  if (c.sp > .5) { box(c.l + 180, GOLD); box(c.l, BLUE); } else box(c.l, '#ffffff');
+}
+
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (!skyReady) bakeStep();
+  if (tween) {
+    const k = Math.min(1, (now - tween.t0) / tween.dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    for (const key in tween.to) cam[key] = tween.from[key] + (tween.to[key] - tween.from[key]) * e;
+    if (k >= 1) tween = null;
+  }
+  if (spin && !dragging) cam.az += .0011;
+  // 하늘이 아직 준비되지 않았으면 태양계 앞에서 기다린다
+  waitEl.classList.toggle('on', !skyReady && cam.f > .9);
+  if (!skyReady && cam.f > .9) waitEl.textContent = `은하수 계산 중… ${Math.round(bakeRow / SKY_H * 100)}%`;
+  stepReach(now);
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.disable(gl.SCISSOR_TEST);
+  gl.clearColor(.004, .006, .014, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+  const c = cam, B = camBasis(c);
+  const skyA = skyReady ? smooth(.72, .98, c.f) : 0, dotA = 1 - smooth(.76, .97, c.f);
+  const left = Math.round(W * .5 * c.sp);
+  if (left > 2) drawView(camBasis(c, 180), 0, 0, left, H, c, skyA, 0);
+  drawView(B, left, 0, W - left, H, c, skyA, dotA);
+  drawOverlay(B, c, dotA, skyA, now);
+  if (cur >= 2) { drawMini(c); drawPano(c); }
+}
+
+// ───────── 조작 ─────────
+let dragging = false, lx = 0, ly = 0;
+cv.addEventListener('pointerdown', e => { dragging = true; lx = e.clientX; ly = e.clientY; cv.setPointerCapture(e.pointerId); cv.classList.add('drag'); });
+cv.addEventListener('pointermove', e => {
+  if (!dragging || tween) return;
+  const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY;
+  if (cam.f < .01) {
+    if (cur === 1) return;
+    cam.az -= dx * .005; cam.el = Math.max(-1.5, Math.min(1.55, cam.el + dy * .005));
+  } else if (cam.f > .99 && cam.sp < .01) {
+    const k = cam.fov / H;
+    cam.l = (cam.l + dx * k) % 360; cam.b = Math.max(-80, Math.min(80, cam.b + dy * k));
+  }
+});
+const endDrag = () => { dragging = false; cv.classList.remove('drag'); };
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (tween) return;
+  const k = Math.exp(e.deltaY * .001);
+  if (cam.f < .01) { if (cur !== 1) cam.dist = Math.max(14, Math.min(80, cam.dist * k)); }
+  else if (cam.sp < .01) cam.fov = Math.max(28, Math.min(100, cam.fov * k));
+}, { passive: false });
+
+let panoDrag = false;
+const panoTurn = e => {
+  if (cur < 2 || cur > 3 || tween) return;
+  const r = panoCv.getBoundingClientRect();
+  cam.l = (.5 - (e.clientX - r.left) / r.width) * 360; cam.b = 0;
+};
+panoCv.addEventListener('pointerdown', e => { panoDrag = true; panoCv.setPointerCapture(e.pointerId); panoTurn(e); });
+panoCv.addEventListener('pointermove', e => { if (panoDrag) panoTurn(e); });
+panoCv.addEventListener('pointerup', () => { panoDrag = false; });
+
+const tl = document.getElementById('timeline');
+STEPS.forEach((s, i) => { const b = document.createElement('button'); b.className = 'chip'; b.textContent = s.chip; b.onclick = () => goTo(i); tl.appendChild(b); });
+
+function toggleFull() { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+document.getElementById('bNext').onclick = () => goTo(cur + 1);
+document.getElementById('bPrev').onclick = () => goTo(cur - 1);
+document.getElementById('bFull').onclick = toggleFull;
+document.querySelectorAll('button').forEach(b => b.addEventListener('mouseup', () => b.blur()));
+
+addEventListener('keydown', e => {
+  const k = e.key;
+  const NEXT = ['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'], PREV = ['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'];
+  if (k === 'f' || k === 'F') { if (!e.repeat) toggleFull(); return; }
+  if (e.repeat) { if (NEXT.includes(k) || PREV.includes(k)) e.preventDefault(); return; } // 리모컨 누르고 있을 때 자동 반복 무시
+  if (NEXT.includes(k)) { e.preventDefault(); goTo(cur + 1); }
+  else if (PREV.includes(k)) { e.preventDefault(); goTo(cur - 1); }
+  else if (k >= '1' && k <= String(STEPS.length)) goTo(+k - 1);
+});
+addEventListener('resize', resize);
+
+showCard();
+resize();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
