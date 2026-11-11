@@ -8,8 +8,9 @@
  <script src="https://cdn.tailwindcss.com"></script>
  <!-- Three.js CDN -->
  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
- <!-- Three.js OrbitControls -->
+ <!-- Three.js OrbitControls / CSS2D 라벨 -->
  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
  <!-- FontAwesome Icons -->
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -25,7 +26,6 @@
  font-family: 'JetBrains Mono', monospace;
  }
 
- /* Glassmorphism Styling */
  .glass-panel {
  background: rgba(8, 12, 24, 0.88);
  backdrop-filter: blur(20px);
@@ -54,27 +54,39 @@
  box-shadow: 0 0 25px rgba(14, 165, 233, 0.6);
  }
 
- ::-webkit-scrollbar {
- width: 5px;
- }
- ::-webkit-scrollbar-track {
- background: rgba(0, 0, 0, 0.4);
- }
- ::-webkit-scrollbar-thumb {
- background: rgba(56, 189, 248, 0.5);
- border-radius: 4px;
- }
+ .glass-button.dim { opacity: 0.4; }
 
- canvas {
- display: block;
- width: 100vw;
- height: 100vh;
- }
+ ::-webkit-scrollbar { width: 5px; }
+ ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.4); }
+ ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.5); border-radius: 4px; }
+
+ canvas { display: block; }
 
  .photo-badge {
  background: linear-gradient(90deg, #0284c7, #2563eb);
  box-shadow: 0 0 15px rgba(14, 165, 233, 0.6);
  }
+
+ /* 3D 공간 안의 이름표 */
+ .lbl {
+ font: 600 11px 'Pretendard', sans-serif;
+ color: #e2e8f0;
+ background: rgba(2, 6, 23, 0.72);
+ border: 1px solid rgba(148, 163, 184, 0.35);
+ padding: 2px 7px;
+ border-radius: 7px;
+ white-space: nowrap;
+ pointer-events: none;
+ }
+ .lbl.warm { border-color: rgba(251, 146, 60, 0.7); color: #fed7aa; }
+ .lbl.cool { border-color: rgba(34, 211, 238, 0.7); color: #a5f3fc; }
+ .lbl.clock { border-color: rgba(167, 139, 250, 0.7); color: #ddd6fe; }
+ .lbl.big { font-size: 12px; }
+
+ .phase { opacity: 0.45; padding: 3px 8px; border-left: 2px solid transparent; border-radius: 4px; transition: all 0.3s; }
+ .phase.on { opacity: 1; border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.1); color: #fde68a; }
+ .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+ input[type=range] { width: 100%; accent-color: #f59e0b; }
  </style>
 </head>
 <body class="bg-slate-950 text-slate-100 overflow-hidden select-none">
@@ -96,29 +108,29 @@
  <h1 class="font-extrabold text-base md:text-lg bg-clip-text text-transparent bg-gradient-to-r from-cyan-200 via-blue-300 to-indigo-300">
  별의 사멸 & 시공간 곡률 3D 시뮬레이터
  </h1>
- <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full photo-badge text-white">3D 물리 정밀 구현</span>
+ <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full photo-badge text-white">물리 계산 기반 3D</span>
  </div>
- <p class="text-xs text-slate-400 font-light">Rigel Blue Supergiant • Implosion/Explosion • Gravity Funnel</p>
+ <p class="text-xs text-slate-400 font-light">Rigel B8 Ia • Core-collapse Supernova • Schwarzschild Spacetime</p>
  </div>
  </div>
 
  <!-- Physics HUD Badges -->
  <div class="hidden lg:flex items-center space-x-3 glass-panel px-4 py-2 rounded-2xl text-xs code-font">
  <div class="flex items-center space-x-2 border-r border-slate-700/60 pr-3">
- <span class="text-slate-400">항성 상태:</span>
- <span id="hud-star-type" class="text-cyan-400 font-semibold">리겔(Rigel) 청색 초거성</span>
+ <span id="hud-l1" class="text-slate-400"></span>
+ <span id="hud-v1" class="text-cyan-400 font-semibold"></span>
  </div>
  <div class="flex items-center space-x-2 border-r border-slate-700/60 pr-3">
- <span class="text-slate-400">블랙홀 질량 (M):</span>
- <span id="hud-mass" class="text-amber-400 font-semibold">21.0 M☉</span>
+ <span id="hud-l2" class="text-slate-400"></span>
+ <span id="hud-v2" class="text-amber-400 font-semibold"></span>
  </div>
  <div class="flex items-center space-x-2 border-r border-slate-700/60 pr-3">
- <span class="text-slate-400">슈바르츠실트 반지름 (Rs):</span>
- <span id="hud-rs" class="text-orange-400 font-semibold">62.0 km</span>
+ <span id="hud-l3" class="text-slate-400"></span>
+ <span id="hud-v3" class="text-orange-400 font-semibold"></span>
  </div>
  <div class="flex items-center space-x-2">
- <span class="text-slate-400">시공간 곡률:</span>
- <span id="hud-depth" class="text-emerald-400 font-semibold">1.2x (정역학 평형)</span>
+ <span id="hud-l4" class="text-slate-400"></span>
+ <span id="hud-v4" class="text-emerald-400 font-semibold"></span>
  </div>
  </div>
  </header>
@@ -130,26 +142,30 @@
  <div class="hidden md:block glass-panel p-4 rounded-2xl max-w-xs space-y-2.5 pointer-events-auto">
  <div class="flex items-center space-x-2 text-cyan-400 font-semibold text-xs uppercase tracking-wider">
  <i class="fa-solid fa-microscope"></i>
- <span>요청사항 3D 반영 현황</span>
+ <span>과학 고증 메모</span>
  </div>
  <ul class="text-xs text-slate-300 space-y-2 leading-relaxed font-light">
  <li class="flex items-start space-x-2">
- <span class="w-2 h-2 rounded-full bg-cyan-400 mt-1 shrink-0"></span>
- <span><b>1. 항성평형:</b> 첨부 리겔 사진과 동일한 푸른 플라즈마 구체 & 정역학 화살표</span>
+ <span class="w-2 h-2 rounded-full bg-sky-300 mt-1 shrink-0"></span>
+ <span><b>리겔의 색:</b> 표면 12,100 K의 별빛은 진한 파랑이 아니라 흰빛 도는 하늘색</span>
+ </li>
+ <li class="flex items-start space-x-2">
+ <span class="w-2 h-2 rounded-full bg-orange-400 mt-1 shrink-0"></span>
+ <span><b>별을 버티는 힘:</b> 기체압이 주역, 빛의 복사압은 약 10~15% 보탬</span>
  </li>
  <li class="flex items-start space-x-2">
  <span class="w-2 h-2 rounded-full bg-rose-400 mt-1 shrink-0"></span>
- <span><b>2. 입체 초신성:</b> 겉부분 입자 비산 + 안쪽 중심부 구체 수축(Implosion)</span>
+ <span><b>초신성:</b> 일반적인 II형에는 극지 제트가 없음. 리겔의 최후는 중성자별·블랙홀 중 아직 불확실</span>
  </li>
  <li class="flex items-start space-x-2">
- <span class="w-2 h-2 rounded-full bg-amber-400 mt-1 shrink-0"></span>
- <span><b>3. 확실한 시공간 곡률:</b> 깊은 아인슈타인 중력 우물과 꺾이는 광선 측지선</span>
+ <span class="w-2 h-2 rounded-full bg-violet-400 mt-1 shrink-0"></span>
+ <span><b>깔때기 그림:</b> 한 순간의 '공간'만 보여줌. 빛의 경로는 따로 계산해 평평한 면에 그림</span>
  </li>
  </ul>
  <div class="pt-1 flex gap-2">
  <button onclick="setCameraPhotoView()" class="w-full py-2 px-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center space-x-1.5">
  <i class="fa-solid fa-camera"></i>
- <span>사진 시점</span>
+ <span>기본 시점</span>
  </button>
  <button onclick="setCameraTopView()" class="w-full py-2 px-2.5 glass-button text-xs font-semibold rounded-xl text-slate-200 flex items-center justify-center space-x-1.5">
  <i class="fa-solid fa-compass"></i>
@@ -162,30 +178,24 @@
  <aside class="glass-panel w-full lg:w-96 p-5 rounded-3xl shadow-2xl pointer-events-auto space-y-4 max-h-[55vh] lg:max-h-[72vh] overflow-y-auto">
  <div class="flex items-center justify-between border-b border-slate-700/50 pb-3">
  <div class="flex items-center space-x-2">
- <span id="step-badge" class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">단계 1 / 4</span>
- <h2 id="step-title" class="font-bold text-slate-100 text-sm md:text-base">1. 청색 초거성 리겔 (Rigel) 항성 평형</h2>
- </div>
- </div>
-
- <!-- Explanation Content -->
- <div id="step-description" class="text-xs md:text-sm text-slate-300 leading-relaxed font-light space-y-2">
- <!-- Dynamic text injected here -->
- </div>
-
- <!-- Detailed Physics Formula Block -->
- <div class="bg-slate-950/90 p-3.5 rounded-2xl border border-slate-800 text-xs space-y-1.5 code-font">
- <div class="text-slate-400 font-semibold flex items-center justify-between">
- <span>물리학 정밀 공식</span>
- <i class="fa-solid fa-square-root-variable text-cyan-400"></i>
- </div>
- <div id="step-formula" class="text-cyan-300 font-mono text-[11px] leading-tight">
- dP/dr = - G * M(r) * ρ(r) / r² (Hydrostatic Equilibrium)
+ <span id="step-badge" class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 whitespace-nowrap">단계 1 / 4</span>
+ <h2 id="step-title" class="font-bold text-slate-100 text-sm md:text-base"></h2>
  </div>
  </div>
 
  <!-- Step-specific Interactive Actions -->
- <div id="action-controls" class="space-y-2 pt-1">
- <!-- Dynamic control button injected here -->
+ <div id="action-controls" class="space-y-2"></div>
+
+ <!-- Explanation Content -->
+ <div id="step-description" class="text-xs md:text-sm text-slate-300 leading-relaxed font-light space-y-2"></div>
+
+ <!-- Detailed Physics Formula Block -->
+ <div class="bg-slate-950/90 p-3.5 rounded-2xl border border-slate-800 text-xs space-y-1.5 code-font">
+ <div class="text-slate-400 font-semibold flex items-center justify-between">
+ <span>관련 식</span>
+ <i class="fa-solid fa-square-root-variable text-cyan-400"></i>
+ </div>
+ <div id="step-formula" class="text-cyan-300 font-mono text-[11px] leading-relaxed"></div>
  </div>
  </aside>
  </div>
@@ -193,31 +203,29 @@
  <!-- Bottom Controller Bar -->
  <footer class="flex flex-col md:flex-row items-center justify-between gap-4 pointer-events-auto w-full">
 
- <!-- Process Step Selector Buttons -->
  <div class="flex items-center space-x-1.5 md:space-x-2 glass-panel p-2 rounded-2xl w-full md:w-auto overflow-x-auto justify-start md:justify-center">
  <button onclick="setSimulationStep(0)" id="btn-step-0" class="glass-button active px-3.5 py-2 rounded-xl text-xs font-medium flex items-center space-x-2 whitespace-nowrap">
- <i class="fa-solid fa-sun text-cyan-400"></i>
- <span>1. 항성 평형 (리겔)</span>
+ <i class="fa-solid fa-sun text-sky-300"></i>
+ <span>1. 리겔 · 정역학 평형</span>
  </button>
  <button onclick="setSimulationStep(1)" id="btn-step-1" class="glass-button px-3.5 py-2 rounded-xl text-xs font-medium flex items-center space-x-2 whitespace-nowrap">
  <i class="fa-solid fa-burst text-rose-400"></i>
- <span>2. 입체 초신성 붕괴</span>
+ <span>2. 핵붕괴 초신성</span>
  </button>
  <button onclick="setSimulationStep(2)" id="btn-step-2" class="glass-button px-3.5 py-2 rounded-xl text-xs font-medium flex items-center space-x-2 whitespace-nowrap">
- <i class="fa-solid fa-network-wired text-amber-400"></i>
- <span>3. 확실한 시공간 곡률</span>
+ <i class="fa-solid fa-network-wired text-violet-400"></i>
+ <span>3. 휘어진 시공간</span>
  </button>
  <button onclick="setSimulationStep(3)" id="btn-step-3" class="glass-button px-3.5 py-2 rounded-xl text-xs font-medium flex items-center space-x-2 whitespace-nowrap">
  <i class="fa-solid fa-circle text-orange-400"></i>
- <span>4. 사건의 지평선 (실체화)</span>
+ <span>4. 블랙홀과 사건의 지평선</span>
  </button>
  </div>
 
- <!-- Quick Simulation Toggles & Photon Launcher -->
  <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
- <button id="toggle-grid-btn" onclick="toggleSpacetimeGrid()" class="glass-button active px-3.5 py-2.5 rounded-xl text-xs font-medium flex items-center space-x-2 text-slate-200">
+ <button id="toggle-grid-btn" onclick="toggleSpacetimeGrid()" class="glass-button active px-3.5 py-2.5 rounded-xl text-xs font-medium flex items-center space-x-2 text-slate-200" title="3단계에서 공간 깔때기 보이기/숨기기">
  <i class="fa-solid fa-network-wired text-cyan-400"></i>
- <span>시공간 곡률 3D</span>
+ <span>공간 깔때기</span>
  </button>
  <button id="fire-photon-btn" onclick="shootPhotonRay()" class="glass-button px-4 py-2.5 rounded-xl text-xs font-bold flex items-center space-x-2 bg-gradient-to-r from-amber-500/30 to-orange-500/30 border-amber-500/50 text-amber-200">
  <i class="fa-solid fa-bolt text-amber-400"></i>
@@ -406,92 +414,332 @@
 
  <!-- MAIN THREE.JS SIMULATION SCRIPT -->
  <script>
- // Global variables
+ // ================= 공용 =================
  let currentStep = 0;
- let scene, camera, renderer, controls;
- let clock = new THREE.Clock();
+ let scene, camera, renderer, controls, labelRenderer;
+ const clock = new THREE.Clock();
  let elapsed = 0;
+ let glowTex;
+ const allLabels = [];
+ let userMovedCamera = false;
+ const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+ const clamp01 = x => Math.min(1, Math.max(0, x));
+ const smooth01 = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
 
- // 3D Visual Objects
- let starMesh, starAtmosphere, starField;
- let supernovaGroup, supernovaParticles, polarJetsGroup, shockwaveMesh, implodingCoreMesh;
+ const NOISE = `
+ float hash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+ float noise(vec3 x) {
+ vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 * f);
+ return mix(mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x), mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
+ mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x), mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z);
+ }
+ float fbm(vec3 p) { float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * noise(p); p = p * 2.07 + vec3(1.7, 9.2, 3.1); a *= 0.5; } return s; }
+ `;
+
+ // 부드러운 점(입자) 공용 셰이더
+ const SOFT_FRAG = `
+ uniform vec3 uColor; uniform float uAlpha; varying float vA;
+ void main() { float d = length(gl_PointCoord - 0.5); float a = exp(-d * d * 14.0); gl_FragColor = vec4(uColor * a * vA * uAlpha, 1.0); }`;
+
+ // 테두리만 빛나는 구 (뉴트리노 파동)
+ const FRESNEL_VERT = `
+ varying vec3 vN; varying vec3 vV;
+ void main() { vN = normalize(normalMatrix * normal); vec4 mv = modelViewMatrix * vec4(position, 1.0); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`;
+ const FRESNEL_FRAG = `
+ uniform vec3 uColor; uniform float uAlpha; varying vec3 vN; varying vec3 vV;
+ void main() { float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 3.0); gl_FragColor = vec4(uColor * f * uAlpha, 1.0); }`;
+
+ // ================= 1단계: 리겔 =================
+ // 리겔: B8 Ia, 12,100 K → 흑체색 #C0D1FF, 반지름 ≈ 74 R☉, 질량 ≈ 21 M☉
+ const STAR_R = 4.5;
+ const STAR_COLOR = new THREE.Color(0xC0D1FF);
+ let starGroup, starMesh, starSurfaceMat, capGroup, capMat, starGlow, windPoints, windMat, eqArrows;
+ const eqLabels = [], onionLabels = [];
+ // 카메라 쪽 1/4 조각(x>0, z>0)을 잘라 내부를 보여준다
+ const cutPlanes = [new THREE.Plane(V3(-1, 0, 0), 0), new THREE.Plane(V3(0, 0, -1), 0)];
+ let isCutaway = true;
+
+ const STAR_VERT = `
+ #include <clipping_planes_pars_vertex>
+ varying vec3 vN; varying vec3 vV; varying vec3 vP;
+ void main() {
+ vP = position;
+ vN = normalize(normalMatrix * normal);
+ vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+ vV = normalize(-mvPosition.xyz);
+ gl_Position = projectionMatrix * mvPosition;
+ #include <clipping_planes_vertex>
+ }`;
+ const STAR_FRAG = `
+ #include <clipping_planes_pars_fragment>
+ uniform vec3 uColor; uniform float uTime; uniform float uHeat;
+ varying vec3 vN; varying vec3 vV; varying vec3 vP;
+ ${NOISE}
+ void main() {
+ #include <clipping_planes_fragment>
+ float mu = clamp(dot(normalize(vN), normalize(vV)), 0.0, 1.0);
+ float limb = 1.0 - 0.38 * (1.0 - mu); // 주연감광: 뜨거운 별은 태양보다 약하다
+ vec3 p = normalize(vP);
+ float n1 = fbm(p * 2.5 + vec3(0.0, uTime * 0.04, 0.0));
+ float n2 = fbm(p * 8.0 - vec3(uTime * 0.03));
+ float mott = 0.93 + 0.09 * n1 + 0.05 * n2; // 쌀알무늬 대신 은은한 밝기 요동
+ float pulse = 1.0 + 0.025 * sin(uTime * 0.9); // α Cyg형 맥동(실제 주기는 수 일)
+ vec3 col = uColor * limb * mott * pulse * 1.12;
+ col = mix(col, vec3(1.0, 0.95, 0.85) * 2.4, uHeat);
+ col += vec3(0.7, 0.82, 1.0) * pow(1.0 - mu, 4.0) * 0.35;
+ gl_FragColor = vec4(col, 1.0);
+ }`;
+
+ const CAP_VERT = `
+ varying vec3 vW;
+ void main() { vW = (modelMatrix * vec4(position, 1.0)).xyz; gl_Position = projectionMatrix * viewMatrix * vec4(vW, 1.0); }`;
+ const CAP_FRAG = `
+ uniform float uMode; uniform float uR; uniform float uCore; uniform float uShock; uniform float uTime;
+ varying vec3 vW;
+ ${NOISE}
+ void main() {
+ float rr = length(vW) / uR;
+ float n = fbm(vW * 1.1 + vec3(0.0, -uTime * 0.12, uTime * 0.08));
+ vec3 col;
+ if (uMode < 0.5) {
+ // 정역학 평형: 중심일수록 뜨겁다 (온도 모식도)
+ vec3 core = vec3(1.0, 0.9, 0.72) * 1.15;
+ vec3 mid = vec3(0.55, 0.68, 1.0) * 0.95;
+ vec3 outer = vec3(0.30, 0.40, 0.78) * 0.85;
+ col = mix(core, mid, smoothstep(0.04, 0.28, rr));
+ col = mix(col, outer, smoothstep(0.32, 1.0, rr));
+ col *= 0.85 + 0.3 * n;
+ col += vec3(1.0, 0.85, 0.6) * exp(-rr * rr * 160.0) * (0.7 + 0.2 * sin(uTime * 3.0));
+ col += vec3(1.0, 0.85, 0.6) * 0.35 * smoothstep(0.01, 0.0, abs(rr - 0.16));
+ } else {
+ // 초신성 직전 양파 껍질 구조 (바깥부터 H, He, C, O·Ne, Si, Fe) — 크기 비율 무시
+ float fe = 0.10 * uCore;
+ vec3 cH = vec3(0.85, 0.28, 0.24);
+ vec3 cHe = vec3(0.96, 0.70, 0.30);
+ vec3 cC = vec3(0.52, 0.50, 0.48);
+ vec3 cO = vec3(0.18, 0.76, 0.60);
+ vec3 cSi = vec3(0.42, 0.58, 0.95);
+ vec3 cFe = vec3(0.80, 0.82, 0.88);
+ if (rr < fe) col = mix(cFe * 1.3, vec3(1.0, 0.97, 0.9) * 3.0, 1.0 - uCore);
+ else if (rr < 0.10) col = vec3(0.02, 0.02, 0.05) + vec3(0.25, 0.3, 0.5) * pow(n, 3.0);
+ else if (rr < 0.20) col = cSi;
+ else if (rr < 0.32) col = cO;
+ else if (rr < 0.44) col = cC;
+ else if (rr < 0.60) col = cHe;
+ else col = cH;
+ if (rr >= 0.10) col *= 0.8 + 0.35 * n;
+ float e = min(min(abs(rr - 0.10), abs(rr - 0.20)), min(min(abs(rr - 0.32), abs(rr - 0.44)), abs(rr - 0.60)));
+ col *= 0.5 + 0.5 * smoothstep(0.0, 0.008, e);
+ if (uShock > 0.0) {
+ float d = rr - uShock;
+ if (d < 0.0 && rr > fe) {
+ if (rr < 0.10) col = vec3(1.0, 0.55, 0.25) * (0.8 + 0.6 * n);
+ else col = col * 1.3 + vec3(0.22, 0.10, 0.04);
+ }
+ col += vec3(1.0, 0.92, 0.75) * 3.0 * exp(-d * d * 4000.0);
+ }
+ }
+ gl_FragColor = vec4(col, 1.0);
+ }`;
+
+ const WIND_VERT = `
+ attribute vec3 aDir; attribute float aPhase; attribute float aSpeed;
+ uniform float uTime; uniform float uR; uniform float uPx;
+ varying float vA;
+ void main() {
+ float f = fract(aPhase + uTime * aSpeed);
+ float r = uR * (1.02 + f * 1.4);
+ vA = (1.0 - f) * smoothstep(0.0, 0.1, f);
+ vec4 mv = modelViewMatrix * vec4(aDir * r, 1.0);
+ gl_PointSize = 0.12 * uPx / -mv.z;
+ gl_Position = projectionMatrix * mv;
+ }`;
+
+ // ================= 2단계: 초신성 =================
+ let snGroup, neutrinoShell, flashSprite, ejecta, remnantGroup, remnantGlow, neutrinoLabel, remnantLabel;
+ let snTime = 0, snPlaying = true, snPhase = -1;
+ const SN_END = 24;
+ const SN_PHASES = [
+ { t: 0.0, name: '① 폭발 직전: 양파 껍질 구조', real: '규소 연소 약 하루' },
+ { t: 3.5, name: '② 철 핵 붕괴', real: '약 0.2초' },
+ { t: 4.6, name: '③ 반동 → 충격파 · 뉴트리노 방출', real: '수 ms ~ 1초' },
+ { t: 5.8, name: '④ 충격파가 별을 뚫고 나감', real: '수 시간' },
+ { t: 8.5, name: '⑤ 표면 도달 → 초신성 폭발', real: '수 개월 동안 밝게 빛남' },
+ { t: 10.0, name: '⑥ 팽창하는 초신성 잔해', real: '수백 ~ 수천 년' }
+ ];
+
+ const EJ_VERT = `
+ attribute vec3 aDir; attribute float aStart; attribute float aSpeed; attribute vec3 aColor; attribute float aSize;
+ uniform float uGrow; uniform float uHot; uniform float uPx;
+ varying vec3 vC;
+ void main() {
+ vec3 p = aDir * (aStart + aSpeed * uGrow);
+ vC = mix(aColor, vec3(1.0, 0.95, 0.85), uHot);
+ vec4 mv = modelViewMatrix * vec4(p, 1.0);
+ gl_PointSize = max(1.0, aSize * uPx / -mv.z);
+ gl_Position = projectionMatrix * mv;
+ }`;
+ const EJ_FRAG = `
+ uniform float uAlpha; varying vec3 vC;
+ void main() { float d = length(gl_PointCoord - 0.5); float a = exp(-d * d * 12.0); gl_FragColor = vec4(vC * a * uAlpha, 1.0); }`;
+
+ // ================= 3단계: 휘어진 시공간 =================
+ // 단위: 장면 1 = Rs (질량 10 M☉ 고정, Rs = 29.5 km)
+ const SP_RS = 1.0, SP_RMAX = 24, SP_NR = 150, SP_NPHI = 180;
+ const RAY_Y = 0.05;
+ let spaceGroup, funnelGroup, funnelGeo, funnelMatFront, funnelMatBack;
+ let flatGroup, starDisk, starDiskGlow, bhDiskGroup, photonRingLine, shadowRingLine, photonRingLabel, shadowRingLabel;
+ let rayGroup, centerLabel;
+ const clockLabels = [];
+ let starRatio = 6, collapseAnim = null, rayReveal = 0;
+ const DEPTH_K = 1.5; // 깊이 과장 배율 (화면에 표시)
+ const wExt = r => 2 * Math.sqrt(SP_RS * Math.max(r - SP_RS, 0));
+ const W_MAX = wExt(SP_RMAX);
+
+ // 플람 포물면 + 별 내부(반지름 √(R³/Rs)인 구면 캡)
+ function embedY(r, R) {
+ if (R <= SP_RS * 1.0001 || r >= R) return -DEPTH_K * (W_MAX - wExt(r));
+ const yR = -(W_MAX - wExt(R));
+ const a2 = R * R * R / SP_RS;
+ return DEPTH_K * (yR + Math.sqrt(a2 - R * R) - Math.sqrt(a2 - r * r));
+ }
+
+ const FUN_VERT = `
+ attribute float aR; varying float vR; varying vec3 vW;
+ void main() { vR = aR; vW = (modelMatrix * vec4(position, 1.0)).xyz; gl_Position = projectionMatrix * viewMatrix * vec4(vW, 1.0); }`;
+ const FUN_FRAG = `
+ uniform float uR; uniform float uBH; uniform float uTime;
+ varying float vR; varying vec3 vW;
+ void main() {
+ float r = vR;
+ float phi = atan(vW.z, vW.x);
+ float qr = r / 2.0;
+ float lineR = 1.0 - min(abs(fract(qr - 0.5) - 0.5) / max(fwidth(qr), 1e-4), 1.0);
+ float qa = phi * 24.0 / 6.2831853;
+ float lineA = 1.0 - min(abs(fract(qa - 0.5) - 0.5) / max(fwidth(qa), 1e-4), 1.0);
+ lineA *= smoothstep(0.4, 1.4, r);
+ float line = max(lineR, lineA);
+ float depth = clamp(-vW.y / 14.0, 0.0, 1.0);
+ vec3 base = mix(vec3(0.03, 0.08, 0.18), vec3(0.12, 0.04, 0.24), depth);
+ vec3 lineCol = mix(vec3(0.25, 0.78, 1.0), vec3(0.78, 0.48, 1.0), depth);
+ vec3 col = base + lineCol * line * 0.95;
+ float alpha = 0.5 + 0.45 * line;
+ if (uBH < 0.5 && r < uR) {
+ float t = r / uR;
+ vec3 sc = mix(vec3(1.0, 0.95, 0.85) * 1.2, vec3(0.55, 0.65, 0.95), t);
+ col = mix(col, sc + lineCol * line * 0.4, 0.7);
+ alpha = 0.92;
+ }
+ if (uBH > 0.5) col += vec3(1.0, 0.5, 0.15) * exp(-(r - 1.0) * 5.0) * 1.3;
+ alpha *= 1.0 - smoothstep(19.0, 24.0, r) * 0.75;
+ gl_FragColor = vec4(col, alpha);
+ }`;
+
+ // ================= 4단계: 블랙홀 =================
  let blackHoleGroup, blackHoleMaterial;
- let spacetimeGridGroup, gridMesh, geodesicLinesGroup;
- let forceArrowsGroup = new THREE.Group();
+ let starField, starFieldMat;
  let photonRays = [];
-
- let isSpacetimeGridVisible = true;
+ let isFunnelVisible = true;
  let isDopplerOn = true;
- let supernovaTime = 0;
+
+ // 장면 단위 1 = 블랙홀 셰이더 단위(Rs)의 BH_SCALE배
+ const BH_SCALE = 0.9;
 
  // 블랙홀 단계 자동 해상도: 느린 기기(크롬북 등)에서는 내부 해상도를 낮춰 부드럽게
  const BH_MAX_PR = Math.min(window.devicePixelRatio, 1.25);
  let bhPixelRatio = BH_MAX_PR;
  let frameAvgMs = 16, adaptCounter = 0;
 
- // 장면 단위 1 = 블랙홀 셰이더 단위(Rs)의 BH_SCALE배.
- // 그림자 반지름(≈2.6 Rs)이 장면에서 약 2.3이 되도록 맞춤 (광자 흡수 반지름과 일치)
- const BH_SCALE = 0.9;
+ const CAMS = [
+ { p: [10, 4.5, 15], t: [0, 0, 0], top: 22 },
+ { p: [10, 4.5, 15], t: [0, 0, 0], top: 38 },
+ { p: [0, 9, 27], t: [0, -4.5, 0], top: 36 },
+ { p: [0, 2.3, 15.5], t: [0, 0, 0], top: 26 }
+ ];
 
  const STEPS_DATA = [
  {
  badge: "단계 1 / 4",
- title: "1. 청색 초거성 리겔(Rigel) 항성 평형",
+ title: "1. 청색 초거성 리겔 — 정역학 평형",
  description: `
- <p>보내주신 사진의 <b>리겔(Rigel) 청색 초거성</b>입니다.</p>
- <p class="mt-2">초고온 핵융합으로 발생하는 <b>'방사압(Radiation Pressure, 주황 화살표)'</b>과 수만 배의 질량이 안으로 이끄는 <b>'자체 중력(Cyan 화살표)'</b>이 팽팽한 정역학적 균형을 유지하고 있습니다.</p>
+ <p>오리온자리의 <b>리겔(B8 Ia)</b>은 태양보다 약 <b>21배 무겁고</b>, 반지름은 약 <b>74배</b>, 표면 온도는 약 <b>12,100 K</b>인 청색 초거성입니다. 이 온도의 별빛은 진한 파랑이 아니라 <b>흰빛이 도는 하늘색</b>입니다.</p>
+ <p>단면을 보면 중심핵에서 핵융합으로 에너지가 나옵니다. 별의 어느 층에서나 <b class="text-orange-300">바깥으로 미는 압력</b>과 <b class="text-cyan-300">안으로 당기는 중력</b>이 같아서, 별은 커지지도 작아지지도 않습니다. 이것이 <b>정역학 평형</b>입니다.</p>
+ <p>미는 압력은 대부분 뜨거운 <b>기체의 압력</b>이고, 빛이 미는 <b>복사압</b>은 이만한 별에서 약 10~15%를 보탭니다. 표면에서는 초속 약 300 km의 <b>항성풍</b>이 조금씩 빠져나갑니다.</p>
+ <p class="text-slate-400 text-[11px]">※ 단면 색은 온도를 나타낸 모식도입니다. 리겔까지 거리는 약 860광년, 나이는 약 800만 년입니다.</p>
  `,
- formula: "dP/dr = - G * M(r) * ρ(r) / r² (Hydrostatic Equilibrium)",
- starType: "리겔(Rigel) 청색 초거성",
- massText: "21.0 M☉",
- rsText: "62.0 km",
- depthText: "1.2x (정역학 평형)",
- actionHtml: `<div class="text-xs text-cyan-300 font-semibold"><i class="fa-solid fa-arrows-to-circle mr-1"></i> 주황 화살표: 방사압 / 청록 화살표: 자체 중력</div>`
+ formula: "dP/dr = −G·M(r)·ρ(r) / r²  (정역학 평형)<br>P = P기체 + P복사  (20 M☉ 별: 기체압 약 90%)",
+ hud: [["항성", "리겔 · B8 Ia 청색 초거성"], ["질량", "≈ 21 M☉"], ["반지름", "≈ 74 R☉ (5,100만 km)"], ["표면 온도", "≈ 12,100 K"]],
+ actionHtml: () => `
+ <div class="flex gap-4 text-xs font-semibold">
+ <span class="text-orange-300"><i class="fa-solid fa-arrow-right-long mr-1"></i>압력 (기체압 + 복사압)</span>
+ <span class="text-cyan-300"><i class="fa-solid fa-arrow-left-long mr-1"></i>중력</span>
+ </div>
+ <button id="cut-btn" onclick="toggleCutaway()" class="w-full py-2 glass-button text-xs font-semibold rounded-xl text-slate-200 flex items-center justify-center space-x-1.5"><i class="fa-solid fa-scissors text-sky-300"></i><span id="cut-label">${isCutaway ? '겉모습 전체 보기' : '단면(속) 보기'}</span></button>`
  },
  {
  badge: "단계 2 / 4",
- title: "2. 입체 초신성 붕괴 & 극지 제트 (3D Supernova)",
+ title: "2. 핵붕괴(II형) 초신성",
  description: `
- <p><b>[요청 반영]</b> 겉부분 물질은 우주 공간으로 사납게 <b>팽창·비산</b>하고, 중심부 항성 핵은 밀도 높은 <b>작은 구체(Core Sphere)로 수축(Implosion)</b>합니다.</p>
- <p class="mt-2">남북 양극 방향으로는 <b>3D 플라즈마 제트(Polar Jets)</b>가 고속으로 분사됩니다.</p>
+ <p>무거운 별은 마지막에 중심이 <b>양파 껍질</b>처럼 층을 이룹니다 (바깥부터 H → He → C → O·Ne → Si → Fe). 철은 핵융합을 해도 에너지가 나오지 않아 중심에 쌓입니다.</p>
+ <p>철 핵이 약 1.4 M☉를 넘으면 <b>0.2초 만에 붕괴</b>합니다. 튕겨 나오며 생긴 <b>충격파</b>가 <b>뉴트리노</b>의 가열을 받아 별을 뚫고 나가 폭발합니다. 폭발 에너지의 약 <b>99%는 뉴트리노</b>가 가져갑니다.</p>
+ <p>날아간 물질은 초속 약 5,000 km로 퍼지며 <span class="text-rose-300">수소(빨강)</span>, <span class="text-emerald-300">산소(청록)</span>처럼 원소마다 다른 색으로 빛나는 <b>초신성 잔해</b>가 됩니다. 중심에는 <b>중성자별</b> 또는 <b>블랙홀</b>이 남습니다.</p>
+ <p class="text-slate-400 text-[11px]">※ 층 크기는 비율을 무시한 모식도입니다 (실제 철 핵은 지구만 하고 별은 태양의 74배). 일반적인 II형 초신성에는 극지 제트가 없어 넣지 않았습니다. 리겔처럼 청색 초거성이 터진 실제 예로 1987년의 SN 1987A가 있습니다. 리겔이 중성자별이 될지 블랙홀이 될지는 아직 확실하지 않습니다.</p>
  `,
- formula: "Core Implosion (r→0.12) + Exterior Shell Explosion",
- starType: "초신성 중심 수축 & 겉부분 비산",
- massText: "18.5 M☉",
- rsText: "54.6 km",
- depthText: "4.5x (급격한 수축)",
- actionHtml: `<button onclick="triggerSupernovaAnimation()" class="w-full py-2 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center space-x-1.5"><i class="fa-solid fa-rotate-right"></i><span>3D 수축 & 비산 재실행</span></button>`
+ formula: "철 핵 ≈ 1.4 M☉ (찬드라세카르 한계) → 반지름 약 20 km로 붕괴<br>방출 에너지 ≈ 10⁴⁶ J (99% 뉴트리노) | 방출 속도 ≈ 5,000 km/s",
+ hud: [["현상", "핵붕괴(II형) 초신성"], ["철 핵", "≈ 1.4 M☉"], ["에너지", "99% 뉴트리노"], ["방출 속도", "≈ 5,000 km/s"]],
+ actionHtml: () => `
+ <div class="text-xs space-y-0.5">${SN_PHASES.map((p, i) => `<div id="sn-ph-${i}" class="phase">${p.name} <span class="text-slate-400">· 실제 ${p.real}</span></div>`).join('')}</div>
+ <div class="grid grid-cols-2 gap-2">
+ <button onclick="triggerSupernovaAnimation()" class="py-2 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center space-x-1.5"><i class="fa-solid fa-rotate-right"></i><span>처음부터</span></button>
+ <button onclick="toggleSnPlay()" class="py-2 glass-button text-xs font-semibold rounded-xl text-slate-200 flex items-center justify-center space-x-1.5"><i class="fa-solid fa-pause" id="sn-play-icon"></i><span id="sn-play-label">일시정지</span></button>
+ </div>
+ <div class="text-[11px] text-slate-300 flex flex-wrap gap-x-3 gap-y-1">
+ <span><span class="swatch" style="background:#d9473d"></span>H</span>
+ <span><span class="swatch" style="background:#f5b34d"></span>He</span>
+ <span><span class="swatch" style="background:#85807a"></span>C</span>
+ <span><span class="swatch" style="background:#2ec29a"></span>O·Ne</span>
+ <span><span class="swatch" style="background:#6b94f2"></span>Si</span>
+ <span><span class="swatch" style="background:#ccd1e0"></span>Fe</span>
+ </div>`
  },
  {
  badge: "단계 3 / 4",
- title: "3. 확실하게 휘어지는 3D 시공간 곡률",
+ title: "3. 휘어진 시공간 — 별에서 블랙홀까지",
  description: `
- <p><b>[요청 반영]</b> 아인슈타인 일반상대성이론의 <b>'플람 파라볼로이드(Flamm's Paraboloid) 중력 우물'</b>이 깔때기 모양으로 수직에 가깝게 휘어집니다.</p>
- <p class="mt-2">시공간 격자(Grid)와 빛의 이동 경로인 <b>측지선(Geodesics, 붉은선)</b>이 깊은 우물 속으로 꺾이는 현상을 관찰할 수 있습니다.</p>
+ <p>깔때기는 무거운 천체 주변의 <b>공간이 얼마나 늘어나는지</b> 보여 주는 그림입니다 (플람 포물면). 격자의 동그라미는 둘레가 일정하게 커지지만, 중심에 가까울수록 동그라미 사이의 실제 거리가 길어집니다.</p>
+ <p>질량은 그대로 두고 <b>별의 반지름만 줄여 보세요.</b> 별 바깥의 모양은 전혀 변하지 않고, 별이 있던 자리만 더 깊게 드러납니다. 별이 Rs의 9/8배보다 작아지면 어떤 압력으로도 버티지 못하고 <b>블랙홀</b>이 됩니다.</p>
+ <p>위쪽 <b>평평한 면</b>에는 빛의 실제 경로를 계산해서 그렸습니다. 중심에서 2.6 Rs보다 안쪽으로 겨눈 빛은 블랙홀로 빠집니다. <b class="text-violet-300">⏱ 숫자</b>는 그 자리에 있는 시계가 멀리 있는 시계보다 몇 배 빠르기로 가는지를 나타냅니다.</p>
+ <p class="text-slate-400 text-[11px]">※ 이 그림은 한 순간의 '공간'만 보여 줍니다. 물체가 깔때기를 굴러떨어지는 것이 아니고, 사과가 떨어지는 까닭은 주로 '시간'의 휘어짐입니다. 깊이는 보기 쉽게 1.5배 과장했습니다. 실제 리겔은 반지름이 Rs의 약 80만 배라 깔때기가 거의 평평합니다.</p>
  `,
- formula: "z(r) = - 2 * √(R_s * (r - R_s)) (아인슈타인 중력 우물)",
- starType: "극심한 중력 우물 (Gravity Well)",
- massText: "15.0 M☉",
- rsText: "44.3 km",
- depthText: "8.5x (확실한 중력 굴절)",
- actionHtml: `<div class="text-xs text-amber-300 font-semibold"><i class="fa-solid fa-route mr-1"></i> 붉은 유선: 휘어진 빛의 3D 측지선 (Geodesics)</div>`
+ formula: "w(r) = 2√(Rs·(r − Rs))  (플람 포물면)<br>별 내부: 반지름 √(R³/Rs)인 구면 | 정적인 별: R ≥ 9/8 Rs<br>광자구 1.5 Rs | 그림자 2.6 Rs | 시계 빠르기 √(1 − Rs/r)",
+ hud: [["보기", "공간의 휘어짐 (적도면)"], ["질량", "10 M☉ (고정)"], ["Rs", "29.5 km"], ["별 반지름", ""]],
+ actionHtml: () => `
+ <div class="text-xs text-slate-200 flex justify-between"><span>별의 반지름 R</span><b><span id="r-val">${starRatio.toFixed(2)}</span> Rs</b></div>
+ <input type="range" id="r-slider" min="1" max="10" step="0.01" value="${starRatio}" oninput="onRatioInput(+this.value)" onchange="fireRays()">
+ <div id="r-warning" class="text-[11px] min-h-[1.2em]"></div>
+ <div class="grid grid-cols-2 gap-2">
+ <button onclick="playCollapse()" class="py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center space-x-1.5"><i class="fa-solid fa-compress"></i><span>블랙홀로 붕괴</span></button>
+ <button onclick="fireRays()" class="py-2 glass-button text-xs font-semibold rounded-xl text-amber-200 flex items-center justify-center space-x-1.5"><i class="fa-solid fa-bolt text-amber-400"></i><span>빛 다발 쏘기</span></button>
+ </div>
+ <div class="text-[11px] text-slate-300 flex flex-wrap gap-x-3 gap-y-1">
+ <span><span class="swatch" style="background:#fde047"></span>휘어서 지나간 빛</span>
+ <span><span class="swatch" style="background:#fb7185"></span>빠진 빛</span>
+ <span><span class="swatch" style="background:#ffffff"></span>2.6 Rs 근처: 휘감고 도는 빛</span>
+ </div>`
  },
  {
  badge: "단계 4 / 4",
  title: "4. 블랙홀과 사건의 지평선 (Event Horizon)",
  description: `
- <p>블랙홀 주변을 지나는 빛의 경로를 <b>화면의 점 하나하나마다 직접 계산(광선 추적)</b>해서 그린 모습입니다. NASA 고다드 우주비행센터의 블랙홀 시뮬레이션과 같은 원리입니다.</p>
+ <p>리겔이 <b>만약</b> 블랙홀이 된다면 볼 수 있는 모습입니다 (중성자별이 될 수도 있어 아직 확실하지 않습니다). 블랙홀 주변을 지나는 빛의 경로를 <b>화면의 점 하나하나마다 직접 계산(광선 추적)</b>해서 그렸습니다. NASA 고다드 우주비행센터의 블랙홀 시뮬레이션과 같은 원리입니다.</p>
  <p class="mt-2"><b>1. 검은 그림자:</b> 사건의 지평선 안으로 들어간 빛은 빠져나오지 못합니다. 빛이 휘어지기 때문에 그림자는 지평선보다 약 2.6배 크게 보입니다.</p>
  <p class="mt-2"><b>2. 위·아래 아치:</b> 블랙홀 <b>뒤쪽</b>에 있는 강착원반의 빛이 중력에 휘어 위와 아래로 돌아 우리 눈에 들어온 것입니다. 원반은 납작한 고리 하나뿐입니다.</p>
  <p class="mt-2"><b>3. 한쪽만 더 밝음:</b> 원반이 빛의 절반 가까운 속도로 돌기 때문에, 우리 쪽으로 다가오는 왼쪽은 밝고 멀어지는 오른쪽은 어둡게 보입니다 (도플러 효과).</p>
  <p class="mt-2 text-slate-400">마우스로 끌어 돌려 보세요. 위에서 보면 원반 전체가 보이고, 옆에서 보면 아치가 생깁니다.</p>
  `,
  formula: "R_s = 2GM / c² | 광자구 = 1.5 R_s | 그림자 ≈ 2.6 R_s | 원반 안쪽 끝 = 3 R_s",
- starType: "슈바르츠실트 블랙홀",
- massText: "10.0 M☉",
- rsText: "29.5 km",
- depthText: "10.0x (사건의 지평선 완결)",
- actionHtml: `
+ hud: [["천체", "슈바르츠실트 블랙홀 (가정)"], ["질량", "10 M☉"], ["Rs", "29.5 km"], ["그림자", "≈ 2.6 Rs ≈ 77 km"]],
+ actionHtml: () => `
  <div class="grid grid-cols-2 gap-2">
  <button onclick="setCameraPhotoView()" class="py-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-black font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center space-x-1.5"><i class="fa-solid fa-camera"></i><span>옆에서 보기</span></button>
  <button onclick="setCameraTopView()" class="py-2 glass-button text-xs font-semibold rounded-xl text-slate-200 flex items-center justify-center space-x-1.5"><i class="fa-solid fa-compass"></i><span>위에서 보기</span></button>
@@ -500,259 +748,680 @@
  }
  ];
 
- // Init Everything
+ // ================= 초기화 =================
  function initScene() {
  const container = document.getElementById('canvas-container');
 
  scene = new THREE.Scene();
- scene.fog = new THREE.FogExp2(0x030712, 0.008);
 
- camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
- camera.position.set(0, 4, 18);
+ camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1200);
+ camera.position.set(10, 4.5, 15);
 
  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
  renderer.setSize(window.innerWidth, window.innerHeight);
- renderer.toneMapping = THREE.ACESFilmicToneMapping;
- renderer.toneMappingExposure = 1.35;
+ renderer.localClippingEnabled = true;
  container.appendChild(renderer.domElement);
+
+ labelRenderer = new THREE.CSS2DRenderer();
+ labelRenderer.setSize(window.innerWidth, window.innerHeight);
+ labelRenderer.domElement.style.position = 'absolute';
+ labelRenderer.domElement.style.top = '0';
+ labelRenderer.domElement.style.pointerEvents = 'none';
+ container.appendChild(labelRenderer.domElement);
 
  controls = new THREE.OrbitControls(camera, renderer.domElement);
  controls.enableDamping = true;
  controls.dampingFactor = 0.05;
  controls.maxDistance = 120;
  controls.minDistance = 3;
+ controls.addEventListener('start', () => { userMovedCamera = true; });
 
- // Ambient Lights & Directional Light
- const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
- scene.add(ambientLight);
+ glowTex = makeGlowTexture();
 
- const pointLight = new THREE.PointLight(0x38bdf8, 3.5, 100);
- pointLight.position.set(0, 0, 0);
- scene.add(pointLight);
-
- // Create Star Field Background
  createStarfield();
-
- // Build Components
- buildRigelStar();
- buildSupernovaEffect();
- buildSpacetimeGrid();
+ buildStar();
+ buildSupernova();
+ buildSpacetime();
  buildRelativisticBlackHole();
- buildForceArrows();
 
- scene.add(forceArrowsGroup);
-
- // Set Step 0
  setSimulationStep(0);
 
  window.addEventListener('resize', onWindowResize, false);
  }
 
- // 1. Starfield
- function createStarfield() {
- const starCount = 3500;
- const geometry = new THREE.BufferGeometry();
- const positions = new Float32Array(starCount * 3);
- const colors = new Float32Array(starCount * 3);
-
- for (let i = 0; i < starCount * 3; i += 3) {
- positions[i] = (Math.random() - 0.5) * 300;
- positions[i + 1] = (Math.random() - 0.5) * 300;
- positions[i + 2] = (Math.random() - 0.5) * 300;
-
- colors[i] = 0.5 + Math.random() * 0.5;
- colors[i + 1] = 0.7 + Math.random() * 0.3;
- colors[i + 2] = 1.0;
+ function makeGlowTexture() {
+ const c = document.createElement('canvas');
+ c.width = c.height = 256;
+ const g = c.getContext('2d');
+ const grd = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+ grd.addColorStop(0, 'rgba(255,255,255,1)');
+ grd.addColorStop(0.15, 'rgba(255,255,255,0.6)');
+ grd.addColorStop(0.4, 'rgba(255,255,255,0.16)');
+ grd.addColorStop(1, 'rgba(255,255,255,0)');
+ g.fillStyle = grd;
+ g.fillRect(0, 0, 256, 256);
+ return new THREE.CanvasTexture(c);
  }
 
- geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
- geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+ function makeGlow(color, size, opacity) {
+ const m = new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false });
+ const s = new THREE.Sprite(m);
+ s.scale.set(size, size, 1);
+ return s;
+ }
 
- const material = new THREE.PointsMaterial({
- size: 0.7,
- vertexColors: true,
- transparent: true,
- opacity: 0.8
+ function makeLabel(html, cls, parent, pos) {
+ const div = document.createElement('div');
+ div.className = 'lbl ' + (cls || '');
+ div.innerHTML = html;
+ const obj = new THREE.CSS2DObject(div);
+ obj.position.copy(pos);
+ obj.userData.show = true;
+ parent.add(obj);
+ allLabels.push(obj);
+ return obj;
+ }
+
+ // CSS2D 라벨은 부모가 숨겨져도 그려지므로 직접 계산한다
+ function updateLabelVisibility() {
+ for (const l of allLabels) {
+ let v = l.userData.show;
+ let o = l.parent;
+ while (v && o) { if (!o.visible) v = false; o = o.parent; }
+ l.visible = v;
+ }
+ }
+
+ function pxScale() {
+ return renderer.getPixelRatio() * window.innerHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+ }
+
+ // ================= 배경 별 =================
+ function createStarfield() {
+ const N = 4000;
+ const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), size = new Float32Array(N), phase = new Float32Array(N);
+ const palette = [[0.75, 0.82, 1.0], [0.9, 0.93, 1.0], [1.0, 1.0, 1.0], [1.0, 0.94, 0.82], [1.0, 0.82, 0.62]];
+ for (let i = 0; i < N; i++) {
+ const u = Math.random() * 2 - 1, th = Math.random() * Math.PI * 2, r = 320 + Math.random() * 160;
+ const s = Math.sqrt(1 - u * u);
+ pos[i * 3] = r * s * Math.cos(th); pos[i * 3 + 1] = r * u; pos[i * 3 + 2] = r * s * Math.sin(th);
+ const c = palette[Math.floor(Math.random() * palette.length)];
+ const b = 0.35 + Math.pow(Math.random(), 3) * 0.9;
+ col[i * 3] = c[0] * b; col[i * 3 + 1] = c[1] * b; col[i * 3 + 2] = c[2] * b;
+ size[i] = 1.2 + Math.pow(Math.random(), 4) * 3.2;
+ phase[i] = Math.random() * 6.28;
+ }
+ const geo = new THREE.BufferGeometry();
+ geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+ geo.setAttribute('aColor', new THREE.BufferAttribute(col, 3));
+ geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+ geo.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
+ starFieldMat = new THREE.ShaderMaterial({
+ uniforms: { uTime: { value: 0 }, uPR: { value: 1 } },
+ vertexShader: `
+ attribute float aSize; attribute vec3 aColor; attribute float aPhase;
+ uniform float uTime; uniform float uPR; varying vec3 vC;
+ void main() { vC = aColor * (0.8 + 0.2 * sin(uTime * 1.3 + aPhase)); gl_PointSize = aSize * uPR; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+ fragmentShader: `
+ varying vec3 vC;
+ void main() { float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.5, 0.0, d); a *= a; gl_FragColor = vec4(vC * a, 1.0); }`,
+ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
  });
-
- starField = new THREE.Points(geometry, material);
+ starField = new THREE.Points(geo, starFieldMat);
  scene.add(starField);
  }
 
- // 2. Rigel Star
- function buildRigelStar() {
- const geometry = new THREE.SphereGeometry(4.5, 64, 64);
- const material = new THREE.MeshStandardMaterial({
- color: 0x0284c7,
- emissive: 0x38bdf8,
- emissiveIntensity: 0.9,
- roughness: 0.2,
- metalness: 0.1
- });
+ // ================= 1단계: 리겔 만들기 =================
+ function buildStar() {
+ starGroup = new THREE.Group();
 
- starMesh = new THREE.Mesh(geometry, material);
- scene.add(starMesh);
-
- const atmosphereGeo = new THREE.SphereGeometry(5.0, 32, 32);
- const atmosphereMat = new THREE.MeshBasicMaterial({
- color: 0x38bdf8,
- transparent: true,
- opacity: 0.3,
- side: THREE.BackSide
+ starSurfaceMat = new THREE.ShaderMaterial({
+ uniforms: { uColor: { value: STAR_COLOR }, uTime: { value: 0 }, uHeat: { value: 0 } },
+ vertexShader: STAR_VERT, fragmentShader: STAR_FRAG,
+ clipping: true, clippingPlanes: cutPlanes, clipIntersection: true
  });
- starAtmosphere = new THREE.Mesh(atmosphereGeo, atmosphereMat);
- starMesh.add(starAtmosphere);
+ starMesh = new THREE.Mesh(new THREE.SphereGeometry(STAR_R, 96, 64), starSurfaceMat);
+ starGroup.add(starMesh);
+
+ // 잘린 면(단면) 두 장
+ capMat = new THREE.ShaderMaterial({
+ uniforms: { uMode: { value: 0 }, uR: { value: STAR_R }, uCore: { value: 1 }, uShock: { value: 0 }, uTime: { value: 0 } },
+ vertexShader: CAP_VERT, fragmentShader: CAP_FRAG, side: THREE.DoubleSide
+ });
+ capGroup = new THREE.Group();
+ const half = new THREE.CircleGeometry(STAR_R, 96, -Math.PI / 2, Math.PI);
+ const capA = new THREE.Mesh(half, capMat); // z = 0 면 (x ≥ 0)
+ const capB = new THREE.Mesh(half, capMat); // x = 0 면 (z ≥ 0)
+ capB.rotation.y = -Math.PI / 2;
+ capGroup.add(capA, capB);
+ starGroup.add(capGroup);
+
+ starGlow = makeGlow(0xC0D1FF, STAR_R * 6.0, 1.0);
+ starGroup.add(starGlow);
+
+ // 항성풍
+ const N = 1400;
+ const dir = new Float32Array(N * 3), ph = new Float32Array(N), sp = new Float32Array(N);
+ for (let i = 0; i < N; i++) {
+ const v = V3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+ dir[i * 3] = v.x; dir[i * 3 + 1] = v.y; dir[i * 3 + 2] = v.z;
+ ph[i] = Math.random(); sp[i] = 0.05 + Math.random() * 0.06;
+ }
+ const wg = new THREE.BufferGeometry();
+ wg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3));
+ wg.setAttribute('aDir', new THREE.BufferAttribute(dir, 3));
+ wg.setAttribute('aPhase', new THREE.BufferAttribute(ph, 1));
+ wg.setAttribute('aSpeed', new THREE.BufferAttribute(sp, 1));
+ windMat = new THREE.ShaderMaterial({
+ uniforms: { uTime: { value: 0 }, uR: { value: STAR_R }, uPx: { value: 800 }, uColor: { value: new THREE.Color(0.65, 0.78, 1.0) }, uAlpha: { value: 0.55 } },
+ vertexShader: WIND_VERT, fragmentShader: SOFT_FRAG,
+ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+ });
+ windPoints = new THREE.Points(wg, windMat);
+ windPoints.frustumCulled = false;
+ starGroup.add(windPoints);
+
+ buildEqArrows();
+
+ // 이름표
+ eqLabels.push(makeLabel('중심핵 (핵융합)', 'big', starGroup, V3(1.15, -0.55, 0.1)));
+ onionLabels.push(makeLabel('H 외피', 'warm', starGroup, V3(3.6 * Math.cos(-0.45), 3.6 * Math.sin(-0.45), 0.1)));
+ onionLabels.push(makeLabel('He', '', starGroup, V3(2.35 * Math.cos(-0.75), 2.35 * Math.sin(-0.75), 0.1)));
+ onionLabels.push(makeLabel('C', '', starGroup, V3(1.72 * Math.cos(-1.05), 1.72 * Math.sin(-1.05), 0.1)));
+ onionLabels.push(makeLabel('O·Ne', 'cool', starGroup, V3(1.17 * Math.cos(-1.4), 1.17 * Math.sin(-1.4), 0.1)));
+ onionLabels.push(makeLabel('Si', '', starGroup, V3(0.68 * Math.cos(0.5), 0.68 * Math.sin(0.5), 0.1)));
+ onionLabels.push(makeLabel('Fe 핵', 'big', starGroup, V3(0.05, 1.05, 0.1)));
+
+ scene.add(starGroup);
  }
 
- // 3. Supernova (Implosion Core + Exterior Explosion)
- function buildSupernovaEffect() {
- supernovaGroup = new THREE.Group();
+ function makeArrow(mat, len) {
+ const g = new THREE.Group();
+ const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, len * 0.68, 10), mat);
+ shaft.position.y = len * 0.34;
+ const head = new THREE.Mesh(new THREE.ConeGeometry(0.13, len * 0.32, 16), mat);
+ head.position.y = len * 0.84;
+ g.add(shaft, head);
+ return g;
+ }
 
- // Central Imploding Core Mesh (Contracts inward into a small sphere)
- const coreGeo = new THREE.SphereGeometry(4.2, 32, 32);
- const coreMat = new THREE.MeshStandardMaterial({
- color: 0xa855f7,
- emissive: 0xc084fc,
- emissiveIntensity: 1.0,
- roughness: 0.1
+ // 단면 위의 힘 화살표: 같은 자리에서 압력(바깥) = 중력(안쪽)
+ function buildEqArrows() {
+ eqArrows = new THREE.Group();
+ const L = 0.85, off = 0.07, side = 0.13;
+ const matOut = new THREE.MeshBasicMaterial({ color: 0xfb923c });
+ const matIn = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
+ const Y = V3(0, 1, 0);
+ const angles = [-60, -20, 20, 60].map(a => a * Math.PI / 180);
+ for (const face of [0, 1]) {
+ for (const th of angles) {
+ for (const rr of [0.42, 0.72]) {
+ const d = face === 0 ? V3(Math.cos(th), Math.sin(th), 0) : V3(0, Math.sin(th), Math.cos(th));
+ const tan = face === 0 ? V3(-Math.sin(th), Math.cos(th), 0) : V3(0, Math.cos(th), -Math.sin(th));
+ const n = face === 0 ? V3(0, 0, off) : V3(off, 0, 0);
+ const base = d.clone().multiplyScalar(rr * STAR_R).add(n);
+ const aOut = makeArrow(matOut, L);
+ aOut.position.copy(base).addScaledVector(tan, side);
+ aOut.quaternion.setFromUnitVectors(Y, d);
+ const aIn = makeArrow(matIn, L);
+ aIn.position.copy(base).addScaledVector(tan, -side).addScaledVector(d, L);
+ aIn.quaternion.setFromUnitVectors(Y, d.clone().negate());
+ eqArrows.add(aOut, aIn);
+ if (face === 0 && th > 1 && rr > 0.7) {
+ const mid = base.clone().addScaledVector(d, L * 0.5);
+ eqLabels.push(makeLabel('압력', 'warm', starGroup, mid.clone().addScaledVector(tan, 0.62)));
+ eqLabels.push(makeLabel('중력', 'cool', starGroup, mid.clone().addScaledVector(tan, -0.62)));
+ }
+ }
+ }
+ }
+ starGroup.add(eqArrows);
+ }
+
+ function setClip(on) {
+ const want = on ? cutPlanes : null;
+ if (starSurfaceMat.clippingPlanes !== want) {
+ starSurfaceMat.clippingPlanes = want;
+ starSurfaceMat.needsUpdate = true;
+ }
+ }
+
+ // ================= 2단계: 초신성 만들기 =================
+ function buildSupernova() {
+ snGroup = new THREE.Group();
+
+ neutrinoShell = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.ShaderMaterial({
+ uniforms: { uColor: { value: new THREE.Color(0.55, 0.9, 1.0) }, uAlpha: { value: 1 } },
+ vertexShader: FRESNEL_VERT, fragmentShader: FRESNEL_FRAG,
+ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+ }));
+ snGroup.add(neutrinoShell);
+
+ flashSprite = makeGlow(0xfff4e0, 1, 0);
+ snGroup.add(flashSprite);
+
+ // 방출 물질: 층마다 다른 원소, 바깥층일수록 빠르다(균일 팽창), 매듭·필라멘트 모양
+ const layers = [
+ { r0: 0.80, v: [1.18, 1.42], c: [1.0, 0.25, 0.22], n: 4600 }, // H: Hα 빨강
+ { r0: 0.45, v: [0.85, 1.05], c: [1.0, 0.55, 0.42], n: 1200 }, // He
+ { r0: 0.25, v: [0.66, 0.86], c: [0.20, 1.0, 0.70], n: 2600 }, // O: [O III] 청록
+ { r0: 0.15, v: [0.42, 0.62], c: [1.0, 0.85, 0.35], n: 1100 }, // Si·S
+ { r0: 0.08, v: [0.30, 0.48], c: [0.70, 0.80, 1.0], n: 700 } // Fe
+ ];
+ const total = layers.reduce((s, l) => s + l.n, 0);
+ const aDir = new Float32Array(total * 3), aStart = new Float32Array(total), aSpeed = new Float32Array(total), aColor = new Float32Array(total * 3), aSize = new Float32Array(total);
+ const asym = V3(0.4, 0.3, -0.85).normalize();
+ const rv = () => V3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+ let k = 0;
+ for (const L of layers) {
+ const knots = [];
+ for (let i = 0; i < 110; i++) knots.push({ d: rv(), s: L.v[0] + Math.random() * (L.v[1] - L.v[0]) });
+ for (let i = 0; i < L.n; i++) {
+ let d, s;
+ if (Math.random() < 0.72) {
+ const kn = knots[Math.floor(Math.random() * knots.length)];
+ d = kn.d.clone().addScaledVector(rv(), 0.07 * Math.random()).normalize();
+ s = kn.s * (0.9 + Math.random() * 0.2); // 반지름 방향으로 약간 길쭉한 매듭
+ } else {
+ d = rv();
+ s = L.v[0] + Math.random() * (L.v[1] - L.v[0]);
+ }
+ if (L.c[1] > 0.9 && Math.random() < 0.12) s *= 1.45; // 산소 일부가 바깥까지 섞임
+ s *= 1 + 0.16 * d.dot(asym); // 약한 비대칭
+ aDir[k * 3] = d.x; aDir[k * 3 + 1] = d.y; aDir[k * 3 + 2] = d.z;
+ aStart[k] = L.r0 * STAR_R * (0.9 + Math.random() * 0.2);
+ aSpeed[k] = s;
+ const b = 0.7 + Math.random() * 0.5;
+ aColor[k * 3] = L.c[0] * b; aColor[k * 3 + 1] = L.c[1] * b; aColor[k * 3 + 2] = L.c[2] * b;
+ aSize[k] = 0.16 + Math.pow(Math.random(), 2) * 0.4;
+ k++;
+ }
+ }
+ const eg = new THREE.BufferGeometry();
+ eg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(total * 3), 3));
+ eg.setAttribute('aDir', new THREE.BufferAttribute(aDir, 3));
+ eg.setAttribute('aStart', new THREE.BufferAttribute(aStart, 1));
+ eg.setAttribute('aSpeed', new THREE.BufferAttribute(aSpeed, 1));
+ eg.setAttribute('aColor', new THREE.BufferAttribute(aColor, 3));
+ eg.setAttribute('aSize', new THREE.BufferAttribute(aSize, 1));
+ ejecta = new THREE.Points(eg, new THREE.ShaderMaterial({
+ uniforms: { uGrow: { value: 0 }, uHot: { value: 1 }, uPx: { value: 800 }, uAlpha: { value: 0.5 } },
+ vertexShader: EJ_VERT, fragmentShader: EJ_FRAG,
+ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+ }));
+ ejecta.frustumCulled = false;
+ snGroup.add(ejecta);
+
+ // 남는 천체 (중성자별 또는 블랙홀)
+ remnantGroup = new THREE.Group();
+ remnantGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.16, 24, 16), new THREE.MeshBasicMaterial({ color: 0xe6f0ff })));
+ remnantGlow = makeGlow(0xbfd8ff, 2.4, 0.9);
+ remnantGroup.add(remnantGlow);
+ snGroup.add(remnantGroup);
+ remnantLabel = makeLabel('중성자별 또는 블랙홀<br><span style="font-weight:400;color:#94a3b8">리겔은 어느 쪽일지 아직 불확실</span>', 'cool', remnantGroup, V3(0, 2.6, 0));
+ neutrinoLabel = makeLabel('뉴트리노 방출 (에너지의 99%)', 'cool', snGroup, V3(-3.2, 4.4, 1.5));
+
+ snGroup.visible = false;
+ scene.add(snGroup);
+ }
+
+ function triggerSupernovaAnimation() {
+ snTime = 0;
+ snPlaying = true;
+ snPhase = -1;
+ userMovedCamera = false;
+ updateSnPlayButton();
+ if (currentStep === 1) {
+ starGroup.visible = true;
+ const c = CAMS[1];
+ camera.position.set(...c.p);
+ controls.target.set(...c.t);
+ controls.update();
+ }
+ }
+
+ function toggleSnPlay() {
+ if (!snPlaying && snTime >= SN_END) { triggerSupernovaAnimation(); return; }
+ snPlaying = !snPlaying;
+ updateSnPlayButton();
+ }
+
+ function updateSnPlayButton() {
+ const lab = document.getElementById('sn-play-label');
+ const ic = document.getElementById('sn-play-icon');
+ if (lab) lab.innerText = snPlaying ? '일시정지' : '이어서 재생';
+ if (ic) ic.className = snPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+ }
+
+ function updateSupernova(dt) {
+ if (snPlaying) snTime = Math.min(SN_END, snTime + dt);
+ const t = snTime;
+
+ let ph = 0;
+ for (let i = 0; i < SN_PHASES.length; i++) if (t >= SN_PHASES[i].t) ph = i;
+ if (ph !== snPhase) {
+ snPhase = ph;
+ SN_PHASES.forEach((_, i) => { const el = document.getElementById('sn-ph-' + i); if (el) el.classList.toggle('on', i === ph); });
+ }
+
+ // ② 철 핵 붕괴
+ const c = clamp01((t - 3.5) / 1.1);
+ capMat.uniforms.uCore.value = 1 - 0.85 * c * c * c;
+ // ③ 반동 충격파(잠시 멈춤) → ④ 뉴트리노 가열로 되살아나 별을 통과
+ let shock = 0;
+ if (t >= 4.6 && t < 5.8) shock = 0.02 + 0.04 * smooth01((t - 4.6) / 0.4);
+ else if (t >= 5.8) shock = 0.06 + 0.94 * smooth01((t - 5.8) / 2.7);
+ capMat.uniforms.uShock.value = shock;
+ starSurfaceMat.uniforms.uHeat.value = smooth01((shock - 0.85) / 0.15);
+ for (const l of onionLabels) l.userData.show = t < 5.8;
+
+ starGroup.visible = t < 8.6;
+
+ // 뉴트리노: 빛보다 먼저, 별을 그냥 통과해 나간다
+ const nt = t - 4.6;
+ neutrinoShell.visible = nt > 0 && nt < 2.2;
+ if (neutrinoShell.visible) {
+ neutrinoShell.scale.setScalar(0.3 + nt * 22);
+ neutrinoShell.material.uniforms.uAlpha.value = 1.2 * (1 - nt / 2.2);
+ }
+ neutrinoLabel.userData.show = t >= 4.6 && t < 7.0;
+
+ // ⑤ 표면 도달 섬광
+ const ft = t - 8.5;
+ flashSprite.visible = ft > 0 && ft < 2.0;
+ if (flashSprite.visible) {
+ flashSprite.scale.setScalar(10 + ft * 45);
+ flashSprite.material.opacity = ft < 0.15 ? ft / 0.15 : Math.max(0, 1 - (ft - 0.15) / 1.85);
+ }
+
+ // ⑥ 방출 물질 팽창
+ ejecta.visible = t >= 8.5;
+ if (ejecta.visible) {
+ const tau = t - 8.5;
+ const u = ejecta.material.uniforms;
+ u.uGrow.value = 0.8 * 14 * (1 - Math.exp(-tau / 7));
+ u.uHot.value = Math.exp(-tau * 0.7);
+ u.uAlpha.value = 0.55 * Math.min(1, tau * 3);
+ }
+
+ remnantGroup.visible = t >= 9.0;
+ if (remnantGroup.visible) {
+ const s = 2.0 + 0.5 * Math.sin(elapsed * 9.0);
+ remnantGlow.scale.set(s, s, 1);
+ }
+
+ // 폭발이 커지면 카메라를 천천히 뒤로
+ if (t > 8.5 && t < 13.2 && !userMovedCamera) {
+ const target = controls.target;
+ const dir = camera.position.clone().sub(target);
+ dir.setLength(18.6 + 21 * smooth01((t - 8.5) / 4.5));
+ camera.position.copy(target).add(dir);
+ }
+ }
+
+ // ================= 3단계: 시공간 만들기 =================
+ function buildSpacetime() {
+ spaceGroup = new THREE.Group();
+
+ // 깔때기 (공간 임베딩 곡면)
+ funnelGroup = new THREE.Group();
+ funnelGeo = new THREE.BufferGeometry();
+ const nv = (SP_NR + 1) * (SP_NPHI + 1);
+ funnelGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(nv * 3), 3));
+ funnelGeo.setAttribute('aR', new THREE.BufferAttribute(new Float32Array(nv), 1));
+ const idx = [];
+ for (let i = 0; i < SP_NR; i++) for (let j = 0; j < SP_NPHI; j++) {
+ const a = i * (SP_NPHI + 1) + j, b = a + SP_NPHI + 1;
+ idx.push(a, b, a + 1, b, b + 1, a + 1);
+ }
+ funnelGeo.setIndex(idx);
+ const mk = side => {
+ const m = new THREE.ShaderMaterial({
+ uniforms: { uR: { value: 6 }, uBH: { value: 0 }, uTime: { value: 0 } },
+ vertexShader: FUN_VERT, fragmentShader: FUN_FRAG,
+ transparent: true, depthWrite: false, side
  });
- implodingCoreMesh = new THREE.Mesh(coreGeo, coreMat);
- supernovaGroup.add(implodingCoreMesh);
+ m.extensions.derivatives = true;
+ return m;
+ };
+ funnelMatBack = mk(THREE.BackSide);
+ funnelMatFront = mk(THREE.FrontSide);
+ const back = new THREE.Mesh(funnelGeo, funnelMatBack); back.renderOrder = 1; back.frustumCulled = false;
+ const front = new THREE.Mesh(funnelGeo, funnelMatFront); front.renderOrder = 2; front.frustumCulled = false;
+ funnelGroup.add(back, front);
+ spaceGroup.add(funnelGroup);
 
- // Explosive Outer Particles
- const particleCount = 3000;
- const geo = new THREE.BufferGeometry();
- const positions = new Float32Array(particleCount * 3);
- const velocities = new Float32Array(particleCount * 3);
- const colors = new Float32Array(particleCount * 3);
+ // 위쪽 평평한 면 (빛의 실제 경로를 그리는 곳)
+ flatGroup = new THREE.Group();
+ const lid = new THREE.Mesh(new THREE.CircleGeometry(SP_RMAX, 96), new THREE.MeshBasicMaterial({ color: 0x1e293b, transparent: true, opacity: 0.12, depthWrite: false, side: THREE.DoubleSide }));
+ lid.rotation.x = -Math.PI / 2; lid.renderOrder = 3;
+ flatGroup.add(lid);
+ flatGroup.add(makeCircleLine(SP_RMAX, 0x64748b, 0.6, false));
 
- for (let i = 0; i < particleCount * 3; i += 3) {
- positions[i] = (Math.random() - 0.5) * 0.5;
- positions[i + 1] = (Math.random() - 0.5) * 0.5;
- positions[i + 2] = (Math.random() - 0.5) * 0.5;
+ starDisk = new THREE.Mesh(new THREE.CircleGeometry(1, 64), new THREE.MeshBasicMaterial({ color: 0xC0D1FF, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide }));
+ starDisk.rotation.x = -Math.PI / 2; starDisk.position.y = RAY_Y - 0.01; starDisk.renderOrder = 4;
+ starDiskGlow = makeCircleLine(1, 0xC0D1FF, 0.9, false);
+ flatGroup.add(starDisk, starDiskGlow);
 
- const dir = new THREE.Vector3(
- (Math.random() - 0.5),
- (Math.random() - 0.5),
- (Math.random() - 0.5)
- ).normalize().multiplyScalar(0.25 + Math.random() * 0.85);
+ bhDiskGroup = new THREE.Group();
+ const bhd = new THREE.Mesh(new THREE.CircleGeometry(SP_RS, 64), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+ bhd.rotation.x = -Math.PI / 2; bhd.renderOrder = 4;
+ const bhr = new THREE.Mesh(new THREE.RingGeometry(SP_RS, SP_RS * 1.12, 64), new THREE.MeshBasicMaterial({ color: 0xff9a3c, side: THREE.DoubleSide }));
+ bhr.rotation.x = -Math.PI / 2; bhr.renderOrder = 4;
+ bhDiskGroup.add(bhd, bhr);
+ bhDiskGroup.position.y = RAY_Y - 0.01;
+ flatGroup.add(bhDiskGroup);
 
- velocities[i] = dir.x;
- velocities[i + 1] = dir.y;
- velocities[i + 2] = dir.z;
+ photonRingLine = makeCircleLine(1.5 * SP_RS, 0xffffff, 0.8, true);
+ shadowRingLine = makeCircleLine(2.598 * SP_RS, 0xfb923c, 0.8, true);
+ flatGroup.add(photonRingLine, shadowRingLine);
+ photonRingLabel = makeLabel('◀ 광자구 1.5 Rs (흰 점선)', '', flatGroup, V3(6.2, RAY_Y + 0.3, 0));
+ shadowRingLabel = makeLabel('그림자 크기 2.6 Rs (주황 점선) ▶', 'warm', flatGroup, V3(-7.0, RAY_Y + 0.3, 0));
+ makeLabel('평평한 면: 빛의 실제 경로', '', flatGroup, V3(15, 0.6, -18));
+ spaceGroup.add(flatGroup);
 
- colors[i] = 1.0;
- colors[i + 1] = 0.3 + Math.random() * 0.5;
- colors[i + 2] = 0.2;
- }
+ rayGroup = new THREE.Group();
+ spaceGroup.add(rayGroup);
 
- geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
- geo.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
- geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+ makeLabel('공간 깔때기 (한 순간의 공간)', 'cool', funnelGroup, V3(-13.5, embedY(14, 6) - 0.4, 5));
+ centerLabel = makeLabel('', 'big', spaceGroup, V3(0, 0, 0));
 
- const mat = new THREE.PointsMaterial({
- size: 0.45,
- vertexColors: true,
- transparent: true,
- opacity: 0.95,
- blending: THREE.AdditiveBlending
+ // 시계 빠르기 이름표 (깔때기 안쪽 벽)
+ const clockR = [1.5, 2, 4, 10, 22];
+ const clockPhi = [-140, -115, -90, -65, -40];
+ clockR.forEach((r, i) => {
+ const lab = makeLabel('', 'clock', spaceGroup, V3(0, 0, 0));
+ lab.userData.r = r;
+ lab.userData.phi = clockPhi[i] * Math.PI / 180;
+ clockLabels.push(lab);
  });
 
- supernovaParticles = new THREE.Points(geo, mat);
- supernovaGroup.add(supernovaParticles);
-
- // 3D Polar Jets (+Y and -Y)
- polarJetsGroup = new THREE.Group();
- const jetGeo = new THREE.CylinderGeometry(0.2, 4.0, 20, 32, 1, true);
- const jetMat = new THREE.MeshBasicMaterial({
- color: 0x38bdf8,
- transparent: true,
- opacity: 0.7,
- side: THREE.DoubleSide,
- blending: THREE.AdditiveBlending
- });
-
- const topJet = new THREE.Mesh(jetGeo, jetMat);
- topJet.position.y = 10;
- const bottomJet = new THREE.Mesh(jetGeo, jetMat);
- bottomJet.position.y = -10;
- bottomJet.rotation.z = Math.PI;
-
- polarJetsGroup.add(topJet);
- polarJetsGroup.add(bottomJet);
- supernovaGroup.add(polarJetsGroup);
-
- // Shockwave Sphere
- const shockGeo = new THREE.SphereGeometry(1, 32, 32);
- const shockMat = new THREE.MeshBasicMaterial({
- color: 0xf43f5e,
- wireframe: true,
- transparent: true,
- opacity: 0.5
- });
- shockwaveMesh = new THREE.Mesh(shockGeo, shockMat);
- supernovaGroup.add(shockwaveMesh);
-
- supernovaGroup.visible = false;
- scene.add(supernovaGroup);
+ spaceGroup.visible = false;
+ scene.add(spaceGroup);
+ setStarRatio(starRatio);
  }
 
- // 4. Spacetime Curvature Grid & Geodesics
- function buildSpacetimeGrid() {
- spacetimeGridGroup = new THREE.Group();
-
- const gridRadius = 25;
- const radialSegments = 44;
- const tubularSegments = 100;
-
- const gridGeo = new THREE.PlaneGeometry(gridRadius * 2, gridRadius * 2, radialSegments, tubularSegments);
- gridGeo.rotateX(-Math.PI / 2);
-
- const posAttr = gridGeo.attributes.position;
- for (let i = 0; i < posAttr.count; i++) {
- const x = posAttr.getX(i);
- const z = posAttr.getZ(i);
- const r = Math.sqrt(x * x + z * z);
-
- // Deep Flamm's paraboloid funnel deformation
- const depth = -13.5 / (Math.pow(r + 0.7, 0.75));
- posAttr.setY(i, depth);
- }
- gridGeo.computeVertexNormals();
-
- const gridMat = new THREE.MeshBasicMaterial({
- color: 0x0284c7,
- wireframe: true,
- transparent: true,
- opacity: 0.4
- });
-
- gridMesh = new THREE.Mesh(gridGeo, gridMat);
- spacetimeGridGroup.add(gridMesh);
-
- // Geodesic Lines
- geodesicLinesGroup = new THREE.Group();
- for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
- const points = [];
- for (let r = 25; r > 1.8; r -= 0.4) {
- const curvedAngle = angle + (16.0 / (r + 0.8)) * 0.22;
- const x = Math.cos(curvedAngle) * r;
- const z = Math.sin(curvedAngle) * r;
- const y = -13.5 / (Math.pow(r + 0.7, 0.75));
- points.push(new THREE.Vector3(x, y + 0.1, z));
- }
- const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
- const lineMat = new THREE.LineBasicMaterial({ color: 0xf43f5e, linewidth: 2.5 });
- const line = new THREE.Line(lineGeo, lineMat);
- geodesicLinesGroup.add(line);
+ function makeCircleLine(r, color, opacity, dashed) {
+ const pts = [];
+ for (let i = 0; i <= 128; i++) { const a = i / 128 * Math.PI * 2; pts.push(V3(r * Math.cos(a), RAY_Y, r * Math.sin(a))); }
+ const g = new THREE.BufferGeometry().setFromPoints(pts);
+ const m = dashed
+ ? new THREE.LineDashedMaterial({ color, transparent: true, opacity, dashSize: 0.18, gapSize: 0.12 })
+ : new THREE.LineBasicMaterial({ color, transparent: true, opacity });
+ const l = new THREE.Line(g, m);
+ if (dashed) l.computeLineDistances();
+ l.renderOrder = 5;
+ return l;
  }
 
- spacetimeGridGroup.add(geodesicLinesGroup);
- scene.add(spacetimeGridGroup);
+ function updateFunnel() {
+ const R = starRatio * SP_RS;
+ const isBH = starRatio <= 1.0001;
+ const rin = isBH ? SP_RS : 0;
+ const pos = funnelGeo.attributes.position.array, ar = funnelGeo.attributes.aR.array;
+ let k = 0;
+ for (let i = 0; i <= SP_NR; i++) {
+ const r = rin + (SP_RMAX - rin) * Math.pow(i / SP_NR, 1.7);
+ const y = embedY(r, R);
+ for (let j = 0; j <= SP_NPHI; j++) {
+ const a = j / SP_NPHI * Math.PI * 2;
+ pos[k * 3] = r * Math.cos(a); pos[k * 3 + 1] = y; pos[k * 3 + 2] = r * Math.sin(a);
+ ar[k] = r;
+ k++;
+ }
+ }
+ funnelGeo.attributes.position.needsUpdate = true;
+ funnelGeo.attributes.aR.needsUpdate = true;
+ for (const m of [funnelMatBack, funnelMatFront]) { m.uniforms.uR.value = R; m.uniforms.uBH.value = isBH ? 1 : 0; }
  }
 
- // 5. Relativistic Black Hole (광선추적 셰이더를 화면 전체에 그림)
+ // 시계 빠르기: 별 바깥 √(1−Rs/r), 균일 밀도 별 내부 [3√(1−Rs/R) − √(1−Rs r²/R³)] / 2
+ function clockRate(r, R) {
+ if (R <= SP_RS * 1.0001 || r >= R) return Math.sqrt(Math.max(0, 1 - SP_RS / r));
+ return (3 * Math.sqrt(1 - SP_RS / R) - Math.sqrt(1 - SP_RS * r * r / (R * R * R))) / 2;
+ }
+
+ function setStarRatio(x) {
+ starRatio = Math.max(1, Math.min(10, x));
+ if (starRatio < 1.004) starRatio = 1;
+ const R = starRatio * SP_RS;
+ const isBH = starRatio === 1;
+ updateFunnel();
+
+ starDisk.visible = !isBH;
+ starDiskGlow.visible = !isBH;
+ starDisk.scale.setScalar(R);
+ starDiskGlow.scale.set(R, 1, R);
+ bhDiskGroup.visible = isBH;
+ const showRings = starRatio < 1.5;
+ photonRingLine.visible = showRings;
+ shadowRingLine.visible = showRings;
+ photonRingLabel.userData.show = showRings;
+ shadowRingLabel.userData.show = showRings;
+
+ const yBottom = embedY(isBH ? SP_RS : 0, R);
+ centerLabel.position.set(isBH ? 1.6 : 0, yBottom - (isBH ? 0 : 0.7), 0);
+ centerLabel.element.innerHTML = isBH ? '사건의 지평선 (r = Rs)' : `별 (R = ${starRatio.toFixed(2)} Rs) · 중심 시계 ⏱ ×${clockRate(0, R).toFixed(2)}`;
+ centerLabel.element.className = 'lbl big ' + (isBH ? 'warm' : '');
+
+ for (const lab of clockLabels) {
+ const r = lab.userData.r, a = lab.userData.phi;
+ const hide = (isBH && r <= SP_RS) || (!isBH && r < R);
+ lab.userData.show = !hide;
+ lab.position.set(r * Math.cos(a), embedY(r, R) + 0.35, r * Math.sin(a));
+ const rate = clockRate(r, R);
+ lab.element.innerHTML = `⏱ ×${rate.toFixed(2)}` + (r >= 20 ? ' (먼 곳 ≈ 1)' : '');
+ }
+
+ const rv = document.getElementById('r-val');
+ if (rv) rv.innerText = starRatio.toFixed(2);
+ const sl = document.getElementById('r-slider');
+ if (sl && Math.abs(+sl.value - starRatio) > 0.005) sl.value = starRatio;
+ const w = document.getElementById('r-warning');
+ if (w) {
+ if (isBH) w.innerHTML = '<span class="text-orange-300">● 블랙홀: 별 표면은 사라지고 사건의 지평선(수직 벽)만 남았습니다.</span>';
+ else if (starRatio < 1.125) w.innerHTML = '<span class="text-rose-300">⚠ R &lt; 9/8 Rs: 어떤 압력으로도 버틸 수 없어 붕괴합니다.</span>';
+ else if (starRatio < 4) w.innerHTML = '<span class="text-sky-300">중성자별은 대략 R ≈ 3 Rs 정도입니다.</span>';
+ else w.innerHTML = '<span class="text-slate-400">별 바깥의 깔때기 모양은 R과 상관없이 같습니다.</span>';
+ }
+ if (currentStep === 2) {
+ const hv = document.getElementById('hud-v4');
+ if (hv) hv.innerText = isBH ? '블랙홀 (R → Rs)' : `R = ${starRatio.toFixed(2)} Rs (≈ ${Math.round(starRatio * 29.5)} km)`;
+ }
+ }
+
+ function onRatioInput(x) {
+ collapseAnim = null;
+ clearRays();
+ setStarRatio(x);
+ }
+
+ function playCollapse() {
+ clearRays();
+ const from = starRatio > 1.05 ? starRatio : 8;
+ collapseAnim = { from, t: 0, dur: 2.2 + from * 0.45 };
+ }
+
+ function clearRays() {
+ while (rayGroup.children.length) {
+ const c = rayGroup.children.pop();
+ if (c.geometry) c.geometry.dispose();
+ }
+ }
+
+ // 슈바르츠실트 빛 궤도: a = −1.5·Rs·h²·r / r⁵ (h = |r×v|, 경로 모양이 정확함), RK4 적분
+ function traceRay(b, rAbsorb) {
+ let x = -23, z = b, vx = 1, vz = 0;
+ const h2 = b * b;
+ const pts = [V3(x, RAY_Y, z)];
+ let lx = x, lz = z, fate = 'escape';
+ const ax = (px, pz) => { const r2 = px * px + pz * pz, r = Math.sqrt(r2); const k = -1.5 * SP_RS * h2 / (r2 * r2 * r); return [k * px, k * pz]; };
+ for (let i = 0; i < 60000; i++) {
+ const r = Math.hypot(x, z);
+ if (r < rAbsorb) { fate = 'capture'; break; }
+ if (r > 25 && x * vx + z * vz > 0) break;
+ const dt = Math.min(0.08, 0.012 * r);
+ const [a1x, a1z] = ax(x, z);
+ const [a2x, a2z] = ax(x + vx * dt / 2, z + vz * dt / 2);
+ const [a3x, a3z] = ax(x + (vx + a1x * dt / 2) * dt / 2, z + (vz + a1z * dt / 2) * dt / 2);
+ const [a4x, a4z] = ax(x + (vx + a2x * dt / 2) * dt, z + (vz + a2z * dt / 2) * dt);
+ const k1x = vx, k1z = vz;
+ const k2x = vx + a1x * dt / 2, k2z = vz + a1z * dt / 2;
+ const k3x = vx + a2x * dt / 2, k3z = vz + a2z * dt / 2;
+ const k4x = vx + a3x * dt, k4z = vz + a3z * dt;
+ x += (k1x + 2 * k2x + 2 * k3x + k4x) * dt / 6;
+ z += (k1z + 2 * k2z + 2 * k3z + k4z) * dt / 6;
+ vx += (a1x + 2 * a2x + 2 * a3x + a4x) * dt / 6;
+ vz += (a1z + 2 * a2z + 2 * a3z + a4z) * dt / 6;
+ if (Math.hypot(x - lx, z - lz) > 0.06) { pts.push(V3(x, RAY_Y, z)); lx = x; lz = z; }
+ }
+ pts.push(V3(x, RAY_Y, z));
+ return { pts, fate };
+ }
+
+ function fireRays() {
+ clearRays();
+ rayReveal = 0;
+ const rAbs = Math.max(starRatio, 1) * SP_RS;
+ const bs = [1.2, 2.0, 2.45, 2.62, 3.2, 4.5, 7, 10.5];
+ for (const sgn of [1, -1]) for (const b0 of bs) {
+ const b = sgn * b0;
+ const { pts, fate } = traceRay(b, rAbs);
+ const near = Math.abs(b0 - 2.62) < 0.01 && fate === 'escape' && starRatio < 1.5;
+ const color = fate === 'capture' ? 0xfb7185 : (near ? 0xffffff : 0xfde047);
+ const g = new THREE.BufferGeometry().setFromPoints(pts);
+ g.setDrawRange(0, 1);
+ const line = new THREE.Line(g, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.95 }));
+ line.renderOrder = 6;
+ line.userData = { pts, n: pts.length };
+ const head = makeGlow(color, 0.9, 1);
+ head.position.copy(pts[0]);
+ line.userData.head = head;
+ rayGroup.add(line, head);
+ }
+ }
+
+ function updateSpacetime(dt) {
+ if (collapseAnim) {
+ collapseAnim.t += dt;
+ const p = clamp01(collapseAnim.t / collapseAnim.dur);
+ // 처음엔 천천히, 끝으로 갈수록 빠르게
+ setStarRatio(1 + (collapseAnim.from - 1) * (1 - p * p * p));
+ if (p >= 1) { collapseAnim = null; setStarRatio(1); fireRays(); }
+ }
+ rayReveal += dt * 12;
+ for (const c of rayGroup.children) {
+ if (!c.isLine) continue;
+ const n = Math.min(c.userData.n, 1 + Math.floor(rayReveal / 0.06));
+ c.geometry.setDrawRange(0, n);
+ const head = c.userData.head;
+ head.position.copy(c.userData.pts[n - 1]);
+ head.visible = n < c.userData.n;
+ }
+ }
+
+ // ================= 4단계: 블랙홀 (광선추적 셰이더) =================
  function buildRelativisticBlackHole() {
  blackHoleGroup = new THREE.Group();
 
@@ -779,121 +1448,79 @@
  scene.add(blackHoleGroup);
  }
 
- // Hydrostatic Force Arrows
- function buildForceArrows() {
- forceArrowsGroup.clear();
- const count = 12;
-
- for (let i = 0; i < count; i++) {
- const angle = (i / count) * Math.PI * 2;
- const dir = new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle));
-
- // Outward Radiation Pressure (Orange)
- const arrowOut = new THREE.ArrowHelper(
- dir,
- dir.clone().multiplyScalar(4.6),
- 1.8,
- 0xf97316,
- 0.6,
- 0.4
- );
- forceArrowsGroup.add(arrowOut);
-
- // Inward Gravity (Cyan)
- const arrowIn = new THREE.ArrowHelper(
- dir.clone().negate(),
- dir.clone().multiplyScalar(7.2),
- 1.8,
- 0x38bdf8,
- 0.6,
- 0.4
- );
- forceArrowsGroup.add(arrowIn);
- }
- }
-
- // 블랙홀 단계에서는 광선추적 화면이 배경 별과 격자를 대신한다
+ // ================= 단계 전환 =================
  function updateSceneVisibility() {
- const isBH = (currentStep === 3);
- blackHoleGroup.visible = isBH;
- starField.visible = !isBH;
- spacetimeGridGroup.visible = !isBH && (isSpacetimeGridVisible || currentStep === 2);
+ const s = currentStep;
+ starGroup.visible = s === 0 || (s === 1 && snTime < 8.6);
+ snGroup.visible = s === 1;
+ spaceGroup.visible = s === 2;
+ funnelGroup.visible = isFunnelVisible;
+ blackHoleGroup.visible = s === 3;
+ starField.visible = s !== 3;
+
+ const cut = s === 1 || isCutaway;
+ setClip(cut);
+ capGroup.visible = cut;
+ capMat.uniforms.uMode.value = s === 1 ? 1 : 0;
+ eqArrows.visible = s === 0 && isCutaway;
+ for (const l of eqLabels) l.userData.show = s === 0 && isCutaway;
+ for (const l of onionLabels) l.userData.show = s === 1;
+ windPoints.visible = s === 0;
+ starSurfaceMat.uniforms.uHeat.value = 0;
+ capMat.uniforms.uCore.value = 1;
+ capMat.uniforms.uShock.value = 0;
+
+ const gb = document.getElementById('toggle-grid-btn');
+ gb.classList.toggle('active', isFunnelVisible);
+ gb.classList.toggle('dim', s !== 2);
  }
 
- // Step Switcher
  function setSimulationStep(stepIndex) {
  currentStep = stepIndex;
+ userMovedCamera = false;
 
  for (let i = 0; i < 4; i++) {
  const btn = document.getElementById(`btn-step-${i}`);
- if (btn) {
- if (i === stepIndex) btn.classList.add('active');
- else btn.classList.remove('active');
- }
+ if (btn) btn.classList.toggle('active', i === stepIndex);
  }
 
  const data = STEPS_DATA[stepIndex];
  document.getElementById('step-badge').innerText = data.badge;
  document.getElementById('step-title').innerText = data.title;
  document.getElementById('step-description').innerHTML = data.description;
- document.getElementById('step-formula').innerText = data.formula;
- document.getElementById('action-controls').innerHTML = data.actionHtml;
+ document.getElementById('step-formula').innerHTML = data.formula;
+ document.getElementById('action-controls').innerHTML = data.actionHtml();
+ data.hud.forEach((h, i) => {
+ document.getElementById('hud-l' + (i + 1)).innerText = h[0] + ':';
+ document.getElementById('hud-v' + (i + 1)).innerText = h[1];
+ });
 
- document.getElementById('hud-star-type').innerText = data.starType;
- document.getElementById('hud-mass').innerText = data.massText;
- document.getElementById('hud-rs').innerText = data.rsText;
- document.getElementById('hud-depth').innerText = data.depthText;
-
- // Visibility Toggles
- starMesh.visible = (stepIndex === 0);
- forceArrowsGroup.visible = (stepIndex === 0);
-
- supernovaGroup.visible = (stepIndex === 1);
- if (stepIndex === 1) {
- triggerSupernovaAnimation();
- }
+ // 남아 있는 광자 정리
+ for (const p of photonRays) { scene.remove(p.mesh); scene.remove(p.trail); }
+ photonRays = [];
 
  updateSceneVisibility();
+ if (stepIndex === 1) triggerSupernovaAnimation();
+ if (stepIndex === 2) { collapseAnim = null; setStarRatio(6); fireRays(); }
  if (stepIndex === 3) updateDopplerLabel();
 
  // 광선추적은 픽셀마다 계산하므로 블랙홀 단계에서는 해상도를 기기 성능에 맞춰 조절한다
  renderer.setPixelRatio(stepIndex === 3 ? bhPixelRatio : Math.min(window.devicePixelRatio, 2));
  frameAvgMs = 16;
 
- // Camera View Placement
- if (stepIndex === 0) camera.position.set(0, 4, 18);
- else if (stepIndex === 1) camera.position.set(0, 8, 26);
- else if (stepIndex === 2) camera.position.set(0, 16, 26);
- else if (stepIndex === 3) camera.position.set(0, 2.3, 15.5);
-
- controls.target.set(0, 0, 0);
- controls.update();
+ setCameraPhotoView();
  }
 
- function triggerSupernovaAnimation() {
- supernovaTime = 0;
-
- if (implodingCoreMesh) {
- implodingCoreMesh.scale.set(1, 1, 1);
- implodingCoreMesh.material.emissiveIntensity = 0.9;
- }
-
- if (supernovaParticles) {
- const posAttr = supernovaParticles.geometry.attributes.position;
- for (let i = 0; i < posAttr.count; i++) {
- posAttr.setXYZ(i, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5);
- }
- posAttr.needsUpdate = true;
- }
+ function toggleCutaway() {
+ isCutaway = !isCutaway;
+ updateSceneVisibility();
+ const lab = document.getElementById('cut-label');
+ if (lab) lab.innerText = isCutaway ? '겉모습 전체 보기' : '단면(속) 보기';
  }
 
  function toggleSpacetimeGrid() {
- isSpacetimeGridVisible = !isSpacetimeGridVisible;
+ isFunnelVisible = !isFunnelVisible;
  updateSceneVisibility();
-
- const btn = document.getElementById('toggle-grid-btn');
- if (isSpacetimeGridVisible) btn.classList.add('active');
- else btn.classList.remove('active');
  }
 
  function toggleDoppler() {
@@ -908,87 +1535,68 @@
  }
 
  function setCameraPhotoView() {
- if (currentStep === 3) camera.position.set(0, 2.3, 15.5);
- else camera.position.set(0, 1.8, 17.5);
- controls.target.set(0, 0, 0);
+ const c = CAMS[currentStep];
+ camera.position.set(...c.p);
+ controls.target.set(...c.t);
  controls.update();
  }
 
  function setCameraTopView() {
- camera.position.set(0, currentStep === 3 ? 26 : 32, 0.1);
- controls.target.set(0, 0, 0);
+ const c = CAMS[currentStep];
+ camera.position.set(c.t[0], c.t[1] + c.top, c.t[2] + 0.1);
+ controls.target.set(...c.t);
  controls.update();
  }
 
  function resetCamera() {
- camera.position.set(0, 10, 24);
- controls.target.set(0, 0, 0);
- controls.update();
+ setCameraPhotoView();
  }
 
- // Photon Gun Simulation
+ // ================= 광자 발사 (실제 빛 궤도) =================
+ function photonEnv() {
+ if (currentStep === 0) return { rs: 0, absorb: STAR_R, y: 0 }; // 리겔 근처에선 빛이 거의 안 휜다
+ if (currentStep === 1) return { rs: 0, absorb: starGroup.visible ? STAR_R : 0.16, y: 0 };
+ if (currentStep === 2) return { rs: SP_RS, absorb: Math.max(starRatio, 1) * SP_RS, y: RAY_Y + 0.02 };
+ return { rs: BH_SCALE, absorb: BH_SCALE, y: 0 };
+ }
+
  function shootPhotonRay() {
- const startX = -25;
- const startZ = (Math.random() - 0.5) * 8.0;
- const startY = (currentStep === 2) ? -1.0 : 0.0;
-
- const photonGeo = new THREE.SphereGeometry(0.25, 16, 16);
- const photonMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
- const photonMesh = new THREE.Mesh(photonGeo, photonMat);
-
- photonMesh.position.set(startX, startY, startZ);
- const velocity = new THREE.Vector3(0.65, 0, 0);
-
- const pathPoints = [photonMesh.position.clone()];
- const lineGeo = new THREE.BufferGeometry().setFromPoints(pathPoints);
- const lineMat = new THREE.LineBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.85 });
- const trailLine = new THREE.Line(lineGeo, lineMat);
-
- scene.add(photonMesh);
- scene.add(trailLine);
-
- photonRays.push({
- mesh: photonMesh,
- velocity: velocity,
- points: pathPoints,
- trail: trailLine,
- alive: true,
- age: 0
- });
+ const env = photonEnv();
+ const b = (Math.random() - 0.5) * 2 * 8;
+ const mesh = makeGlow(0xfacc15, 0.9, 1);
+ mesh.position.set(-26, env.y, b);
+ const pathPoints = [mesh.position.clone()];
+ const trail = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pathPoints), new THREE.LineBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.85 }));
+ trail.renderOrder = 7;
+ scene.add(mesh);
+ scene.add(trail);
+ photonRays.push({ mesh, trail, points: pathPoints, x: -26, z: b, vx: 1, vz: 0, h2: b * b, env, age: 0 });
  }
 
  function updatePhotons() {
  for (let i = photonRays.length - 1; i >= 0; i--) {
  const p = photonRays[i];
- if (!p.alive) continue;
-
- p.age += 1;
- const pos = p.mesh.position;
- const r = pos.length();
-
- if (r < 2.3) {
- scene.remove(p.mesh);
- scene.remove(p.trail);
- p.alive = false;
- photonRays.splice(i, 1);
- continue;
+ p.age++;
+ let travelled = 0, dead = false, guard = 0;
+ // 화면에서는 같은 빠르기로 움직이도록 경로 길이 기준으로 전진
+ while (travelled < 0.4 && guard++ < 400) {
+ const r = Math.hypot(p.x, p.z);
+ if (r < p.env.absorb) { dead = true; break; }
+ const dt = Math.min(0.2, 0.03 * r);
+ let ax = 0, az = 0;
+ if (p.env.rs > 0) { const k = -1.5 * p.env.rs * p.h2 / Math.pow(r, 5); ax = k * p.x; az = k * p.z; }
+ p.vx += ax * dt; p.vz += az * dt;
+ p.x += p.vx * dt; p.z += p.vz * dt;
+ travelled += Math.hypot(p.vx, p.vz) * dt;
  }
-
- if (r < 20.0) {
- const gravityAccel = pos.clone().negate().normalize().multiplyScalar(1.25 / (r * r));
- p.velocity.add(gravityAccel);
- }
-
- p.mesh.position.add(p.velocity);
+ p.mesh.position.set(p.x, p.env.y, p.z);
  p.points.push(p.mesh.position.clone());
-
- if (p.points.length > 50) p.points.shift();
+ if (p.points.length > 90) p.points.shift();
  p.trail.geometry.setFromPoints(p.points);
-
- if (pos.x > 32 || pos.x < -32 || pos.z > 32 || pos.z < -32 || p.age > 260) {
+ if (dead || Math.abs(p.x) > 32 || Math.abs(p.z) > 32 || p.age > 400) {
  scene.remove(p.mesh);
  scene.remove(p.trail);
- p.alive = false;
+ p.trail.geometry.dispose();
  photonRays.splice(i, 1);
  }
  }
@@ -998,9 +1606,10 @@
  camera.aspect = window.innerWidth / window.innerHeight;
  camera.updateProjectionMatrix();
  renderer.setSize(window.innerWidth, window.innerHeight);
+ labelRenderer.setSize(window.innerWidth, window.innerHeight);
  }
 
- // Main Render Loop
+ // ================= 렌더 루프 =================
  function animate() {
  requestAnimationFrame(animate);
 
@@ -1021,52 +1630,26 @@
  }
  }
 
- // Step 0: Rotate Star
- if (starMesh && starMesh.visible) {
- starMesh.rotation.y += 0.003;
+ const px = pxScale();
+ starFieldMat.uniforms.uTime.value = elapsed;
+ starFieldMat.uniforms.uPR.value = renderer.getPixelRatio();
+
+ if (currentStep <= 1) {
+ // 빛번짐은 별 뒤에 두어 단면을 덮지 않고 둘레로만 보이게
+ starGlow.position.copy(camera.position).sub(controls.target).setLength(-STAR_R * 1.1);
+ starSurfaceMat.uniforms.uTime.value = elapsed;
+ capMat.uniforms.uTime.value = elapsed;
+ windMat.uniforms.uTime.value = elapsed;
+ windMat.uniforms.uPx.value = px;
+ ejecta.material.uniforms.uPx.value = px;
  }
-
- // Step 1: Supernova Explosive Particles & Imploding Core
- if (supernovaGroup && supernovaGroup.visible) {
- supernovaTime += delta * 2.0;
-
- // Core Implosion: Shrinks down to a tiny, high-density core sphere
- if (implodingCoreMesh) {
- const coreScale = Math.max(0.12, 1.0 - supernovaTime * 0.35);
- implodingCoreMesh.scale.set(coreScale, coreScale, coreScale);
- implodingCoreMesh.material.emissiveIntensity = 0.9 + supernovaTime * 2.2;
- }
-
- // Shell Particles Expanding Outward
- const posAttr = supernovaParticles.geometry.attributes.position;
- const velAttr = supernovaParticles.geometry.attributes.velocity;
-
- for (let i = 0; i < posAttr.count; i++) {
- let x = posAttr.getX(i);
- let y = posAttr.getY(i);
- let z = posAttr.getZ(i);
-
- const vx = velAttr.getX(i);
- const vy = velAttr.getY(i);
- const vz = velAttr.getZ(i);
-
- x += vx * 0.16;
- y += vy * 0.16;
- z += vz * 0.16;
-
- posAttr.setXYZ(i, x, y, z);
- }
- posAttr.needsUpdate = true;
-
- shockwaveMesh.scale.setScalar(1 + supernovaTime * 4.2);
- }
+ if (currentStep === 1) updateSupernova(delta);
+ if (currentStep === 2) updateSpacetime(delta);
 
  updatePhotons();
-
  controls.update();
 
- // Step 3: 블랙홀 셰이더에 카메라 정보 전달
- if (blackHoleGroup && blackHoleGroup.visible) {
+ if (blackHoleGroup.visible) {
  camera.updateMatrixWorld();
  const u = blackHoleMaterial.uniforms;
  u.uInvProj.value.copy(camera.projectionMatrixInverse);
@@ -1075,10 +1658,11 @@
  u.uTime.value = elapsed;
  }
 
+ updateLabelVisibility();
  renderer.render(scene, camera);
+ labelRenderer.render(scene, camera);
  }
 
- // Window Load Start
  window.onload = function() {
  initScene();
  animate();
