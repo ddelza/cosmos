@@ -95,6 +95,7 @@
   // 투영: Stellarium의 평사(기본)·원근·등거리 어안·정사
   var PTYPE = { stereo: 0, persp: 1, fisheye: 2, ortho: 3 }, THMAX = { stereo: 2.5, persp: 1.45, fisheye: 3.05, ortho: 1.5707 }, FOVMAX = { stereo: 180, persp: 120, fisheye: 200, ortho: 180 };
   function radF(t) { return S.proj === 'stereo' ? 2 * Math.tan(t / 2) : S.proj === 'persp' ? Math.tan(Math.min(t, 1.52)) : S.proj === 'fisheye' ? t : Math.sin(Math.min(t, Math.PI / 2)); }
+  var AND = window.AndroidStarmap || null;      // 안드로이드 앱 안에서 열렸을 때만 있음(starmap-android)
   var meas = { on: false, a: null, b: null }, shot = false, artImgs = {}, zoomBack = null, fps = 60;
 
   // ---------- WebGL ----------
@@ -526,6 +527,7 @@
     var c = document.createElement('canvas'); c.width = glc.width; c.height = glc.height;
     var x = c.getContext('2d'); x.drawImage(glc, 0, 0); x.drawImage(ov, 0, 0);
     if (S.night) { x.globalCompositeOperation = 'multiply'; x.fillStyle = '#f00'; x.fillRect(0, 0, c.width, c.height); }
+    if (AND) { try { AND.savePng(c.toDataURL('image/png'), 'starmap-' + Date.now() + '.png'); } catch (e) { CN.toast('저장하지 못했어요'); } return; }
     c.toBlob(function (b) { var a = document.createElement('a'), d = new Date(S.time); a.href = URL.createObjectURL(b); a.download = 'starmap-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes()) + '.png'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000); CN.toast('화면을 PNG로 저장했어요'); });
   }
 
@@ -1054,7 +1056,7 @@
         ib('data-act="mount"', 'mount', S.mount === 'az' ? '경위대식 가대 (누르면 적도의식)' : '적도의식 가대 (누르면 경위대식)', 'Ctrl+M', S.mount === 'eq') +
         ib('data-act="center"', 'center', '고른 천체를 가운데로', 'Space', tracking) +
         ib('data-act="night"', 'night', '야간 모드 (붉은 화면)', 'Ctrl+N', S.night) +
-        ib('data-act="full"', 'full', '전체 화면', 'F11', !!document.fullscreenElement) +
+        ib('data-act="full"', 'full', '전체 화면', 'F11', !!document.fullscreenElement || !!buildTools.fullAnd) +
         ib('data-act="measure"', 'measure', '각도 재기 (하늘 위에서 끌기)', 'Ctrl+A', meas.on) + sep +
         ib('data-act="galaxy"', 'galaxy', '은하에서 보기', 'Tab', false) +
         '<span class="grow"></span>' +
@@ -1111,6 +1113,7 @@
     if (a === 'mount') { var f = fwdW(); S.mount = S.mount === 'az' ? 'eq' : 'az'; setViewDir(f); say(S.mount === 'az' ? '경위대식 — 지평선이 수평으로 고정돼요' : '적도의식 — 하늘(적경·적위)이 고정되고 땅이 돌아요', 3500); }
     else if (a === 'center') { if (sel) afterSelect(true); else CN.toast('먼저 천체를 골라 주세요'); }
     else if (a === 'night') S.night = !S.night;
+    else if (a === 'full' && AND) { AND.toggleFullscreen(); }
     else if (a === 'full') { if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {}); }
     else if (a === 'measure') { meas.on = !meas.on; if (!meas.on) { meas.a = meas.b = null; } else say('각도 재기 — 하늘 위에서 끌어 보세요 (끄려면 다시 누르기)', 4000); }
     else if (a === 'galaxy') { if (S.mode === 'earth') enterGalaxy(); else enterEarth(); return; }
@@ -1137,6 +1140,17 @@
     save(); buildTools();
   }
   document.addEventListener('fullscreenchange', buildTools);
+  // 안드로이드 뒤로 가기: 열린 창 → 화면 요소 숨김 → 선택 → 은하 보기 순으로 하나씩 닫고, 닫을 게 없으면 false(앱 종료)
+  window.SMAndroidBack = function () {
+    var mb = document.querySelector('.modal-back [data-close]'); if (mb) { mb.click(); return true; }
+    if (document.body.classList.contains('nogui')) { act('gui'); return true; }
+    if (closeTopWin()) return true;
+    if (meas.on) { act('measure'); return true; }
+    if (S.mode === 'galaxy') { if (!(anim && anim.lock)) enterEarth(); return true; }
+    if (sel) { deselect(); return true; }
+    return false;
+  };
+  window.SMAndroidFull = function (on) { buildTools.fullAnd = !!on; buildTools(); };
 
   function rateText() {
     if (!S.playing) return '멈춤';
@@ -1516,7 +1530,7 @@
     if (ctrl) {
       var cm = { KeyM: g ? null : 'mount', KeyN: 'night', KeyS: 'shot', KeyA: 'measure', KeyT: 'gui', KeyH: ev.shiftKey ? 'flipH' : 'home', KeyV: ev.shiftKey ? 'flipV' : null }[c];
       if (c === 'KeyF') { ev.preventDefault(); if (!wins.F3) toggleWin('F3'); return; }
-      if (c === 'KeyC' && ev.shiftKey) { ev.preventDefault(); var tx = document.getElementById('info').innerText; if (navigator.clipboard) navigator.clipboard.writeText(tx).then(function () { CN.toast('천체 정보를 복사했어요'); }, function () {}); return; }
+      if (c === 'KeyC' && ev.shiftKey) { ev.preventDefault(); var tx = document.getElementById('info').innerText; if (AND) { AND.copy(tx); return; } if (navigator.clipboard) navigator.clipboard.writeText(tx).then(function () { CN.toast('천체 정보를 복사했어요'); }, function () {}); return; }
       if (c === 'Equal' || c === 'Minus') { ev.preventDefault(); stepTime(c === 'Equal' ? 3600 : -3600); return; }
       if (cm) { ev.preventDefault(); act(cm); }
       return;
