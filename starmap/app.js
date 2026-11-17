@@ -68,7 +68,7 @@
     lat0: CN.LOC.lat, lon0: CN.LOC.lon, place: CN.LOC.name,
     f: { conLines: true, conNames: true, bounds: false, eqGrid: false, azGrid: false, ecliptic: false, galEq: false,
       ground: true, atm: false, cardinal: true, dso: true, starNames: true, planets: true, milky: true,
-      stars: true, planetNames: true, art: false, meridian: false, horizon: false, equator: false, galGrid: false, fog: true, compass: false,
+      stars: true, planetNames: true, art: false, dsoImg: true, meridian: false, horizon: false, equator: false, galGrid: false, fog: true, compass: false,
       gNames: true, arms: true, rings: true, stems: false, sight: true },
     types: { star: true, cluster: true, nebula: true, galaxy: true },
     center: 'gc',
@@ -247,9 +247,10 @@
   Promise.all([
     fetch('data/stars.bin?v=1').then(function (r) { return r.arrayBuffer(); }),
     fetch('data/sky.json?v=2').then(function (r) { return r.json(); }),
+    fetch('data/dso.json?v=2').then(function (r) { return r.json(); }).catch(function () { return {}; }),
     CN.loadAll(function () {}),
   ]).then(function (res) {
-    sky = res[1]; state = res[2];
+    sky = res[1]; state = res[3]; initDsoImgs(res[2]);
     initStars(res[0]); initObjects(); initLines();
     document.getElementById('loading').remove();
     var id = CN.qs('id');
@@ -659,6 +660,7 @@
     ctx.globalAlpha = a;
     var hide = function (d) { return f.ground && altOf(d) < -0.01; };
     if (f.art) drawArt(a * (1 - 0.75 * dayF * (f.atm ? 1 : 0)), hide);
+    if (f.dsoImg) drawDsoImgs(a * (1 - 0.9 * dayF * (f.atm ? 1 : 0)) * clamp(1.25 - S.v.bortle * 0.08, 0.4, 1.2), hide);
     // 고른 천체
     var sd = selDir();
     if (sd && (q = proj(sd, true)) && onScreen(q, 30)) { reticle(q[0], q[1], 9); label(q[0], q[1], selName(), '#fff', { bold: true, size: 13, dx: 14, force: true }); }
@@ -726,6 +728,77 @@
       var E2 = P[0][0] - A2 * u0 - C2 * v0, F2 = P[0][1] - B2 * u0 - D2 * v0;
       ctx.setTransform(dpr * A2, dpr * B2, dpr * C2, dpr * D2, dpr * E2, dpr * F2);
       ctx.drawImage(im, 0, 0);
+    });
+    ctx.restore(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  // ---- 딥스카이 사진 겹치기 (Stellarium 단축키 I) ----
+  // 사진마다 네 모서리의 J2000 적경·적위(Stellarium textures.json)가 있어 그대로 하늘에 붙인다.
+  // 캔버스 2D는 원근 변형이 안 되므로 사진을 격자로 잘라 삼각형마다 아핀 변형으로 그린다.
+  var dsoImgs = [], dsoCv = document.createElement('canvas'), dctx = dsoCv.getContext('2d');
+  function initDsoImgs(j) {
+    var seen = {};
+    Object.keys(j || {}).forEach(function (id) {
+      (j[id] || []).forEach(function (q) {
+        if (seen[q.f]) { seen[q.f].ids.push(id); return; }
+        var c = q.w.map(function (p) { return sph(p[0], p[1]); }), m = norm([0, 1, 2].map(function (i) { return (c[0][i] + c[1][i] + c[2][i] + c[3][i]) / 4; }));
+        var half = Math.max.apply(null, c.map(function (v) { return Math.acos(clamp(dot(v, m), -1, 1)); }));
+        seen[q.f] = { f: q.f, c: c, t: q.t, cen: m, half: half, ids: [id], credit: q.credit, im: null };
+        dsoImgs.push(seen[q.f]);
+      });
+    });
+  }
+  function affine(s0, s1, s2, d0, d1, d2) {      // 원본 세 점 → 화면 세 점
+    var det = s0[0] * (s1[1] - s2[1]) + s1[0] * (s2[1] - s0[1]) + s2[0] * (s0[1] - s1[1]);
+    if (Math.abs(det) < 1e-9) return null;
+    var a = (d0[0] * (s1[1] - s2[1]) + d1[0] * (s2[1] - s0[1]) + d2[0] * (s0[1] - s1[1])) / det;
+    var c = (d0[0] * (s2[0] - s1[0]) + d1[0] * (s0[0] - s2[0]) + d2[0] * (s1[0] - s0[0])) / det;
+    var b = (d0[1] * (s1[1] - s2[1]) + d1[1] * (s2[1] - s0[1]) + d2[1] * (s0[1] - s1[1])) / det;
+    var d = (d0[1] * (s2[0] - s1[0]) + d1[1] * (s0[0] - s2[0]) + d2[1] * (s1[0] - s0[0])) / det;
+    return [a, b, c, d, d0[0] - a * s0[0] - c * s0[1], d0[1] - b * s0[0] - d * s0[1]];
+  }
+  function drawDsoImgs(alpha, hide) {
+    if (alpha <= 0.01) return;
+    var ppr = pxPerRad(), fw = fwdW(), view = fovRad * Math.hypot(W, H) / H * 0.6;
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    dsoImgs.forEach(function (d) {
+      if (!d.ids.some(function (id) { var o = state.byId[id]; return o && typeOn(o); })) return;
+      var px = d.half * ppr;                                   // 화면에서 사진 반지름(픽셀)
+      var k = sstep(18, 80, px); if (k <= 0.01) return;
+      if (Math.acos(clamp(dot(fw, d.cen), -1, 1)) > view + d.half) return;
+      if (hide(d.c[0]) && hide(d.c[1]) && hide(d.c[2]) && hide(d.c[3])) return;
+      if (!d.im) { d.im = new Image(); d.im.src = 'data/dso/' + d.f + '?v=2'; return; }
+      if (!d.im.complete || !d.im.naturalWidth) return;
+      var iw = d.im.naturalWidth, ih = d.im.naturalHeight, n = d.half > 0.026 ? 4 : d.half > 0.009 ? 2 : 1, i, j;
+      var grid = [];
+      for (j = 0; j <= n; j++) for (i = 0; i <= n; i++) {
+        var u = i / n, v = j / n, w0 = (1 - u) * (1 - v), w1 = u * (1 - v), w2 = u * v, w3 = (1 - u) * v;
+        var P = norm([0, 1, 2].map(function (x) { return d.c[0][x] * w0 + d.c[1][x] * w1 + d.c[2][x] * w2 + d.c[3][x] * w3; }));
+        var tu = d.t[0][0] * w0 + d.t[1][0] * w1 + d.t[2][0] * w2 + d.t[3][0] * w3, tv = d.t[0][1] * w0 + d.t[1][1] * w1 + d.t[2][1] * w2 + d.t[3][1] * w3;
+        grid.push({ s: proj(P, true), t: [tu * iw, (1 - tv) * ih] });   // 텍스처 v=0이 사진 아래쪽(OpenGL 관례)
+      }
+      var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      grid.forEach(function (g) { if (g.s) { x0 = Math.min(x0, g.s[0]); y0 = Math.min(y0, g.s[1]); x1 = Math.max(x1, g.s[0]); y1 = Math.max(y1, g.s[1]); } });
+      x0 = Math.max(Math.floor(x0) - 2, 0); y0 = Math.max(Math.floor(y0) - 2, 0); x1 = Math.min(Math.ceil(x1) + 2, W); y1 = Math.min(Math.ceil(y1) + 2, H);
+      if (x1 <= x0 || y1 <= y0) return;
+      var bw = Math.ceil((x1 - x0) * dpr), bh = Math.ceil((y1 - y0) * dpr);
+      if (dsoCv.width < bw || dsoCv.height < bh) { dsoCv.width = Math.max(dsoCv.width, bw); dsoCv.height = Math.max(dsoCv.height, bh); }
+      dctx.setTransform(1, 0, 0, 1, 0, 0); dctx.clearRect(0, 0, bw, bh);
+      function tri(A, B, C) {
+        if (!A.s || !B.s || !C.s) return;
+        var m = affine(A.t, B.t, C.t, A.s, B.s, C.s); if (!m) return;
+        var cx = (A.s[0] + B.s[0] + C.s[0]) / 3, cy = (A.s[1] + B.s[1] + C.s[1]) / 3, g = function (q) { var dx = q[0] - cx, dy = q[1] - cy, l = Math.hypot(dx, dy) || 1; return [q[0] + dx / l * 0.7, q[1] + dy / l * 0.7]; };
+        var a = g(A.s), b = g(B.s), c = g(C.s);
+        dctx.save(); dctx.setTransform(dpr, 0, 0, dpr, -x0 * dpr, -y0 * dpr);
+        dctx.beginPath(); dctx.moveTo(a[0], a[1]); dctx.lineTo(b[0], b[1]); dctx.lineTo(c[0], c[1]); dctx.closePath(); dctx.clip();
+        dctx.setTransform(dpr * m[0], dpr * m[1], dpr * m[2], dpr * m[3], dpr * (m[4] - x0), dpr * (m[5] - y0));
+        dctx.drawImage(d.im, 0, 0); dctx.restore();
+      }
+      for (j = 0; j < n; j++) for (i = 0; i < n; i++) {
+        var p00 = grid[j * (n + 1) + i], p10 = grid[j * (n + 1) + i + 1], p01 = grid[(j + 1) * (n + 1) + i], p11 = grid[(j + 1) * (n + 1) + i + 1];
+        tri(p00, p10, p11); tri(p00, p11, p01);
+      }
+      ctx.globalAlpha = alpha * k * 0.95;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(dsoCv, 0, 0, bw, bh, x0 * dpr, y0 * dpr, bw, bh); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     });
     ctx.restore(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
@@ -1155,6 +1228,18 @@
 
   var PLACES_L = [['광수중학교', CN.LOC.lat, CN.LOC.lon], ['서울', 37.5665, 126.978], ['부산', 35.1796, 129.0756], ['제주', 33.4996, 126.5312], ['독도', 37.2429, 131.8669],
     ['도쿄', 35.6762, 139.6503], ['런던', 51.5074, -0.1278], ['뉴욕', 40.7128, -74.006], ['시드니', -33.8688, 151.2093], ['적도 (키토)', -0.1807, -78.4678], ['북극점', 89.99, 0], ['남극점', -89.99, 0]];
+  var leafletP = null;
+  function loadLeaflet() {
+    if (window.L && window.L.map) return Promise.resolve(window.L);
+    if (leafletP) return leafletP;
+    leafletP = new Promise(function (ok, no) {
+      var css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(css);
+      var js = document.createElement('script'); js.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+      js.onload = function () { ok(window.L); }; js.onerror = function () { leafletP = null; no(); };
+      document.head.appendChild(js);
+    });
+    return leafletP;
+  }
   function setPlace(name, la, lo) { S.lat0 = la; S.lon0 = lo; S.place = name; observer = new A.Observer(la, lo, 50); bodyT = null; save(); }
   // 단축키 목록 — Stellarium 25.2 사용 설명서 부록 A(기본 단축키)를 따름. 세 번째 값: 0 = 이 성도에 없는 기능
   var KEYS = [
@@ -1162,7 +1247,7 @@
       ['F8 · F9', 'Stellarium에서도 비어 있는 키 (F9는 망원경 플러그인)', 0], ['F12', '스크립트 콘솔', 0], ['Esc', '맨 위 창 닫기 · 선택 해제']]],
     ['표시', [['C · V · R · B', '별자리 선 · 이름 · 그림 · 경계'], ['S · Alt+S', '별 · 별 이름'], ['P · Alt+P', '태양계 천체 · 이름'], ['D', '딥스카이 천체'], ['M', '은하수'],
       ['G · F · A', '지면 · 안개 · 대기'], ['Q · Shift+Q', '방위 표시 · 나침 눈금'], ['E · Z', '적도 격자 · 방위 격자'], [', · .', '황도 · 천구 적도'], ['H · ;', '지평선 · 자오선'],
-      ['Ctrl+N', '야간 모드 (브라우저가 새 창을 열면 아래 막대 버튼 사용)'], ['Ctrl+Shift+H · V', '좌우 · 상하 뒤집기'], ['O · Shift+T', '행성 궤도 · 자취', 0], ['I', '딥스카이 사진 겹치기', 0]]],
+      ['Ctrl+N', '야간 모드 (브라우저가 새 창을 열면 아래 막대 버튼 사용)'], ['Ctrl+Shift+H · V', '좌우 · 상하 뒤집기'], ['I', '딥스카이 사진 (확대하면 보임)'], ['O · Shift+T', '행성 궤도 · 자취', 0]]],
     ['움직이기', [['끌기 · 방향키', '하늘 돌리기'], ['휠 · PgUp/PgDn', '확대 · 축소'], ['클릭 · 오른쪽 클릭', '고르기 · 선택 해제'], ['Space · T', '가운데로 · 따라가기'], ['/ · \\', '고른 천체로 자동 확대 · 원래대로'],
       ['Shift+N·E·S·W', '북·동·남·서쪽 보기'], ['Shift+Z', '천정 보기'], ['Alt+Shift+N · S', '하늘의 북극 · 남극 보기'], ['Ctrl+H', '처음 방향으로'], ['Ctrl+M', '경위대식 ↔ 적도의식'],
       ['Ctrl+Alt+1…0', '시야 180·90·60·45·20·10·5·2·1·0.5°'], ['Ctrl+A', '각도 재기'], ['Ctrl+G', '고른 행성으로 이동', 0]]],
@@ -1181,6 +1266,8 @@
           '<p class="hint">화면 구성과 단축키는 Stellarium을 따랐어요. 왼쪽 막대는 창(F1~F10), 아래 막대는 표시 켜고 끄기와 시간 조절이에요. 단추에 마우스를 올리면 이름과 단축키가 나와요.</p>' + keysHtml(true);
       }], ['자료와 한계', function (b) {
         b.innerHTML = '<h4>자료</h4><p>별 26,656개(7.5등급까지)의 방향·거리·밝기·색, 별자리 선·경계·그림은 Stellarium 25.2의 자료 파일(Hipparcos·Gaia DR3, 현대 별자리 문화)에서 뽑았어요. 별자리 자료는 CC BY-SA 4.0, 별자리 그림은 Free Art License예요.</p>' +
+          '<p>딥스카이 사진 ' + dsoImgs.length + '장도 Stellarium 기본 사진 묶음에서 가져왔고, 사진마다 네 모서리의 하늘 좌표가 정해져 있어 실제 방향·크기로 겹쳐져요. 사진 제공: ' + esc(Object.keys(dsoImgs.reduce(function (o, d) { if (d.credit) o[d.credit] = 1; return o; }, {})).join(', ')) + '.</p>' +
+          '<p>위치 지도는 OpenStreetMap(© OpenStreetMap 기여자)과 Leaflet을 써요.</p>' +
           '<p>성단·성운·은하 ' + objs.filter(isDso).length + '개와 이름 붙은 별은 밤하늘 관측 도우미와 같은 목록이에요. 해·달·행성 위치는 Astronomy Engine으로 계산해요.</p>' +
           '<h4>한계</h4><p>은하 원반·나선팔은 전파 관측으로 잰 팔 위치를 따라 그린 <b>개략 모형</b>이에요. 은하수 띠는 이 모형을 태양 자리에서 본 모습이라 실제 은하수의 어두운 띠는 없어요. 시차가 아주 작은 별 약 300개는 거리가 불확실해 6,500광년에 두었어요. 대기 굴절은 계산하지 않아요.</p>';
       }]]);
@@ -1226,7 +1313,7 @@
           el('p', { className: 'hint', style: 'margin-top:8px' }, ['행성의 위성·궤도·자취는 넣지 않았어요.'])].forEach(function (x) { b.appendChild(x); });
       }], ['딥스카이', function (b) {
         var ty = el('div', { className: 'cols' }, [['cluster', '성단'], ['nebula', '성운'], ['galaxy', '은하'], ['star', '이름 붙은 별']].map(function (t) { return chkV(t[1], function () { return S.types[t[0]]; }, function (v) { S.types[t[0]] = v; rebuildStems(); }); }));
-        [chk('딥스카이 천체 표식', 'dso', 'D'), sld('이름 양', 'dsoLab', 0, 6, 0.5, num(1)), h4('종류'), ty,
+        [chk('딥스카이 천체 표식', 'dso', 'D'), chk('딥스카이 사진 (확대하면 실제 방향·크기로 보임)', 'dsoImg', 'I'), sld('이름 양', 'dsoLab', 0, 6, 0.5, num(1)), h4('종류'), ty,
           el('p', { className: 'hint', style: 'margin-top:8px' }, ['대상은 밤하늘 관측 도우미 목록(' + objs.filter(isDso).length + '개)이에요. 표식 모양·색은 Stellarium과 같아요: 은하 = 붉은 타원, 성단 = 노란 원, 성운 = 초록 네모.'])].forEach(function (x) { b.appendChild(x); });
       }], ['표시', function (b) {
         var c = el('div', { className: 'cols' }, [chk('적도 격자', 'eqGrid', 'E'), chk('방위 격자', 'azGrid', 'Z'), chk('은하 격자', 'galGrid'), chk('천구 적도', 'equator', '.'), chk('황도', 'ecliptic', ','), chk('은하 적도', 'galEq'),
@@ -1262,21 +1349,39 @@
         h4('직접 입력'), dl, el('p', { className: 'hint', style: 'margin-top:8px' }, ['시각은 이 기기의 시간대 기준이에요.'])].forEach(function (x) { bd.appendChild(x); });
       tick(); return tick;
     } },
-    F6: { title: '위치', build: function (bd) {
+    F6: { title: '위치', wide: true, build: function (bd) {
       var cur = el('p', {}, ['']), la = el('input', { type: 'number', step: 0.0001, min: -90, max: 90 }), lo = el('input', { type: 'number', step: 0.0001, min: -180, max: 180 });
-      function show() { cur.innerHTML = '지금: <b>' + esc(S.place) + '</b> · ' + (S.lat0 >= 0 ? '북위 ' : '남위 ') + Math.abs(S.lat0).toFixed(2) + '°, ' + (S.lon0 >= 0 ? '동경 ' : '서경 ') + Math.abs(S.lon0).toFixed(2) + '°'; la.value = S.lat0; lo.value = S.lon0; }
-      var list = el('div', { className: 'btns' }, PLACES_L.map(function (p) { return btn(p[0], function () { setPlace(p[0], p[1], p[2]); show(); }); }).concat([btn('내 위치', function () {
+      function show(pan) {
+        cur.innerHTML = '지금: <b>' + esc(S.place) + '</b> · ' + (S.lat0 >= 0 ? '북위 ' : '남위 ') + Math.abs(S.lat0).toFixed(2) + '°, ' + (S.lon0 >= 0 ? '동경 ' : '서경 ') + Math.abs(S.lon0).toFixed(2) + '°'; la.value = S.lat0; lo.value = S.lon0;
+        if (mark) mark.setLatLng([S.lat0, S.lon0]);
+        if (map && pan) map.setView([S.lat0, S.lon0], Math.max(map.getZoom(), 5));
+      }
+      var mapEl = el('div', { className: 'smap' }), map = null, mark = null;
+      var list = el('div', { className: 'btns' }, PLACES_L.map(function (p) { return btn(p[0], function () { setPlace(p[0], p[1], p[2]); show(true); }); }).concat([btn('내 위치', function () {
         if (!navigator.geolocation) return CN.toast('이 브라우저는 위치 찾기를 지원하지 않아요.');
         CN.toast('현재 위치를 찾는 중…', 6000);
-        navigator.geolocation.getCurrentPosition(function (p) { setPlace('내 위치', +p.coords.latitude.toFixed(4), +p.coords.longitude.toFixed(4)); show(); CN.toast('현재 위치로 바꿨어요'); }, function () { CN.toast('위치를 가져오지 못했어요. 직접 입력해 주세요.', 4000); }, { timeout: 10000, maximumAge: 600000 });
+        navigator.geolocation.getCurrentPosition(function (p) { setPlace('내 위치', +p.coords.latitude.toFixed(4), +p.coords.longitude.toFixed(4)); show(true); CN.toast('현재 위치로 바꿨어요'); }, function () { CN.toast('위치를 가져오지 못했어요. 직접 입력해 주세요.', 4000); }, { timeout: 10000, maximumAge: 600000 });
       }, 'go')]));
+      function pickAt(ll) {
+        var a = +clamp(ll.lat, -89.99, 89.99).toFixed(4), o = +(((ll.lng + 180) % 360 + 360) % 360 - 180).toFixed(4);
+        setPlace('지도에서 고른 곳 (' + a.toFixed(2) + ', ' + o.toFixed(2) + ')', a, o); show(false);
+      }
+      loadLeaflet().then(function (L) {
+        if (!document.body.contains(mapEl)) return;
+        map = L.map(mapEl, { worldCopyJump: true, zoomControl: true, attributionControl: true, minZoom: 1 }).setView([S.lat0, S.lon0], 6);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
+        mark = L.circleMarker([S.lat0, S.lon0], { radius: 7, color: '#ffb35a', weight: 2, fillColor: '#ff6a3a', fillOpacity: .9 }).addTo(map);
+        PLACES_L.forEach(function (p) { L.circleMarker([p[1], p[2]], { radius: 3, color: '#8fb0ff', weight: 1, fillOpacity: .8 }).bindTooltip(p[0]).addTo(map); });
+        map.on('click', function (e) { pickAt(e.latlng); });
+        setTimeout(function () { map.invalidateSize(); }, 60);
+      }).catch(function () { mapEl.innerHTML = '<p class="hint" style="padding:12px">지도를 불러오지 못했어요(인터넷 연결 확인). 아래에서 장소를 고르거나 직접 입력해 주세요.</p>'; });
       var apply = btn('적용', function () {
         var a = parseFloat(la.value), o = parseFloat(lo.value);
         if (isNaN(a) || a < -90 || a > 90 || isNaN(o) || o < -180 || o > 180) return CN.toast('위도는 −90~90, 경도는 −180~180 사이로 넣어 주세요.');
-        setPlace('지정한 곳 (' + a.toFixed(2) + ', ' + o.toFixed(2) + ')', a, o); show();
+        setPlace('지정한 곳 (' + a.toFixed(2) + ', ' + o.toFixed(2) + ')', a, o); show(true);
       });
-      [cur, h4('장소 고르기'), list, h4('직접 입력'), el('div', { className: 'cols' }, [el('label', {}, ['위도 (북+ 남−)', la]), el('label', {}, ['경도 (동+ 서−)', lo])]), el('div', { className: 'btns' }, [apply]),
-        el('p', { className: 'hint', style: 'margin-top:8px' }, ['다른 나라를 골라도 시계는 이 기기의 시간대로 표시돼요. 지도에서 고르기는 없어요.'])].forEach(function (x) { bd.appendChild(x); });
+      [cur, mapEl, el('p', { className: 'hint', style: 'margin:4px 0 0' }, ['지도를 누르면 그곳으로 바뀌어요. 휠·두 손가락으로 확대해서 학교·집처럼 정확히 고를 수 있어요.']), h4('장소 고르기'), list, h4('직접 입력'), el('div', { className: 'cols' }, [el('label', {}, ['위도 (북+ 남−)', la]), el('label', {}, ['경도 (동+ 서−)', lo])]), el('div', { className: 'btns' }, [apply]),
+        el('p', { className: 'hint', style: 'margin-top:8px' }, ['다른 나라를 골라도 시계는 이 기기의 시간대로 표시돼요.'])].forEach(function (x) { bd.appendChild(x); });
       show();
     } },
     F10: { title: '천문 계산', wide: true, build: function (bd) {
@@ -1400,7 +1505,7 @@
   // ---------- 단축키 (Stellarium 25.2 기본값) ----------
   var FOVKEYS = { 1: 180, 2: 90, 3: 60, 4: 45, 5: 20, 6: 10, 7: 5, 8: 2, 9: 1, 0: 0.5 };
   document.addEventListener('keydown', function (ev) {
-    var k = ev.key, tag = (ev.target.tagName || ''), typing = /^(INPUT|TEXTAREA|SELECT)$/.test(tag);
+    var k = ev.key, tag = (ev.target.tagName || ''), typing = /^(INPUT|TEXTAREA|SELECT)$/.test(tag) || !!(ev.target.closest && ev.target.closest('.leaflet-container'));
     if (document.querySelector('.modal-back')) return;
     if (/^F([1-7]|10)$/.test(k)) { ev.preventDefault(); toggleWin(k); return; }
     if (k === 'F11') { ev.preventDefault(); act('full'); return; }
@@ -1453,7 +1558,7 @@
       else if (/^[1-6]$/.test(k) && !(anim && anim.lock)) goPreset(PRESETS[+k - 1]);
       return;
     }
-    var em = { c: 'conLines', v: 'conNames', r: 'art', b: 'bounds', e: 'eqGrid', z: 'azGrid', ',': 'ecliptic', '.': 'equator', ';': 'meridian', h: 'horizon', g: 'ground', f: 'fog', a: 'atm', q: 'cardinal', d: 'dso', s: 'stars', p: 'planets', m: 'milky' };
+    var em = { c: 'conLines', v: 'conNames', r: 'art', b: 'bounds', e: 'eqGrid', z: 'azGrid', ',': 'ecliptic', '.': 'equator', ';': 'meridian', h: 'horizon', g: 'ground', f: 'fog', a: 'atm', q: 'cardinal', d: 'dso', i: 'dsoImg', s: 'stars', p: 'planets', m: 'milky' };
     if (em[lk]) toggle(em[lk]);
     else if (lk === 't') { tracking = !tracking && !!sel; buildTools(); }
   });

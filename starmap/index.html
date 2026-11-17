@@ -128,6 +128,14 @@ body.night #nightmask { display: block; }
 .spin .u span { font-size: 1.5rem; color: #fff; font-variant-numeric: tabular-nums; min-width: 1.4em; text-align: center; }
 .spin .u.y span { min-width: 2.6em; }
 .spin i { font-style: normal; color: var(--dim); font-size: 1.2rem; padding: 0 1px; }
+.smap { height: 280px; border-radius: 10px; overflow: hidden; border: 1px solid #36405a; background: #0a0d15; margin-top: 4px; }
+.smap .leaflet-tile-pane { filter: invert(1) hue-rotate(185deg) brightness(.92) contrast(.9) saturate(.6); }
+.leaflet-container img { max-width: none !important; filter: none; }
+.leaflet-container { font-family: inherit; }
+.leaflet-container .leaflet-control-attribution { background: rgba(10,13,21,.75); color: #8b97b3; font-size: 10px; }
+.leaflet-container .leaflet-control-attribution a { color: #8fb0ff; }
+.leaflet-bar a { background: #141a28; color: #dfe5f2; border-color: #36405a; }
+.leaflet-bar a:hover { background: #1f2840; }
 .keys { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; font-size: .84rem; }
 .keys kbd { margin: 0; }
 .keys .no { color: var(--dim); }
@@ -171,6 +179,6 @@ body.night #nightmask { display: block; }
 <script src="../2026/js/catalog.js?v=20261102a"></script>
 <script src="../2026/js/starchart.js?v=20261102a"></script>
 <script src="../2026/js/object-view.js?v=20261102a"></script>
-<script src="app.js?v=20261117b"></script>
+<script src="app.js?v=20261117c"></script>
 </body>
 </html>
