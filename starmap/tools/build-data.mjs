@@ -73,7 +73,18 @@ let missing = 0;
 const constellations = sc.constellations.map(c => ({
   abbr: c.id.split(' ').pop(),
   lines: c.lines.map(l => l.map(h => { const i = hipIdx.get(h); if (i === undefined) { missing++; return -1; } return i; }).filter(i => i >= 0)).filter(l => l.length > 1),
+  art: artOf(c),
 }));
+// 별자리 그림(Free Art License): 그림 파일을 data/art로 복사하고, 그림 속 기준점 3개(픽셀 ↔ 별 번호)를 함께 적는다
+function artOf(c) {
+  const im = c.image; if (!im || !im.anchors || im.anchors.length < 3) return undefined;
+  const an = im.anchors.map(a => [a.pos[0], a.pos[1], hipIdx.get(a.hip)]);
+  if (an.some(a => a[2] === undefined)) return undefined;
+  const name = path.basename(im.file);
+  fs.mkdirSync(path.join(OUT, 'art'), { recursive: true });
+  fs.copyFileSync(path.join(STEL, 'skycultures', 'modern', im.file), path.join(OUT, 'art', name));
+  return { f: name, size: im.size, a: an };
+}
 
 // 경계는 B1875.0 적도좌표의 자오선(M)·평행선(P) 조각 → 잘게 나눈 뒤 J2000으로 세차 보정
 const T = (2405889.25855 - 2451545.0) / 36525;
@@ -126,7 +137,7 @@ for (const k of Object.keys(sc.common_names || {})) {
 }
 
 fs.writeFileSync(path.join(OUT, 'sky.json'), JSON.stringify({
-  source: 'Stellarium 25.x — stars/hip_gaia3(Hipparcos·Gaia DR3), skycultures/modern(CC BY-SA 4.0)',
+  source: 'Stellarium 25.x — stars/hip_gaia3(Hipparcos·Gaia DR3), skycultures/modern(자료 CC BY-SA 4.0, 별자리 그림 Free Art License)',
   starCount: stars.length, constellations, boundaries, names,
 }));
 console.log('별', stars.length, '· 거리 불확실', uncertain, '· 별자리', constellations.length, '· 선에서 빠진 별', missing, '· 경계 조각', boundaries.length, '· 이름', Object.keys(names).length);
