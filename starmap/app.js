@@ -1156,8 +1156,8 @@
   document.getElementById('lbar').addEventListener('click', function (ev) { var b = ev.target.closest('[data-win]'); if (b) toggleWin(b.dataset.win); });
   document.getElementById('bMode').onclick = function () { act('galaxy'); };
   if (!AND && /Android/i.test(navigator.userAgent)) {
-    var dl = document.createElement('a'); dl.className = 'home'; dl.href = 'starmap.apk'; dl.setAttribute('download', '우리은하성도.apk');
-    dl.textContent = '안드로이드 앱 받기 ›'; document.getElementById('top').appendChild(dl);
+    var dl = document.createElement('a'); dl.className = 'home'; dl.href = 'starmap.apk'; dl.setAttribute('download', 'CosmoStella.apk');
+    dl.textContent = '안드로이드 앱 CosmoStella 받기 ›'; document.getElementById('top').appendChild(dl);
   }
   document.getElementById('guiBack').onclick = function () { act('gui'); };
   // 풍선 도움말: 이름 + 단축키 (Stellarium은 막대 위에 글자로 보여 줌)
@@ -1352,7 +1352,7 @@
         b.innerHTML = '<h4>자료</h4><p>별 26,656개(7.5등급까지)의 방향·거리·밝기·색, 별자리 선·경계·그림은 Stellarium 25.2의 자료 파일(Hipparcos·Gaia DR3, 현대 별자리 문화)에서 뽑았어요. 별자리 자료는 CC BY-SA 4.0, 별자리 그림은 Free Art License예요.</p>' +
           '<p>딥스카이 사진 ' + dsoImgs.length + '장도 Stellarium 기본 사진 묶음에서 가져왔고, 사진마다 네 모서리의 하늘 좌표가 정해져 있어 실제 방향·크기로 겹쳐져요. 사진 제공: ' + esc(Object.keys(dsoImgs.reduce(function (o, d) { if (d.credit) o[d.credit] = 1; return o; }, {})).join(', ')) + '.</p>' +
           '<p>위치 지도는 OpenStreetMap(© OpenStreetMap 기여자)과 Leaflet을 써요.</p>' +
-          (AND ? '' : '<h4>안드로이드 앱</h4><p>같은 성도를 앱으로 쓸 수 있어요(오프라인에서도 열림). <a href="starmap.apk" download="우리은하성도.apk">우리은하성도.apk 내려받기</a> — 설치할 때 「출처를 알 수 없는 앱 설치」를 한 번 허용해야 해요.</p>') +
+          (AND ? '' : '<h4>안드로이드 앱 CosmoStella</h4><p>같은 성도를 앱으로 쓸 수 있어요(오프라인에서도 열림). <a href="starmap.apk" download="CosmoStella.apk">CosmoStella.apk 내려받기</a> — 설치할 때 「출처를 알 수 없는 앱 설치」를 한 번 허용해야 해요.</p>') +
           '<p>성단·성운·은하 ' + objs.filter(isDso).length + '개와 이름 붙은 별은 밤하늘 관측 도우미와 같은 목록이에요. 해·달·행성 위치는 Astronomy Engine으로 계산해요.</p>' +
           '<h4>한계</h4><p>은하 원반·나선팔은 전파 관측으로 잰 팔 위치를 따라 그린 <b>개략 모형</b>이에요. 은하수 띠는 이 모형을 태양 자리에서 본 모습이라 실제 은하수의 어두운 띠는 없어요. 시차가 아주 작은 별 약 300개는 거리가 불확실해 6,500광년에 두었어요. 대기 굴절은 계산하지 않아요.</p>';
       }]]);
