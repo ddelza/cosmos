@@ -374,7 +374,7 @@
     return [r[0], r[1], r[2], u[0], u[1], u[2], -f[0], -f[1], -f[2]];    // 지평 좌표 → 화면
   }
   function onOrient(ev) {
-    if (!sensor.on) return;
+    if (!sensor.on || sensor.freeze) return;
     var al = null;
     if (ev.type === 'deviceorientationabsolute' || ev.absolute === true) al = ev.alpha;
     else if (ev.webkitCompassHeading != null) al = 360 - ev.webkitCompassHeading;     // iOS 사파리
@@ -394,7 +394,7 @@
       var seen = false; try { seen = localStorage.getItem('cnStarmapSensorTip') === '1'; } catch (e) {}
       if (!seen) {
         try { localStorage.setItem('cnStarmapSensorTip', '1'); } catch (e) {}
-        var m = CN.modal('<div class="modal-head"><div class="t">폰 방향으로 보기</div><button class="icon-btn" data-close>닫기</button></div><div style="padding:0 16px 18px"><p>폰 뒷면이 향하는 쪽의 밤하늘을 보여 줘요. 폰을 하늘에 대고 이리저리 돌려 보세요.</p><p style="font-weight:700;color:var(--text-strong)">' + esc(SENSOR_TIP) + '</p><button class="btn primary block" data-ok>확인</button></div>', { narrow: true });
+        var m = CN.modal('<div class="modal-head"><div class="t">폰 방향으로 보기</div><button class="icon-btn" data-close>닫기</button></div><div style="padding:0 16px 18px"><p>폰 뒷면이 향하는 쪽의 밤하늘을 보여 줘요. 폰을 하늘에 대고 이리저리 돌려 보세요. 왼쪽 돋보기(천체 찾기)로 천체를 검색하면 화살표가 그쪽으로 안내해요.</p><p style="font-weight:700;color:var(--text-strong)">' + esc(SENSOR_TIP) + '</p><button class="btn primary block" data-ok>확인</button></div>', { narrow: true });
         m.el.querySelector('[data-ok]').onclick = function () { m.close(); };
       } else say('폰 뒷면이 향하는 쪽 하늘이에요', 3500);
       buildTools();
@@ -408,7 +408,7 @@
   }
   function sensorStop() {
     if (!sensor.on) return;
-    var f = fwdW(); sensor.on = false; sensor.cur = sensor.target = null; clearTimeout(sensor.timer);
+    var f = fwdW(); sensor.on = false; sensor.cur = sensor.target = null; clearTimeout(sensor.timer); guide = null;
     if (f) setViewDir(f);
     buildTools();
   }
@@ -769,6 +769,65 @@
     if (f.compass) for (i = 0; i < 360; i += 10) { if (f.cardinal && i % 90 === 0) continue; var cd = m3v(m3T(Fhor), [Math.cos(i * D2R), -Math.sin(i * D2R), 0]); if ((q = proj(cd, true)) && onScreen(q)) label(q[0], q[1] + 12, i + '°', 'rgba(226,90,70,.9)', { size: 10, center: true }); }
     if (meas.a && meas.b) drawMeasure();
     ctx.globalAlpha = 1;
+    if (guide && sensorActive()) drawGuide();
+  }
+
+  // ---- 폰 방향으로 보기 + 검색: 천체 쪽을 가리키는 화살표 ----
+  // 출발할 때(검색한 순간 또는 천체가 다시 화면 밖으로 나간 순간) 폰 방향 = 적색, 천체에 가까워질수록
+  // 주황 → 황 → 황백 → 백 → 청백 → 청. 화면 가운데에 들어오면 청색 화살표로 3초 가리키고 사라짐.
+  var guide = null;
+  var GUIDE_COLS = [[255, 59, 48], [255, 138, 31], [255, 210, 63], [255, 243, 176], [255, 255, 255], [207, 227, 255], [61, 139, 255]];
+  function guideCol(t) {
+    t = clamp(t, 0, 1) * (GUIDE_COLS.length - 1);
+    var i = Math.min(Math.floor(t), GUIDE_COLS.length - 2), k = t - i, a = GUIDE_COLS[i], b = GUIDE_COLS[i + 1];
+    return [0, 1, 2].map(function (j) { return Math.round(a[j] + (b[j] - a[j]) * k); });
+  }
+  function startGuide() {
+    var d = selDir(); if (!d) { guide = null; return; }
+    guide = { phase: 'seek', start: Math.max(Math.acos(clamp(dot(fwdW(), d), -1, 1)), 0.02), t0: 0 };
+  }
+  function drawGuide() {
+    var d = selDir(); if (!d) { guide = null; return; }
+    var now = performance.now(), cx = W / 2, cy = H / 2, ang = Math.acos(clamp(dot(fwdW(), d), -1, 1));
+    var q = proj(d, true), mrg = 30, inView = q && onScreen(q, -mrg), arriveR = Math.min(W, H) * 0.16;
+    var arrived = q && Math.hypot(q[0] - cx, q[1] - cy) < arriveR;
+    if (guide.phase === 'seek' && arrived) { guide.phase = 'arrived'; guide.t0 = now; }
+    if (guide.phase === 'arrived' && now - guide.t0 > 3600) guide.phase = 'done';
+    if (guide.phase === 'done' && !inView) { guide.phase = 'seek'; guide.start = Math.max(ang, 0.02); }   // 다시 화면 밖으로 → 다시 등장(지금 방향이 새 출발점)
+    if (guide.phase === 'done') return;
+    var alpha = 1, t = 1 - ang / guide.start;
+    if (guide.phase === 'arrived') { t = 1; alpha = 1 - sstep(3000, 3600, now - guide.t0); }
+    // 화면에서 천체 쪽 방향: 보이면 그 점, 뒤쪽이라 안 보이면 큰원을 따라 조금 간 점으로
+    var dir;
+    if (q && q[2]) dir = [q[0] - cx, q[1] - cy];
+    if (!q || Math.hypot(dir[0], dir[1]) < 1) {
+      var f = fwdW(), s0 = Math.sin(ang) || 1, step = Math.min(ang, 0.25), wa = Math.sin(ang - step) / s0, wb = Math.sin(step) / s0;
+      var q2 = proj(norm([f[0] * wa + d[0] * wb, f[1] * wa + d[1] * wb, f[2] * wa + d[2] * wb]), true);
+      dir = q2 ? [q2[0] - cx, q2[1] - cy] : [0, -1];
+    }
+    var L = Math.hypot(dir[0], dir[1]) || 1, ux = dir[0] / L, uy = dir[1] / L, x, y;
+    if (inView) { x = q[0] - ux * 44; y = q[1] - uy * 44; }           // 천체 바로 앞에서 천체를 가리킴
+    else {                                                            // 화면 가장자리에서 천체 쪽을 가리킴
+      var top = 70, bot = H - 150, lft = 60, rgt = W - 60, k = Infinity;
+      if (ux > 0) k = Math.min(k, (rgt - cx) / ux); if (ux < 0) k = Math.min(k, (lft - cx) / ux);
+      if (uy > 0) k = Math.min(k, (bot - cy) / uy); if (uy < 0) k = Math.min(k, (top - cy) / uy);
+      x = cx + ux * k; y = cy + uy * k;
+    }
+    var c = guideCol(t), col = 'rgb(' + c.join(',') + ')', pulse = guide.phase === 'arrived' ? 1 + 0.12 * Math.sin((now - guide.t0) / 140) : 1, sz = 30 * pulse;
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(Math.atan2(uy, ux));
+    ctx.shadowColor = 'rgba(' + c.join(',') + ',.85)'; ctx.shadowBlur = 16;
+    ctx.beginPath(); ctx.moveTo(sz, 0); ctx.lineTo(-sz * 0.35, -sz * 0.62); ctx.lineTo(-sz * 0.12, -sz * 0.2); ctx.lineTo(-sz * 0.95, -sz * 0.2);
+    ctx.lineTo(-sz * 0.95, sz * 0.2); ctx.lineTo(-sz * 0.12, sz * 0.2); ctx.lineTo(-sz * 0.35, sz * 0.62); ctx.closePath();
+    ctx.fillStyle = col; ctx.fill(); ctx.shadowBlur = 0; ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.stroke();
+    ctx.restore();
+    // 화살표 옆 글자: 이름 · 남은 각도 (지평선 아래면 알려 줌)
+    var below = altOf(d) < 0, txt = guide.phase === 'arrived' ? selName() + ' 찾았어요!' : selName() + ' · ' + Math.round(ang * R2D) + '°' + (below ? ' (지평선 아래)' : '');
+    ctx.globalAlpha = alpha;
+    // 글자는 화살표와 겹치지 않게 화살표 아래(아래쪽을 가리키면 위)에
+    var ly = uy > 0.6 ? y - 42 : y + 40;
+    ctx.font = '700 13px ' + FONT; var tw = ctx.measureText(txt).width / 2 + 8;
+    label(clamp(x, tw, W - tw), clamp(ly, 40, H - 130), txt, col, { bold: true, size: 13, center: true, force: true });
+    ctx.globalAlpha = 1;
   }
   // 별자리 그림: 그림 속 기준점 3개가 놓일 화면 자리로 아핀 변환해 겹쳐 그린다
   function drawArt(alpha, hide) {
@@ -986,7 +1045,9 @@
   }
   function afterSelect(center) {
     tracking = false; updateInfo(); buildTools();
+    if (!sel) guide = null;
     if (!center || !sel) return;
+    if (sensorActive()) { startGuide(); return; }
     if (S.mode === 'earth') { var d = selDir(); if (d) { updateSky(); centerOn(d); tracking = true; } }
     else if (selPos() && !(anim && anim.lock)) {
       var p = selPos(), far = Math.hypot(p[0], p[1], p[2]);
@@ -1575,7 +1636,7 @@
   ov.addEventListener('pointerup', up); ov.addEventListener('pointercancel', function (ev) { delete ptrs[ev.pointerId]; ov.classList.remove('drag'); measuring = false; });
   ov.addEventListener('contextmenu', function (ev) { ev.preventDefault(); deselect(); });       // 오른쪽 클릭 = 선택 해제
   ov.addEventListener('auxclick', function (ev) { if (ev.button === 1 && sel) { ev.preventDefault(); afterSelect(true); } });   // 휠 누르기 = 가운데로
-  function deselect() { sel = null; tracking = false; if (S.center === 'sel') S.center = 'sun'; updateInfo(); buildTools(); }
+  function deselect() { guide = null; sel = null; tracking = false; if (S.center === 'sel') S.center = 'sun'; updateInfo(); buildTools(); }
   function zoom(k) {
     if (!userMove()) return;
     if (S.mode === 'earth') S.fov = clamp(S.fov * k, 0.5, FOVMAX[S.proj]);
@@ -1650,5 +1711,5 @@
   });
 
   // 시험·디버그용
-  window.SM = { S: S, O: O, sensor: sensor, fwdHor: function () { return m3v(Fhor, fwdW()); }, sensorStart: sensorStart, sensorStop: sensorStop, sensorHor: sensorHor, get sel() { return sel; }, select: function (id) { if (state.byId[id]) selectObj(state.byId[id], true); }, enterGalaxy: enterGalaxy, enterEarth: enterEarth, proj: proj, objs: objs, get tr() { return tr; } };
+  window.SM = { S: S, O: O, sensor: sensor, fwdHor: function () { return m3v(Fhor, fwdW()); }, sensorStart: sensorStart, sensorStop: sensorStop, sensorHor: sensorHor, get guide() { return guide; }, fhor: function () { return Fhor; }, get sel() { return sel; }, select: function (id) { if (state.byId[id]) selectObj(state.byId[id], true); }, enterGalaxy: enterGalaxy, enterEarth: enterEarth, proj: proj, objs: objs, get tr() { return tr; } };
 })();
