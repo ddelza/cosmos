@@ -355,7 +355,67 @@
     var sa = Math.asin(clamp(sunHor[2], -1, 1)) * R2D;
     dayF = sstep(-6, 7, sa); twF = sstep(-18, -1, sa);
   }
+  // ---- 폰 방향으로 보기 (나침반·자이로·GPS) ----
+  // W3C DeviceOrientation: 지구 좌표(동 E, 북 N, 위 U)에서 폰 좌표(x 오른쪽, y 위쪽, z 화면 밖) 회전 R = Rz(α)·Rx(β)·Ry(γ).
+  // 폰 뒷면 방향 = −z, 화면 위쪽 = 화면 회전각만큼 돌린 y. 이 성도의 지평 좌표는 (북, 서, 위).
+  var SENSOR_OK = typeof window.DeviceOrientationEvent !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0) && (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || !!(window.matchMedia && matchMedia('(any-pointer: coarse)').matches));
+  var sensor = { on: false, target: null, cur: null, last: 0, timer: null };
+  function sensorHor(al, be, ga) {
+    var a = al * D2R, b = be * D2R, g = ga * D2R, ca = Math.cos(a), sa = Math.sin(a), cb = Math.cos(b), sb = Math.sin(b), cg = Math.cos(g), sg = Math.sin(g);
+    // R의 열 = 폰 x·y·z 축을 지구(E,N,U) 좌표로
+    var X = [ca * cg - sa * sb * sg, sa * cg + ca * sb * sg, -cb * sg];
+    var Y = [-sa * cb, ca * cb, sb];
+    var Z = [ca * sg + sa * sb * cg, sa * sg - ca * sb * cg, cb * cg];
+    var th = ((screen.orientation && screen.orientation.angle) || window.orientation || 0) * D2R, ct = Math.cos(th), st = Math.sin(th);
+    var up = [0, 1, 2].map(function (i) { return st * X[i] + ct * Y[i]; });
+    var toHor = function (v) { return [v[1], -v[0], v[2]]; };
+    var f = norm(toHor(Z.map(function (x) { return -x; }))), u = norm(toHor(up)), r = norm(cross(f, u));
+    u = cross(r, f);
+    return [r[0], r[1], r[2], u[0], u[1], u[2], -f[0], -f[1], -f[2]];    // 지평 좌표 → 화면
+  }
+  function onOrient(ev) {
+    if (!sensor.on) return;
+    var al = null;
+    if (ev.type === 'deviceorientationabsolute' || ev.absolute === true) al = ev.alpha;
+    else if (ev.webkitCompassHeading != null) al = 360 - ev.webkitCompassHeading;     // iOS 사파리
+    if (al == null || ev.beta == null || ev.gamma == null) return;
+    sensor.target = sensorHor(al, ev.beta, ev.gamma); sensor.last = performance.now();
+  }
+  window.addEventListener('deviceorientationabsolute', onOrient);
+  window.addEventListener('deviceorientation', onOrient);
+  var SENSOR_TIP = '인식이 잘 안될 경우 손으로 핸드폰을 잡고 ∞ 모양으로 흔들고 다시 확인해보세요';
+  function sensorStart() {
+    var go = function () {
+      sensor.on = true; sensor.target = sensor.cur = null; sensor.last = 0;
+      S.time = Date.now(); S.rate = 1; S.playing = true; bodyT = null; tracking = false;
+      if (navigator.geolocation) navigator.geolocation.getCurrentPosition(function (p) { setPlace('내 위치 (GPS)', +p.coords.latitude.toFixed(4), +p.coords.longitude.toFixed(4)); buildTools(); }, function () { CN.toast('위치를 못 받아서 ' + S.place + ' 기준으로 보여 줘요', 3500); }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 300000 });
+      clearTimeout(sensor.timer);
+      sensor.timer = setTimeout(function () { if (sensor.on && !sensor.last) { sensorStop(); CN.toast('이 기기에서는 나침반(방향 센서)을 읽을 수 없어요', 4000); } }, 2500);
+      var seen = false; try { seen = localStorage.getItem('cnStarmapSensorTip') === '1'; } catch (e) {}
+      if (!seen) {
+        try { localStorage.setItem('cnStarmapSensorTip', '1'); } catch (e) {}
+        var m = CN.modal('<div class="modal-head"><div class="t">폰 방향으로 보기</div><button class="icon-btn" data-close>닫기</button></div><div style="padding:0 16px 18px"><p>폰 뒷면이 향하는 쪽의 밤하늘을 보여 줘요. 폰을 하늘에 대고 이리저리 돌려 보세요.</p><p style="font-weight:700;color:var(--text-strong)">' + esc(SENSOR_TIP) + '</p><button class="btn primary block" data-ok>확인</button></div>', { narrow: true });
+        m.el.querySelector('[data-ok]').onclick = function () { m.close(); };
+      } else say('폰 뒷면이 향하는 쪽 하늘이에요', 3500);
+      buildTools();
+    };
+    // iOS 13+는 버튼을 누른 순간에 허락을 받아야 함
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      var ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      // 허락이 꼭 필요한 건 iOS뿐 — 다른 기기는 결과와 상관없이 켜 보고, 값이 안 들어오면 2.5초 뒤 안내하고 끔
+      DeviceOrientationEvent.requestPermission().then(function (r) { if (r === 'granted' || !ios) go(); else CN.toast('방향 센서 사용을 허락해야 쓸 수 있어요', 3500); }).catch(function () { if (!ios) go(); else CN.toast('방향 센서를 켤 수 없어요', 3500); });
+    } else go();
+  }
+  function sensorStop() {
+    if (!sensor.on) return;
+    var f = fwdW(); sensor.on = false; sensor.cur = sensor.target = null; clearTimeout(sensor.timer);
+    if (f) setViewDir(f);
+    buildTools();
+  }
+  function sensorActive() { return sensor.on && sensor.cur && S.mode === 'earth'; }
+
   function earthM() {
+    if (sensorActive()) return m3mul(sensor.cur, Fhor);
     if (S.mount === 'az') { var a = S.lat * D2R, z = S.lon * D2R; return m3mul(viewFrom([Math.cos(a) * Math.cos(z), -Math.cos(a) * Math.sin(z), Math.sin(a)]), Fhor); }
     return viewFrom(sph(S.lon, S.lat));
   }
@@ -507,6 +567,7 @@
     if (S.mode === 'earth' && tracking && sel && !anim) { var sd = selDir(); if (sd) setViewDir(sd); }
     if (S.mode === 'galaxy' && S.center === 'sel' && !anim && selPos()) O.target = selPos();
 
+    if (sensor.on && sensor.target) sensor.cur = sensor.cur ? mslerp(sensor.cur, sensor.target, 0.22) : sensor.target;
     var Me = earthM();
     if (S.mode === 'earth') { M = Me; cam = [0, 0, 0]; fovRad = S.fov * D2R; }
     else {
@@ -1024,6 +1085,7 @@
     center: '<circle cx="12" cy="12" r="5"/><path d="M12 2.500v5M12 16.500v5M2.500 12h5M16.500 12h5"/>',
     night: '<path d="M18 14.500A7.500 7.500 0 0 1 9.500 6 7.500 7.500 0 1 0 18 14.500z"/>',
     full: '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',
+    sensor: '<rect x="7" y="3" width="10" height="18" rx="2.200"/><path d="M11 18h2M2.500 8.500a10 10 0 0 1 2-3.500M21.500 8.500a10 10 0 0 0-2-3.500M2.500 15.500a10 10 0 0 0 2 3.500M21.500 15.500a10 10 0 0 1-2 3.500"/>',
     measure: '<path d="M4 19h16M4 19 17 6M11 19a7 7 0 0 0-2-5"/>',
     galaxy: '<path d="M12 12c.500-2.500 4-2.500 4 .500s-5 5-8 2-.500-9.500 5-9.500 9 6.500 5 12"/>',
     earth: '<circle cx="12" cy="12" r="8.500"/><path d="M3.500 12h17M12 3.500c-3 2.500-3 14.500 0 17M12 3.500c3 2.500 3 14.500 0 17"/>',
@@ -1052,12 +1114,14 @@
     var el = document.getElementById('tools'), h = '', g = S.mode === 'galaxy';
     var sep = '<span class="sep"></span>';
     if (!g) {
+      if (SENSOR_OK) h += ib('data-act="sensor"', 'sensor', '폰 방향으로 보기 (GPS·나침반·자이로)', '', sensor.on) + sep;   // 폰에서 바로 보이게 맨 앞
       h += BAR_E.map(function (t) { return t === '|' ? sep : ib('data-flag="' + t[0] + '"', t[0], t[1], t[2], S.f[t[0]]); }).join('') +
         ib('data-act="mount"', 'mount', S.mount === 'az' ? '경위대식 가대 (누르면 적도의식)' : '적도의식 가대 (누르면 경위대식)', 'Ctrl+M', S.mount === 'eq') +
         ib('data-act="center"', 'center', '고른 천체를 가운데로', 'Space', tracking) +
         ib('data-act="night"', 'night', '야간 모드 (붉은 화면)', 'Ctrl+N', S.night) +
         ib('data-act="full"', 'full', '전체 화면', 'F11', !!document.fullscreenElement || !!buildTools.fullAnd) +
-        ib('data-act="measure"', 'measure', '각도 재기 (하늘 위에서 끌기)', 'Ctrl+A', meas.on) + sep +
+        ib('data-act="measure"', 'measure', '각도 재기 (하늘 위에서 끌기)', 'Ctrl+A', meas.on) +
+ sep +
         ib('data-act="galaxy"', 'galaxy', '은하에서 보기', 'Tab', false) +
         '<span class="grow"></span>' +
         ib('data-act="slow"', 'slow', '시간 느리게 · 거꾸로', 'J', S.playing && S.rate < 0) +
@@ -1091,6 +1155,10 @@
   });
   document.getElementById('lbar').addEventListener('click', function (ev) { var b = ev.target.closest('[data-win]'); if (b) toggleWin(b.dataset.win); });
   document.getElementById('bMode').onclick = function () { act('galaxy'); };
+  if (!AND && /Android/i.test(navigator.userAgent)) {
+    var dl = document.createElement('a'); dl.className = 'home'; dl.href = 'starmap.apk'; dl.setAttribute('download', '우리은하성도.apk');
+    dl.textContent = '안드로이드 앱 받기 ›'; document.getElementById('top').appendChild(dl);
+  }
   document.getElementById('guiBack').onclick = function () { act('gui'); };
   // 풍선 도움말: 이름 + 단축키 (Stellarium은 막대 위에 글자로 보여 줌)
   (function () {
@@ -1115,6 +1183,7 @@
     else if (a === 'night') S.night = !S.night;
     else if (a === 'full' && AND) { AND.toggleFullscreen(); }
     else if (a === 'full') { if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {}); }
+    else if (a === 'sensor') { if (sensor.on) sensorStop(); else sensorStart(); return; }
     else if (a === 'measure') { meas.on = !meas.on; if (!meas.on) { meas.a = meas.b = null; } else say('각도 재기 — 하늘 위에서 끌어 보세요 (끄려면 다시 누르기)', 4000); }
     else if (a === 'galaxy') { if (S.mode === 'earth') enterGalaxy(); else enterEarth(); return; }
     else if (a === 'flipH') S.flipH = !S.flipH; else if (a === 'flipV') S.flipV = !S.flipV;
@@ -1142,6 +1211,7 @@
   document.addEventListener('fullscreenchange', buildTools);
   // 안드로이드 뒤로 가기: 열린 창 → 화면 요소 숨김 → 선택 → 은하 보기 순으로 하나씩 닫고, 닫을 게 없으면 false(앱 종료)
   window.SMAndroidBack = function () {
+    if (sensor.on && !document.querySelector('.modal-back') && !Object.keys(wins).length) { sensorStop(); return true; }
     var mb = document.querySelector('.modal-back [data-close]'); if (mb) { mb.click(); return true; }
     if (document.body.classList.contains('nogui')) { act('gui'); return true; }
     if (closeTopWin()) return true;
@@ -1282,6 +1352,7 @@
         b.innerHTML = '<h4>자료</h4><p>별 26,656개(7.5등급까지)의 방향·거리·밝기·색, 별자리 선·경계·그림은 Stellarium 25.2의 자료 파일(Hipparcos·Gaia DR3, 현대 별자리 문화)에서 뽑았어요. 별자리 자료는 CC BY-SA 4.0, 별자리 그림은 Free Art License예요.</p>' +
           '<p>딥스카이 사진 ' + dsoImgs.length + '장도 Stellarium 기본 사진 묶음에서 가져왔고, 사진마다 네 모서리의 하늘 좌표가 정해져 있어 실제 방향·크기로 겹쳐져요. 사진 제공: ' + esc(Object.keys(dsoImgs.reduce(function (o, d) { if (d.credit) o[d.credit] = 1; return o; }, {})).join(', ')) + '.</p>' +
           '<p>위치 지도는 OpenStreetMap(© OpenStreetMap 기여자)과 Leaflet을 써요.</p>' +
+          (AND ? '' : '<h4>안드로이드 앱</h4><p>같은 성도를 앱으로 쓸 수 있어요(오프라인에서도 열림). <a href="starmap.apk" download="우리은하성도.apk">우리은하성도.apk 내려받기</a> — 설치할 때 「출처를 알 수 없는 앱 설치」를 한 번 허용해야 해요.</p>') +
           '<p>성단·성운·은하 ' + objs.filter(isDso).length + '개와 이름 붙은 별은 밤하늘 관측 도우미와 같은 목록이에요. 해·달·행성 위치는 Astronomy Engine으로 계산해요.</p>' +
           '<h4>한계</h4><p>은하 원반·나선팔은 전파 관측으로 잰 팔 위치를 따라 그린 <b>개략 모형</b>이에요. 은하수 띠는 이 모형을 태양 자리에서 본 모습이라 실제 은하수의 어두운 띠는 없어요. 시차가 아주 작은 별 약 300개는 거리가 불확실해 6,500광년에 두었어요. 대기 굴절은 계산하지 않아요.</p>';
       }]]);
@@ -1488,6 +1559,7 @@
     moved += Math.abs(dx) + Math.abs(dy);
     if (measuring) { if (meas.a) meas.b = unproj(ev.clientX, ev.clientY); return; }
     if (moved < 4 || !userMove()) return;
+    if (sensorActive()) { if (!sensor.dragTip) { sensor.dragTip = 1; CN.toast('폰 방향으로 보기 중이에요 — 폰을 돌려 보세요 (끄려면 아래 단추)', 3000); } return; }
     if (S.mode === 'earth') {
       var k = S.fov / H * 1.05, fx = S.flipH ? -1 : 1, fy = S.flipV ? -1 : 1;
       S.lon = (S.lon + (S.mount === 'az' ? -1 : 1) * fx * dx * k / Math.max(Math.cos(S.lat * D2R), 0.15) + 360) % 360;
@@ -1555,7 +1627,7 @@
     if (k === '/') { ev.preventDefault(); act('zoomIn'); return; }
     if (k === '\\') { ev.preventDefault(); act('zoomOut'); return; }
     if (/^Arrow/.test(k)) {
-      ev.preventDefault(); if (!userMove()) return;
+      ev.preventDefault(); if (sensorActive() || !userMove()) return;
       var sx = k === 'ArrowLeft' ? -1 : k === 'ArrowRight' ? 1 : 0, sy = k === 'ArrowUp' ? 1 : k === 'ArrowDown' ? -1 : 0;
       if (!g) { S.lon = (S.lon + (S.mount === 'az' ? 1 : -1) * sx * S.fov * 0.06 / Math.max(Math.cos(S.lat * D2R), 0.15) + 360) % 360; S.lat = clamp(S.lat + sy * S.fov * 0.06, -89.5, 89.5); }
       else { O.yaw += sx * 0.06; O.pitch = clamp(O.pitch - sy * 0.06, -1.55, 1.55); }
@@ -1578,5 +1650,5 @@
   });
 
   // 시험·디버그용
-  window.SM = { S: S, O: O, get sel() { return sel; }, select: function (id) { if (state.byId[id]) selectObj(state.byId[id], true); }, enterGalaxy: enterGalaxy, enterEarth: enterEarth, proj: proj, objs: objs, get tr() { return tr; } };
+  window.SM = { S: S, O: O, sensor: sensor, fwdHor: function () { return m3v(Fhor, fwdW()); }, sensorStart: sensorStart, sensorStop: sensorStop, sensorHor: sensorHor, get sel() { return sel; }, select: function (id) { if (state.byId[id]) selectObj(state.byId[id], true); }, enterGalaxy: enterGalaxy, enterEarth: enterEarth, proj: proj, objs: objs, get tr() { return tr; } };
 })();
