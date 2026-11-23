@@ -20,8 +20,40 @@
       <div class="stat"><b id="statNeed">36자리</b><span>필수 역할</span></div>
       <div class="stat"><b id="statFill">-</b><span>배정 완료</span></div>
     </div>
-    <div class="notice">⚠️ <b>필수 역할</b>에 배정된 사람은 11월 3일(화) <b>16:10 ~ 22:30 끝까지</b> 참석해야 해요. 끝까지 있기 어렵거나 필수 역할이 아닌 사람은 <b>설명꾼</b>이 됩니다.</div>
+    <div class="notice">⚠️ <b>필수 역할</b>에 배정된 사람은 11월 26일(목) <b>16:10 ~ 22:30 끝까지</b> 참석해야 해요. 끝까지 있기 어렵거나 필수 역할이 아닌 사람은 <b>설명꾼</b>이 됩니다.</div>
   </header>
+
+  <section class="sec vote-sec" id="voteSec">
+    <details class="fold" id="voteFold">
+      <summary><span class="fold-t">🗳️ 시간 투표</span><span class="fold-s">11/25(수) 리허설·준비 · 11/26(목) 관측회 당일 — 올 수 있는 시간을 모두 칠해 주세요</span><span class="fold-x"></span></summary>
+      <div class="fold-body">
+        <div id="voteWho">
+          <p class="sec-hint" style="margin-bottom:8px">① 먼저 내 이름을 찾아 골라 주세요.</p>
+          <input id="voteFind" type="text" placeholder="이름 또는 학번 검색" autocomplete="off">
+          <div class="find-res" id="voteFindRes"></div>
+        </div>
+        <div id="voteBody" hidden>
+          <div class="vote-me" id="voteMe"></div>
+          <p class="sec-hint" style="margin:8px 0">② 올 수 있는 시간 칸을 누르거나 <b>끌어서</b> 초록색으로 칠하세요. 칠한 칸을 다시 누르면 지워져요. (휴대폰: 왼쪽 시간 칸을 밀면 화면이 움직여요)</p>
+          <div class="vote-tools">
+            <button class="qbtn" data-all="0">11/25 전부 가능</button><button class="qbtn" data-all="1">11/26 전부 가능</button><button class="qbtn" data-clear="1">모두 지우기</button>
+          </div>
+          <div id="voteGrid"></div>
+          <div class="vote-save"><button class="btn primary" id="voteSave">투표 저장하기</button><span class="save-state" id="voteState"></span></div>
+        </div>
+      </div>
+    </details>
+    <details class="fold" id="resFold">
+      <summary><span class="fold-t">📊 투표 결과 확인</span><span class="fold-s" id="resSummary">불러오는 중…</span><span class="fold-x"></span></summary>
+      <div class="fold-body">
+        <p class="sec-hint" style="margin-bottom:8px">칸의 숫자 = 그 시간에 올 수 있는 사람 수. 초록색이 진할수록 많이 와요. 칸을 누르면 누가 되는지·안 되는지 보여요.</p>
+        <div id="resGrid"></div>
+        <div class="vote-detail" id="resDetail"></div>
+        <div class="vote-who" id="resWho"></div>
+        <button class="qbtn" id="resReload" style="margin-top:10px">↻ 새로고침</button>
+      </div>
+    </details>
+  </section>
 
   <section class="sec finder">
     <h2>🔎 내 역할 찾기</h2>
@@ -116,6 +148,7 @@
 
 <script src="session.js"></script>
 <script src="schedule.js"></script>
+<script src="vote.js"></script>
 <script>
 const TEACHER_NAME = '김병선';
 const $ = id => document.getElementById(id);
