@@ -24,12 +24,16 @@ function makeSheet() {
     appendRow: (vals) => { rows.push(vals.slice()); },
     deleteRow: (r) => { rows.splice(r - 1, 1); },
     setFrozenRows: () => {},
+    setName: () => {},
   };
 }
 
 function loadGas(opts = {}) {
   const props = Object.assign({ ADMIN_PW: 'test-pw', SHEET_ID: 'sheet1', FOLDER_ID: 'folder1' }, opts.props || {});
-  const sheet = makeSheet();
+  // 탭 여러 개: opts.tabs = { '탭 이름': [[헤더...], [행...]] } 로 미리 채울 수 있음
+  const tabs = new Map();
+  const addTab = (name, rows) => { const sh = makeSheet(); (rows || []).forEach((r) => sh.rows.push(r.slice())); sh.setName = (n) => { tabs.delete(name); name = n; tabs.set(n, sh); }; tabs.set(name, sh); return sh; };
+  Object.entries(opts.tabs || {}).forEach(([n, rows]) => addTab(n, rows));
   const cache = new Map();
   const files = new Map();
   const folders = new Map();
@@ -54,7 +58,7 @@ function loadGas(opts = {}) {
     CacheService: { getScriptCache: () => ({ get: (k) => (cache.has(k) ? cache.get(k) : null), put: (k, v) => cache.set(k, v), remove: (k) => cache.delete(k), removeAll: (ks) => ks.forEach((k) => cache.delete(k)) }) },
     LockService: { getScriptLock: () => ({ waitLock: () => {}, releaseLock: () => {} }) },
     SpreadsheetApp: {
-      openById: (id) => (id === props.SHEET_ID ? { getSheetByName: (n) => (n === '신청(11.27)' ? sheet : null), insertSheet: () => sheet, getUrl: () => 'https://sheet', getId: () => id } : null),
+      openById: (id) => (id === props.SHEET_ID ? { getSheetByName: (n) => tabs.get(n) || null, insertSheet: (n) => addTab(n), getUrl: () => 'https://sheet', getId: () => id } : null),
       getActiveSpreadsheet: () => null, create: () => null,
     },
     DriveApp: {
@@ -77,7 +81,8 @@ function loadGas(opts = {}) {
   const code = fs.readFileSync(path.join(__dirname, '..', 'apps-script', 'Code.gs'), 'utf8');
   vm.runInContext(code, ctx, { filename: 'Code.gs' });
   return {
-    ctx, sheet, props, cache, files,
+    ctx, tabs, props, cache, files,
+    get sheet() { return tabs.get(ctx.SHEET_NAME) || tabs.get('신청(11.26)'); },
     call: (params) => JSON.parse(ctx.doPost({ parameter: Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)])) }).content),
   };
 }

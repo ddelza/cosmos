@@ -9,7 +9,7 @@ const base = { action: 'register', consent: 'Y' };
 
 // 1) 기본 집계
 let c = g.call({ action: 'counts' });
-check('counts 기본', c.ok && c.capacity === 72 && c.studentFirstOpen === false && c.firstSlot === S1 && c.version === '2026-11-02' && c.eventDate === '2026-11-27', c);
+check('counts 기본', c.ok && c.capacity === 72 && c.studentFirstOpen === false && c.firstSlot === S1 && c.version === '2026-11-23' && c.eventDate === '2026-11-26', c);
 
 // 2) 첫 타임 학생 차단 / 다른 시간대 학생 허용 / 첫 타임 주민 허용
 let r = g.call({ ...base, role: '학생', slot: S1, studentNo: '2115', name: '김학생' });
@@ -91,13 +91,15 @@ check('마감', g.call({ action: 'setRegOpen', pw: 'test-pw', open: 'N' }).regOp
 check('마감 후 신청 거절', !g.call({ ...base, role: '교사', slot: S2, name: '최선생' }).ok);
 g.call({ action: 'setRegOpen', pw: 'test-pw', open: 'Y' });
 
-// 8) 예전 형식(10열) 시트에 이어서 쓰기 — 머리글 자동 확장
-const g2 = loadGas();
-g2.sheet.rows.push(['제출시각', '신분', '이름/별칭', '학번', '자녀 이름', '관계', '시간대', '인원', '남길 말', '개인정보 동의']);
-g2.sheet.rows.push([new Date(), '일반주민', "'=__시험용", '', '', '', S2, 2, '시험', '동의']);
+// 8) 예전 형식(10열) 「신청(11.27)」 탭 → 「신청(11.26)」으로 이름만 바꿔 그대로 사용, 머리글 자동 확장
+const g2 = loadGas({ tabs: { '신청(11.27)': [
+  ['제출시각', '신분', '이름/별칭', '학번', '자녀 이름', '관계', '시간대', '인원', '남길 말', '개인정보 동의'],
+  [new Date(), '일반주민', "'=__시험용", '', '', '', S2, 2, '시험', '동의'],
+] } });
 c = g2.call({ action: 'counts' });
+check('11.27 탭이 11.26으로 이름 바뀜', g2.tabs.has('신청(11.26)') && !g2.tabs.has('신청(11.27)'));
 check('예전 행도 집계', c.slots[S2].people === 2, c.slots[S2]);
-check('머리글 13열로 확장', g2.sheet.rows[0].length === 13 && g2.sheet.rows[0][12] === '신청 번호');
+check('머리글 17열로 확장', g2.sheet.rows[0].length === 17 && g2.sheet.rows[0][12] === '신청 번호' && g2.sheet.rows[0][13] === '상태');
 r = g2.call({ ...base, role: '교사', slot: S2, name: '정선생', phone: '010 9876 5432', phoneConsent: 'Y' });
 check('예전 시트에 새 형식 추가', r.ok && g2.sheet.rows.at(-1).length === 13 && g2.sheet.rows.at(-1)[10] === '010-9876-5432');
 check('예전 행은 공개 안 됨', g2.call({ action: 'publicList' }).slots[S2].length === 0);
@@ -109,7 +111,58 @@ const up = g.call({ action: 'uploadPhoto', pw: 'test-pw', folder: 'm31', data: i
 check('업로드', up.ok && up.fileId);
 check('잘못된 폴더명 거절', !g.call({ action: 'uploadPhoto', pw: 'test-pw', folder: '../x', data: img }).ok);
 check('휴지통', g.call({ action: 'trashPhoto', pw: 'test-pw', fileId: up.fileId }).ok && g.files.get(up.fileId).trashed);
-check('ping', g.call({ action: 'ping' }).version === '2026-11-02');
+check('ping', g.call({ action: 'ping' }).version === '2026-11-23');
+
+// 10) 예약 확인·변경·취소·변경 대기
+{
+  const h = loadGas({ props: { CAPACITY: '5', STUDENT_FIRST_OPEN: 'N' } });
+  const reg = (o) => h.call({ ...base, ...o });
+  const A = reg({ role: '일반주민', slot: S1, name: '홍 길동', phone: '010-1111-2222', phoneConsent: 'Y', party: 3 }).id;
+  const B = reg({ role: '일반주민', slot: S2, name: '이몽룡', party: 2 }).id;
+  const C = reg({ role: '학부모', slot: S2, childName: '성춘향', relation: '어머니', party: 3 }).id;
+  const D = reg({ role: '일반주민', slot: S3, name: '변학도', party: 5 }).id; // S3 꽉 참(5)
+  const look = (by, q) => h.call({ action: 'lookup', by, q, dev: 'dev1', ua: 'test' });
+  let L = look('phone', '01011112222');
+  check('휴대폰으로 조회', L.ok && L.items.length === 1 && L.items[0].id === A && L.items[0].party === 3);
+  check('이름으로 조회(띄어쓰기 무시)', look('name', '홍길동').items.length === 1);
+  check('학부모는 자녀 이름으로 조회', look('name', '성춘향').items[0].id === C);
+  check('조회 결과에 휴대폰 없음', !JSON.stringify(L).includes('1111-2222'));
+  check('짧은 이름 거절', !look('name', '홍').ok);
+  check('남의 예약은 못 바꿈(키 불일치)', !h.call({ action: 'change', id: B, by: 'name', q: '홍길동', slot: S2, party: 1 }).ok);
+  check('같은 시간대 인원 늘리기 거절', !h.call({ action: 'change', id: A, by: 'name', q: '홍길동', slot: S1, party: 4 }).ok);
+  r = h.call({ action: 'change', id: A, by: 'phone', q: '010-1111-2222', slot: S1, party: 2 });
+  check('인원 줄이기', r.ok && r.result === 'reduced' && r.counts.slots[S1].people === 2, r);
+  // S3 꽉 참 → A(2명)가 S3로 변경 대기, B(2명)도 대기
+  r = h.call({ action: 'change', id: A, by: 'name', q: '홍길동', slot: S3, party: 2 });
+  check('꽉 찬 시간대는 변경 대기', r.ok && r.result === 'waiting' && r.pos === 1, r);
+  r = h.call({ action: 'change', id: B, by: 'name', q: '이몽룡', slot: S3, party: 2 });
+  check('두 번째 대기자', r.ok && r.result === 'waiting' && r.pos === 2);
+  check('대기 중에도 원래 예약 유지', look('name', '홍길동').items[0].slot === S1);
+  check('대기 있는 시간대는 새 신청도 막힘', !reg({ role: '일반주민', slot: S3, name: '방자', party: 1 }).ok);
+  check('집계에 대기 수', h.call({ action: 'counts' }).slots[S3].waiting === 2);
+  // D(5명)가 취소 → A, B 순서대로 S3로 이동
+  r = h.call({ action: 'cancel', id: D, by: 'name', q: '변학도' });
+  check('취소', r.ok && r.counts.slots[S3].people === 4, r.counts && r.counts.slots[S3]);
+  L = look('name', '홍길동');
+  check('먼저 건 대기자 자동 이동', L.items[0].slot === S3 && !L.items[0].want);
+  check('다음 대기자도 이동', look('name', '이몽룡').items[0].slot === S3);
+  check('취소한 예약은 조회 안 됨', look('name', '변학도').items.length === 0);
+  check('취소 행은 지우지 않고 상태만', h.sheet.rows.some((x) => x[12] === D && x[13] === '취소'));
+  check('취소한 예약 다시 못 바꿈', !h.call({ action: 'cancel', id: D, by: 'name', q: '변학도' }).ok);
+  // 학생은 첫 타임으로 못 옮김
+  const E = reg({ role: '학생', slot: S2, studentNo: '2101', name: '김별빛' }).id;
+  check('학생 첫 타임 이동 거절', !h.call({ action: 'change', id: E, by: 'name', q: '김별빛', slot: S1, party: 1 }).ok);
+  // 빈자리 있으면 바로 이동
+  r = h.call({ action: 'change', id: C, by: 'name', q: '성춘향', slot: S1, party: 3 });
+  check('빈자리 있으면 바로 이동', r.ok && r.result === 'moved' && r.item.slot === S1, r);
+  // 대기 취소
+  h.call({ action: 'change', id: E, by: 'name', q: '김별빛', slot: S3, party: 2 });
+  r = h.call({ action: 'cancelWait', id: E, by: 'name', q: '김별빛' });
+  check('변경 대기 취소', r.ok && !r.item.want && r.item.slot === S2);
+  const log = h.tabs.get('변경기록');
+  check('변경기록 탭에 남음', log && log.rows.length > 10 && log.rows.some((x) => x[1] === '대기 자동 이동') && log.rows.some((x) => x[9] === 'dev1'));
+}
+
 check('모르는 요청', !g.call({ action: 'nope' }).ok);
 
 console.log(fail ? `\n실패 ${fail}건` : '\n모두 통과');

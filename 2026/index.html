@@ -6,15 +6,15 @@
 <meta name="theme-color" content="#0a0405">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <title>2026 광수중학교 주민 공개 천체관측회</title>
-<meta name="description" content="일정 변경: 11월 27일(금) 저녁으로 연기되었어요. 광수중학교 천체관측동아리 코스모스와 함께 토성과 달, 가을·겨울 밤하늘을 관측해요.">
+<meta name="description" content="날짜 변경: 11월 26일(목) 저녁 6시 20분. 광수중학교 천체관측동아리 코스모스와 함께 토성과 달, 가을·겨울 밤하늘을 관측해요.">
 <meta property="og:title" content="2026 광수중학교 주민 공개 천체관측회">
-<meta property="og:description" content="[일정 변경] 11월 27일(금) 저녁 6시 20분 · 광수중학교 과학실·3층 데크·옥상 · 새 날짜로 다시 사전신청해 주세요">
-<meta property="og:image" content="https://ddelza.github.io/cosmos/2026/img/og.jpg?v=1127">
+<meta property="og:description" content="[날짜 변경] 11월 26일(목) 저녁 6시 20분 · 광수중학교 과학실·3층 데크·옥상 · 예약은 그대로, 시간 변경·취소 가능">
+<meta property="og:image" content="https://ddelza.github.io/cosmos/2026/img/og.jpg?v=1126">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="css/site.css?v=20261102a">
+<link rel="stylesheet" href="css/site.css?v=20261123a">
 <style>
 .poster-wrap { position: relative; margin: 12px auto 0; max-width: 560px; }
 .poster-img { display: block; width: 100%; border-radius: 16px; border: 1px solid var(--line); }
@@ -68,6 +68,7 @@
   <section class="card info" id="info" style="margin-top:16px"></section>
   <a class="cta" id="cta" href="register.html">사전신청 하기<small id="ctaSub">시간대를 골라 신청해 주세요</small></a>
   <a class="btn ghost block" href="status.html" style="margin-top:2px">👥 사전신청 현황 보기 <span id="statusSub" style="font-weight:400;color:var(--muted);font-size:.82rem"></span></a>
+  <a class="btn ghost block" href="manage.html" style="margin-top:8px">🔁 예약 확인·변경·취소 <span style="font-weight:400;color:var(--muted);font-size:.82rem">· 시간 바꾸기, 인원 줄이기</span></a>
   <p class="cta-sub">사전신청을 하지 않아도 당일 참여할 수 있어요. 신청해 주시면 시간대별 인원을 나눠 더 여유롭게 관측할 수 있어요.</p>
   <nav class="menu">
     <a class="wide" href="sky.html"><span class="i">🔭</span><span class="t">시간대별 천체 미리보기</span><span class="s">몇 시에 어느 쪽 하늘에서 무엇이 보일까?</span></a>
@@ -79,7 +80,7 @@
   </nav>
 </main>
 
-<script src="js/core.js?v=20261102a"></script>
+<script src="js/core.js?v=20261123a"></script>
 <script>
 (function () {
   'use strict';
@@ -102,6 +103,17 @@
     var el = document.getElementById('change');
     if (!postponed()) { el.innerHTML = ''; return; }
     var old = CN.oldRegs().length;
+    if (cfg.postponed.keepRegs) {
+      el.innerHTML = '<section class="change-card" role="alert">' +
+        '<span class="lbl">📢 관측회 날짜 변경</span>' +
+        '<div class="dates"><span class="old">' + esc(CN.dateShortW(cfg.postponed.from)) + '</span><span class="arrow">→</span><span class="new">' + esc(CN.dateShortW(cfg.eventDate)) + '</span></div>' +
+        '<div class="time">저녁 6시 20분 ~ 9시 40분 · 시간과 장소는 그대로예요</div>' +
+        '<p class="why">관측회 날짜가 <strong>' + esc(CN.dateShortW(cfg.eventDate)) + '</strong>로 바뀌었어요.<br>' +
+        '<strong>이미 하신 예약은 같은 시간대로 그대로 옮겨졌어요.</strong> 새 날짜에 오기 어려우시면 시간을 바꾸거나, 인원을 줄이거나, 취소해 주세요.</p>' +
+        '<a class="btn" href="manage.html">예약 확인·변경·취소</a>' +
+        '</section>';
+      return;
+    }
     el.innerHTML = '<section class="change-card" role="alert">' +
       '<span class="lbl">📢 관측회 일정 변경</span>' +
       '<div class="dates"><span class="old">' + esc(CN.dateShortW(cfg.postponed.from)) + '</span><span class="arrow">→</span><span class="new">' + esc(CN.dateShortW(cfg.eventDate)) + '</span></div>' +
@@ -121,7 +133,7 @@
     var src = cfg.posterFileId ? CN.photoUrl(cfg.posterFileId, 1600) : 'img/poster.jpg?v=' + CN.VERSION;
     el.innerHTML = '<img class="poster-img no-night" id="posterImg" alt="2026 광수중학교 주민 공개 천체관측회 포스터" src="' + esc(src) + '" style="display:none">' + htmlPoster +
       (admin ? '<label class="btn small poster-admin">포스터 바꾸기<input type="file" accept="image/*" hidden id="posterFile"></label>' : '') +
-      (postponed() ? '<div class="ribbon">' + esc(CN.dateShortW(cfg.eventDate)) + '로 연기<small>' + esc(CN.dateShortW(cfg.postponed.from)) + ' → 변경</small></div>' : '');
+      (postponed() ? '<div class="ribbon">' + esc(CN.dateShortW(cfg.eventDate)) + '로 변경<small>' + esc(CN.dateShortW(cfg.postponed.from)) + ' → 변경</small></div>' : '');
     var img = document.getElementById('posterImg');
     img.onload = function () { img.style.display = 'block'; var h = document.getElementById('posterHtml'); if (h) h.remove(); };
     img.onerror = function () {

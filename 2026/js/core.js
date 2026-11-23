@@ -5,15 +5,16 @@
   var CN = window.CN = {};
 
   // ===== 설정 =====
-  CN.VERSION = '20261102a';
+  CN.VERSION = '20261123a';
   CN.DB_URL = 'https://gwangsu-on-default-rtdb.firebaseio.com';
   CN.ROOT = 'years/2026/cosmosNight';          // 행사·천체 아카이브 데이터 (연도 바뀌어도 이 경로 고정)
   CN.ROSTER_YEAR = 2026;                        // 학생·교사 명단 연도
   CN.API_URL = 'https://script.google.com/macros/s/AKfycbwLUwLZlaqXJR4uL7FA3crSz6BzZ3u_z_dJsAYEKliJyMVWbvEhJnj4Sv3_AAq8isIn/exec';
   CN.DEFAULTS = {
-    eventDate: '2026-11-27',
+    eventDate: '2026-11-26',
     // 일정 변경(연기) 안내: from과 eventDate가 다르면 모든 페이지 위에 안내 띠, 메인에 큰 안내
-    postponed: { from: '2026-11-03', reason: '관측회 날 흐리고 비가 온다는 예보가 있어' },
+    // 11/3 → 11/27(다시 신청) → 11/26(예약 그대로 옮김: keepRegs)
+    postponed: { from: '2026-11-27', keepRegs: true },
     previewTimes: ['18:30', '19:30', '20:30', '21:30'],
     slots: ['18:20~19:20', '19:30~20:30', '20:40~21:40'],
     notice: '',
@@ -164,9 +165,11 @@
       return Array.isArray(list) ? list : [];
     } catch (e) { return []; }
   };
-  var regDate = function (r) { return r.date || (CN.DEFAULTS.postponed && CN.DEFAULTS.postponed.from) || CN.DEFAULTS.eventDate; };
-  CN.myRegs = function () { return CN.allMyRegs().filter(function (r) { return regDate(r) === CN.DEFAULTS.eventDate; }); };
-  CN.oldRegs = function () { return CN.allMyRegs().filter(function (r) { return regDate(r) !== CN.DEFAULTS.eventDate; }); };
+  // 날짜 없는 예전 기록 = 11/3 신청(무효). 날짜만 바뀐 경우(keepRegs)는 바뀌기 전 날짜 신청도 유효
+  var regDate = function (r) { return r.date || '2026-11-03'; };
+  var validDates = function () { var pp = CN.DEFAULTS.postponed, d = [CN.DEFAULTS.eventDate]; if (pp && pp.keepRegs) d.push(pp.from); return d; };
+  CN.myRegs = function () { var v = validDates(); return CN.allMyRegs().filter(function (r) { return v.indexOf(regDate(r)) >= 0; }); };
+  CN.oldRegs = function () { var v = validDates(); return CN.allMyRegs().filter(function (r) { return v.indexOf(regDate(r)) < 0; }); };
   CN.addMyReg = function (r) {
     r.date = r.date || CN.DEFAULTS.eventDate;
     try { var list = CN.allMyRegs(); list.push(r); localStorage.setItem(REGS_KEY, JSON.stringify(list)); } catch (e) {}
@@ -403,8 +406,9 @@
     if (pp && pp.from !== CN.DEFAULTS.eventDate && !opts.href && !opts.noChange) {
       var strip = document.createElement('a');
       strip.className = 'change-strip';
-      strip.href = CN.asset('register.html');
-      strip.innerHTML = '<b>📢 일정 변경</b> <s>' + CN.esc(CN.dateShortW(pp.from)) + '</s> → <strong>' + CN.esc(CN.dateShortW(CN.DEFAULTS.eventDate)) + '</strong> <span>· 새 날짜로 다시 신청해 주세요 ›</span>';
+      strip.href = CN.asset(pp.keepRegs ? 'manage.html' : 'register.html');
+      strip.innerHTML = '<b>📢 날짜 변경</b> <s>' + CN.esc(CN.dateShortW(pp.from)) + '</s> → <strong>' + CN.esc(CN.dateShortW(CN.DEFAULTS.eventDate)) + '</strong> <span>· ' +
+        (pp.keepRegs ? '예약은 그대로 옮겨졌어요 · 확인·변경·취소 ›' : '새 날짜로 다시 신청해 주세요 ›') + '</span>';
       bar.parentNode.insertBefore(strip, bar.nextSibling);
     }
     bar.querySelector('#nightBtn').onclick = function () {

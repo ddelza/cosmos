@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0405">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<title>예약 확인·변경·취소 · 2026 광수중 주민 천체관측회</title>
+<meta name="robots" content="noindex">
+<meta property="og:title" content="예약 확인·변경·취소 · 2026 광수중학교 주민 공개 천체관측회">
+<meta property="og:description" content="예약할 때 쓴 휴대폰 번호나 이름으로 시간 변경·인원 줄이기·취소를 할 수 있어요">
+<meta property="og:image" content="https://ddelza.github.io/cosmos/2026/img/og.jpg?v=1126">
+<link rel="stylesheet" href="css/site.css?v=20261123a">
+<style>
+.warnbox { border: 2px solid #ff6b5b; background: #3a0c0a; color: #ffe1dc; border-radius: 14px; padding: 12px 14px; font-size: .9rem; line-height: 1.6; margin: 8px 0 14px; }
+.warnbox b { color: #fff; }
+.tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.find { display: flex; gap: 8px; }
+.find input { flex: 1; min-width: 0; }
+.res { margin-top: 14px; display: grid; gap: 10px; }
+.rcard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.rcard .h { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rcard .h strong { color: var(--text-strong); font-size: 1.05rem; }
+.rcard .h .role { font-size: .78rem; color: var(--muted); }
+.rcard .slotline { margin-top: 6px; font-size: 1rem; color: var(--text-strong); font-weight: 700; }
+.rcard .when { font-size: .74rem; color: var(--muted); margin-top: 2px; }
+.rcard .wait { margin-top: 10px; background: #2a1408; border: 1px solid #7a3b14; color: #f3b98c; border-radius: 10px; padding: 8px 10px; font-size: .86rem; }
+.rcard .acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.editor { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 12px; }
+.opts { display: grid; gap: 6px; }
+.opt { display: flex; align-items: center; gap: 10px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; cursor: pointer; color: var(--text); font: inherit; text-align: left; }
+.opt[aria-pressed="true"] { border-color: var(--red); background: var(--red-soft); color: var(--text-strong); }
+.opt[disabled] { opacity: .45; cursor: not-allowed; }
+.opt .t { font-weight: 700; }
+.opt .n { margin-left: auto; font-size: .8rem; color: var(--muted); }
+.opt .n.full { color: #f3b98c; }
+.partyrow { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+.partyrow select { width: auto; }
+.note { font-size: .8rem; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<main class="wrap narrow">
+  <h1>예약 확인·변경·취소</h1>
+  <p class="sub" id="lead">예약할 때 쓴 휴대폰 번호나 이름으로 내 예약을 찾아 시간을 바꾸거나, 인원을 줄이거나, 취소할 수 있어요.</p>
+
+  <div class="warnbox" role="alert">⚠️ <b>본인(또는 가족)의 예약만 확인·변경해 주세요.</b><br>
+    조회와 변경·취소는 <b>시각과 기기 정보까지 모두 기록</b>됩니다. 다른 사람의 예약을 바꾸거나 취소해서 문제가 생기면 <b>기록을 확인해 추적</b>하고 조치합니다.</div>
+
+  <section class="card">
+    <div class="chips tabs" id="tabs">
+      <button class="chip on" data-by="phone" aria-pressed="true">휴대폰 번호로</button>
+      <button class="chip" data-by="name" aria-pressed="false">이름으로</button>
+    </div>
+    <div class="find">
+      <input type="tel" id="q" inputmode="numeric" autocomplete="off" placeholder="예약할 때 쓴 번호 (예: 010-1234-5678)">
+      <button class="btn primary" id="go">조회</button>
+    </div>
+    <p class="note" id="hint">예약할 때 휴대폰 번호를 적으신 분은 번호로 찾을 수 있어요.</p>
+    <div class="msg err" id="err"></div>
+  </section>
+
+  <div class="res" id="res"></div>
+  <p style="text-align:center;margin-top:16px"><a href="status.html">사전신청 현황</a> · <a href="register.html">새로 신청하기</a> · <a href="index.html">처음 화면</a></p>
+</main>
+
+<script src="js/core.js?v=20261123a"></script>
+<script>
+(function () {
+  'use strict';
+  var esc = CN.esc;
+  CN.topbar();
+  CN.footer({});
+  var cfg = null, counts = null, key = null, items = [];
+
+  // 기록용 기기 표시(이 브라우저에 한 번 만든 임의 번호)
+  var dev = (function () {
+    try { var d = localStorage.getItem('cn26dev'); if (!d) { d = 'd' + CN.uid(); localStorage.setItem('cn26dev', d); } return d; } catch (e) { return 'nostore'; }
+  })();
+  function api(action, params) {
+    return CN.api(action, Object.assign({ dev: dev, ua: navigator.userAgent.slice(0, 180) }, params), 30000).then(function (r) {
+      if (!r || !r.ok) throw new Error(r && r.error ? r.error : '서버 응답이 없어요. 잠시 후 다시 해 주세요.');
+      if (r.counts) counts = r.counts;
+      return r;
+    });
+  }
+
+  var by = 'phone', q = document.getElementById('q'), err = document.getElementById('err'), res = document.getElementById('res');
+  document.querySelectorAll('#tabs [data-by]').forEach(function (b) {
+    b.onclick = function () {
+      by = b.dataset.by;
+      document.querySelectorAll('#tabs [data-by]').forEach(function (x) { var on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+      q.value = '';
+      q.type = by === 'phone' ? 'tel' : 'text';
+      q.inputMode = by === 'phone' ? 'numeric' : 'text';
+      q.placeholder = by === 'phone' ? '예약할 때 쓴 번호 (예: 010-1234-5678)' : '예약할 때 쓴 이름 (학부모는 자녀 이름)';
+      document.getElementById('hint').innerHTML = by === 'phone' ? '예약할 때 휴대폰 번호를 적으신 분은 번호로 찾을 수 있어요.'
+        : '학생·교사·주민은 예약할 때 쓴 <b>이름(또는 별칭)</b>, 학부모님은 <b>자녀 이름</b>을 띄어쓰기 상관없이 그대로 넣어 주세요.';
+      q.focus();
+    };
+  });
+  function showErr(m) { err.textContent = m; err.classList.add('show'); }
+
+  async function search() {
+    err.classList.remove('show');
+    var v = q.value.trim();
+    if (!v) return showErr(by === 'phone' ? '휴대폰 번호를 입력해 주세요.' : '이름을 입력해 주세요.');
+    var go = document.getElementById('go');
+    go.disabled = true; go.textContent = '찾는 중…';
+    try {
+      var r = await api('lookup', { by: by, q: v });
+      key = { by: by, q: v };
+      items = r.items || [];
+      render();
+    } catch (e) { showErr(e.message); }
+    go.disabled = false; go.textContent = '조회';
+  }
+  document.getElementById('go').onclick = search;
+  q.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.isComposing) search(); });
+
+  function slotInfo(s) { return counts && counts.slots ? counts.slots[s] : null; }
+  function render() {
+    if (!items.length) {
+      res.innerHTML = '<div class="card"><p style="margin:0">이 ' + (key.by === 'phone' ? '휴대폰 번호' : '이름') + '로 된 예약을 찾지 못했어요.</p>' +
+        '<p class="note">' + (key.by === 'phone' ? '예약할 때 번호를 적지 않으셨다면 「이름으로」 찾아 주세요. ' : '예약할 때 쓴 이름과 똑같이 넣었는지 확인해 주세요. ') +
+        '그래도 없으면 교무실(768-3101)로 문의해 주세요.</p></div>';
+      return;
+    }
+    res.innerHTML = '<p class="note" style="margin:0">' + items.length + '건을 찾았어요. 본인 예약이 맞는지 확인해 주세요.</p>' + items.map(function (it, i) {
+      var w = it.want;
+      return '<div class="rcard" data-i="' + i + '"><div class="h"><strong>' + esc(it.label) + '</strong><span class="role">' + esc(it.role) + '</span></div>' +
+        '<div class="slotline">🕖 ' + esc(it.slot) + ' · ' + it.party + '명</div>' +
+        (it.at ? '<div class="when">' + CN.fmtWhen(it.at) + ' 신청</div>' : '') +
+        (w ? '<div class="wait">⏳ <b>' + esc(w.slot) + ' · ' + w.party + '명</b>으로 변경 대기 중 (' + w.pos + '번째)<br>빈자리가 생기면 먼저 신청한 순서대로 자동으로 옮겨져요. 그때까지 지금 예약(' + esc(it.slot) + ')은 그대로예요.</div>' : '') +
+        '<div class="acts"><button class="btn small primary" data-act="edit">시간·인원 바꾸기</button>' +
+        (w ? '<button class="btn small ghost" data-act="unwait">변경 대기 취소</button>' : '') +
+        '<button class="btn small ghost" data-act="cancel">예약 취소</button></div><div class="editor" hidden></div></div>';
+    }).join('');
+    res.querySelectorAll('.rcard').forEach(function (card) {
+      var it = items[Number(card.dataset.i)];
+      card.querySelector('[data-act="edit"]').onclick = function () { openEditor(card, it); };
+      card.querySelector('[data-act="cancel"]').onclick = function () { doCancel(it); };
+      var uw = card.querySelector('[data-act="unwait"]');
+      if (uw) uw.onclick = function () { doUnwait(it); };
+    });
+  }
+
+  function openEditor(card, it) {
+    var ed = card.querySelector('.editor');
+    if (!ed.hidden) { ed.hidden = true; return; }
+    var slots = (cfg && cfg.slots) || CN.DEFAULTS.slots;
+    var sel = it.slot, party = it.party;
+    var studentBlocked = function (s) { return it.role === '학생' && s === slots[0] && !(counts && counts.studentFirstOpen); };
+    var draw = function () {
+      var same = sel === it.slot;
+      var maxP = same ? it.party - 1 : 10;
+      if (same && party >= it.party) party = Math.max(1, it.party - 1);
+      ed.innerHTML = '<div class="opts">' + slots.map(function (s) {
+        var c = slotInfo(s), mine = s === it.slot;
+        var left = c ? c.remaining : null, waiting = c ? (c.waiting || 0) : 0;
+        var note = mine ? '지금 예약한 시간대' : studentBlocked(s) ? '학생은 선택할 수 없어요(주민 우선)' : left == null ? '' : (left > 0 && !waiting) ? '남은 자리 ' + left + '명' : '꽉 참 · 변경 대기 ' + waiting + '명';
+        var full = !mine && left != null && (left <= 0 || waiting > 0);
+        return '<button type="button" class="opt" data-s="' + esc(s) + '" aria-pressed="' + (s === sel) + '"' + (studentBlocked(s) ? ' disabled' : '') + '><span class="t">' + esc(s) + '</span><span class="n' + (full ? ' full' : '') + '">' + note + '</span></button>';
+      }).join('') + '</div>' +
+        (same && it.party <= 1 ? '<p class="note">1명 예약은 같은 시간대에서 더 줄일 수 없어요. 다른 시간대를 고르거나 「예약 취소」를 눌러 주세요.</p>'
+          : '<div class="partyrow"><label for="pp">인원</label><select id="pp">' + Array.from({ length: maxP }, function (_, k) { var n = k + 1; return '<option' + (n === party ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select>' +
+            '<span class="note" style="margin:0">' + (same ? '같은 시간대에서는 인원을 <b>줄이기만</b> 할 수 있어요(지금 ' + it.party + '명).' : '본인 포함 함께 오는 인원') + '</span></div>' +
+            '<div class="acts"><button class="btn small primary" data-save>바꾸기</button><button class="btn small ghost" data-close>닫기</button></div>') +
+        '<p class="note">꽉 찬 시간대를 고르면 <b>변경 대기</b>로 걸어 둘 수 있어요. 그 시간대에서 누가 취소하거나 인원을 줄이면 먼저 건 분부터 자동으로 옮겨지고, 그때까지 지금 예약은 그대로예요.</p>';
+      ed.querySelectorAll('[data-s]').forEach(function (b) { b.onclick = function () { sel = b.dataset.s; party = sel === it.slot ? Math.max(1, it.party - 1) : it.party; draw(); }; });
+      var pp = ed.querySelector('#pp');
+      if (pp) pp.onchange = function () { party = Number(pp.value); };
+      var cl = ed.querySelector('[data-close]');
+      if (cl) cl.onclick = function () { ed.hidden = true; };
+      var sv = ed.querySelector('[data-save]');
+      if (sv) sv.onclick = function () { doChange(it, sel, Number(ed.querySelector('#pp').value), sv); };
+    };
+    ed.hidden = false;
+    draw();
+  }
+
+  async function refresh() {
+    var r = await api('lookup', key);
+    items = r.items || [];
+    render();
+  }
+
+  async function doChange(it, slot, party, btn) {
+    var same = slot === it.slot;
+    var msg = same ? it.slot + ' 예약 인원을 ' + it.party + '명 → ' + party + '명으로 줄일까요?'
+      : it.slot + ' ' + it.party + '명 → ' + slot + ' ' + party + '명으로 바꿀까요?\n(자리가 없으면 변경 대기로 걸어 두고, 지금 예약은 그대로 유지돼요)';
+    if (!confirm(msg)) return;
+    btn.disabled = true; btn.textContent = '바꾸는 중…';
+    try {
+      var r = await api('change', Object.assign({ id: it.id, slot: slot, party: party }, key));
+      CN.toast(r.result === 'reduced' ? '인원을 줄였어요' : r.result === 'moved' ? slot + '로 옮겼어요' : '변경 대기로 걸어 두었어요 (' + r.pos + '번째)', 3500);
+      await refresh();
+    } catch (e) { CN.toast(e.message, 4500); btn.disabled = false; btn.textContent = '바꾸기'; }
+  }
+  async function doCancel(it) {
+    if (!confirm(it.label + ' · ' + it.slot + ' · ' + it.party + '명 예약을 취소할까요?\n취소하면 자리가 다른 분께 넘어가서 되돌릴 수 없어요.')) return;
+    try { await api('cancel', Object.assign({ id: it.id }, key)); CN.toast('예약을 취소했어요', 3000); await refresh(); }
+    catch (e) { CN.toast(e.message, 4500); }
+  }
+  async function doUnwait(it) {
+    if (!confirm('변경 대기를 취소할까요? 지금 예약(' + it.slot + ')은 그대로예요.')) return;
+    try { await api('cancelWait', Object.assign({ id: it.id }, key)); CN.toast('변경 대기를 취소했어요', 3000); await refresh(); }
+    catch (e) { CN.toast(e.message, 4500); }
+  }
+
+  CN.getConfig().then(function (c) {
+    cfg = c;
+    document.getElementById('lead').textContent = CN.dateLabel(c.eventDate) + ' 관측회 예약을 휴대폰 번호나 이름으로 찾아 시간 변경·인원 줄이기·취소를 할 수 있어요.';
+  });
+  CN.api('counts', {}, 20000).then(function (c) { if (c && c.ok && !counts) counts = c; }).catch(function () {});
+})();
+</script>
+</body>
+</html>

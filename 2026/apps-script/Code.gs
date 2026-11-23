@@ -14,18 +14,22 @@
  * 시트 열 순서를 바꾸지 마세요 (아래 COL 번호로 읽음). 행 삭제는 자유롭게 해도 됨.
  */
 
-var VERSION = '2026-11-02';
+var VERSION = '2026-11-23';
 var INITIAL_ADMIN_PW = ''; // ← setup 실행 전에만 적기 (저장소에는 올리지 않음)
 var ROLES = ['학생', '교사', '학부모', '일반주민'];
 var SLOTS = ['18:20~19:20', '19:30~20:30', '20:40~21:40'];
-var HEADERS = ['제출시각', '신분', '이름/별칭', '학번', '자녀 이름', '관계', '시간대', '인원', '남길 말', '개인정보 동의', '휴대폰(선택)', '현황 공개', '신청 번호'];
-var COL = { at: 1, role: 2, name: 3, studentNo: 4, childName: 5, relation: 6, slot: 7, party: 8, message: 9, consent: 10, phone: 11, pub: 12, id: 13 };
+var HEADERS = ['제출시각', '신분', '이름/별칭', '학번', '자녀 이름', '관계', '시간대', '인원', '남길 말', '개인정보 동의', '휴대폰(선택)', '현황 공개', '신청 번호', '상태', '변경 희망 시간대', '변경 희망 인원', '변경 신청 시각'];
+var COL = { at: 1, role: 2, name: 3, studentNo: 4, childName: 5, relation: 6, slot: 7, party: 8, message: 9, consent: 10, phone: 11, pub: 12, id: 13, status: 14, wantSlot: 15, wantParty: 16, wantAt: 17 };
 var DEFAULT_CAPACITY = 72;
 var FIRST_SLOT = SLOTS[0]; // 첫 타임: 주민 우선 — 학생은 관리자가 열어 줄 때까지 신청 불가
-// 11/3 → 11/27(금) 연기(기상): 새 날짜 신청은 새 탭에 모음. 예전 「신청」 탭(11/3 신청자)은 그대로 둠
-var EVENT_DATE = '2026-11-27';
-var SHEET_NAME = '신청(11.27)';
+// 11/3 → 11/27(금) 연기(기상): 새 탭에 다시 신청받음, 예전 「신청」 탭(11/3)은 그대로 둠
+// 11/27 → 11/26(목) 변경: 11/27 신청을 그대로 옮김 — 「신청(11.27)」 탭 이름을 「신청(11.26)」으로 바꿔 계속 씀
+var EVENT_DATE = '2026-11-26';
+var SHEET_NAME = '신청(11.26)';
+var PREV_SHEET_NAME = '신청(11.27)';
 var OLD_SHEET_NAME = '신청';
+var LOG_SHEET_NAME = '변경기록';
+var LOG_HEADERS = ['시각', '한 일', '신청 번호', '예약자', '조회 방법', '조회 값', '변경 전', '변경 후', '결과', '기기 표시', '브라우저'];
 var ROOT_FOLDER_NAME = '2026 주민관측회 사진';
 var MAX_IMAGE_CHARS = 9 * 1024 * 1024; // base64 문자 수 상한(약 6.7MB 이미지)
 
@@ -91,6 +95,10 @@ function route_(action, p) {
     case 'setPublic': return setPublic_(p);
     case 'setStudentFirst': return setStudentFirst_(p);
     case 'deleteReg': return deleteReg_(p);
+    case 'lookup': return lookup_(p);
+    case 'change': return change_(p);
+    case 'cancel': return cancel_(p);
+    case 'cancelWait': return cancelWait_(p);
     default: return { ok: false, error: '알 수 없는 요청입니다: ' + action };
   }
 }
@@ -117,6 +125,7 @@ function getRegSheet_(ss) {
   ss = ss || openSheetFile_();
   if (!ss) throw new Error('setup()을 먼저 실행해 주세요.');
   var sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh && PREV_SHEET_NAME) { sh = ss.getSheetByName(PREV_SHEET_NAME); if (sh) sh.setName(SHEET_NAME); } // 날짜만 바뀜: 예약 그대로 옮김
   if (!sh) sh = ss.insertSheet(SHEET_NAME, 0); // 새 탭을 맨 앞에
   var lastCol = sh.getLastColumn();
   var head = lastCol ? sh.getRange(1, 1, 1, lastCol).getValues()[0] : [];
@@ -168,13 +177,16 @@ function readRows_(sh) {
       childName: String(v[COL.childName - 1]), relation: String(v[COL.relation - 1]), slot: String(v[COL.slot - 1]),
       party: parseInt(v[COL.party - 1], 10) || 1, message: String(v[COL.message - 1]),
       pub: String(v[COL.pub - 1]) === 'Y', id: String(v[COL.id - 1]),
+      phone: String(v[COL.phone - 1]), canceled: String(v[COL.status - 1]) === '취소',
+      wantSlot: String(v[COL.wantSlot - 1] || ''), wantParty: parseInt(v[COL.wantParty - 1], 10) || 1,
+      wantAt: v[COL.wantAt - 1] instanceof Date ? v[COL.wantAt - 1].getTime() : (Number(v[COL.wantAt - 1]) || 0),
     });
   }
   return out;
 }
 function slotPeople_(rows, slot) {
   var n = 0;
-  rows.forEach(function (r) { if (r.slot === slot) n += r.party; });
+  rows.forEach(function (r) { if (r.slot === slot && !r.canceled) n += r.party; });
   return n;
 }
 // 시트에 저장할 때 붙인 ' (수식 방지 표시)는 화면에 보일 때 떼기
@@ -229,6 +241,7 @@ function register_(p) {
     var sh = getRegSheet_();
     var cap = capacity_();
     var used = slotPeople_(readRows_(sh), slot);
+    if (activeRows_(sh).some(function (x) { return x.wantSlot === slot; })) used = Math.max(used, capacity_()); // 변경 대기자가 먼저
     if (used + party > cap) {
       var left = Math.max(0, cap - used);
       throw new Error(left ? slot + ' 시간대는 ' + left + '명까지만 더 신청할 수 있어요. 인원을 줄이거나 다른 시간대를 골라 주세요.'
@@ -240,6 +253,191 @@ function register_(p) {
   }
   clearCaches_();
   return { ok: true, id: id, eventDate: EVENT_DATE, counts: counts_() };
+}
+
+// ===== 예약 확인·변경·취소 (본인 확인: 예약할 때 쓴 휴대폰 번호 또는 이름) =====
+// 모든 조회·변경은 「변경기록」 탭에 남김. 취소는 행을 지우지 않고 상태를 「취소」로 바꿈(되살릴 수 있게)
+function digits_(s) { return String(s || '').replace(/\D/g, ''); }
+function normName_(s) { return shown_(s).replace(/\s+/g, ''); }
+function rowLabel_(r) {
+  return r.role === '학부모' ? shown_(r.childName) + ' ' + shown_(r.relation)
+    : r.role === '교사' ? shown_(r.name) + ' 선생님' : shown_(r.name);
+}
+// 조회 키가 이 예약과 맞는지
+function matches_(r, by, q) {
+  if (by === 'phone') { var d = digits_(q); return d.length >= 10 && digits_(r.phone) === d; }
+  if (by === 'name') { var n = normName_(q); return n.length >= 2 && (normName_(r.name) === n || normName_(r.childName) === n); }
+  return false;
+}
+function checkKey_(p) {
+  var by = String(p.by || ''), q = String(p.q || '');
+  if (by === 'phone') { if (digits_(q).length < 10) throw new Error('휴대폰 번호를 확인해 주세요. (예: 010-1234-5678)'); }
+  else if (by === 'name') { if (normName_(q).length < 2) throw new Error('예약할 때 쓴 이름을 두 글자 이상 입력해 주세요.'); }
+  else throw new Error('휴대폰 번호 또는 이름으로 조회해 주세요.');
+  return { by: by, q: q };
+}
+function logSheet_(ss) {
+  ss = ss || openSheetFile_();
+  var sh = ss.getSheetByName(LOG_SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(LOG_SHEET_NAME);
+    sh.getRange(1, 1, 1, LOG_HEADERS.length).setValues([LOG_HEADERS]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+function log_(action, p, r, before, after, result) {
+  try {
+    logSheet_().appendRow([new Date(), action, r ? r.id : '', r ? rowLabel_(r) + ' (' + r.role + ')' : '',
+      p.by === 'phone' ? '휴대폰' : p.by === 'name' ? '이름' : String(p.by || ''), clean_(p.q, 40),
+      before || '', after || '', result || '', clean_(p.dev, 40), clean_(p.ua, 200)]);
+  } catch (e) { /* 기록 실패가 변경을 막지는 않음 */ }
+}
+function desc_(slot, party) { return slot + ' ' + party + '명'; }
+function activeRows_(sh) { return readRows_(sh).filter(function (r) { return !r.canceled; }); }
+// 한 시간대에서 대기 순번(1부터)
+function queuePos_(rows, r) {
+  if (!r.wantSlot) return 0;
+  var q = rows.filter(function (x) { return x.wantSlot === r.wantSlot; }).sort(function (a, b) { return a.wantAt - b.wantAt; });
+  for (var i = 0; i < q.length; i++) if (q[i].id === r.id) return i + 1;
+  return 0;
+}
+function itemOf_(rows, r) {
+  return { id: r.id, role: r.role, label: rowLabel_(r), slot: r.slot, party: r.party, at: r.at instanceof Date ? r.at.getTime() : 0,
+    want: r.wantSlot ? { slot: r.wantSlot, party: r.wantParty, pos: queuePos_(rows, r), at: r.wantAt } : null };
+}
+function setWant_(sh, r, slot, party, at) {
+  sh.getRange(r.row, COL.wantSlot, 1, 3).setValues([[slot || '', slot ? party : '', slot ? new Date(at) : '']]);
+}
+function findOwned_(sh, p) {
+  var key = checkKey_(p);
+  var id = String(p.id || '');
+  var rows = readRows_(sh);
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].id === id) {
+      if (!matches_(rows[i], key.by, key.q)) throw new Error('조회한 휴대폰 번호·이름과 예약이 맞지 않아요.');
+      if (rows[i].canceled) throw new Error('이미 취소된 예약이에요.');
+      return rows[i];
+    }
+  }
+  throw new Error('예약을 찾을 수 없어요. 다시 조회해 주세요.');
+}
+
+// 빈자리가 생긴 시간대에 대기자를 먼저 신청한 순서대로 옮김(앞사람이 안 들어가면 뒷사람도 기다림)
+function processQueues_(sh, p) {
+  var cap = capacity_(), moved = [];
+  for (var guard = 0; guard < 300; guard++) {
+    var rows = activeRows_(sh), did = false;
+    for (var k = 0; k < SLOTS.length && !did; k++) {
+      var s = SLOTS[k];
+      var q = rows.filter(function (x) { return x.wantSlot === s; }).sort(function (a, b) { return a.wantAt - b.wantAt; });
+      if (!q.length) continue;
+      var first = q[0], left = cap - slotPeople_(rows, s);
+      if (first.wantParty <= left) {
+        var before = desc_(first.slot, first.party);
+        sh.getRange(first.row, COL.slot).setValue(s);
+        sh.getRange(first.row, COL.party).setValue(first.wantParty);
+        setWant_(sh, first, '');
+        log_('대기 자동 이동', { by: '자동', q: '' }, first, before, desc_(s, first.wantParty), '빈자리가 생겨 이동');
+        moved.push(first.id);
+        did = true;
+      }
+    }
+    if (!did) break;
+  }
+  return moved;
+}
+
+function lookup_(p) {
+  var key = checkKey_(p);
+  var sh = getRegSheet_();
+  var rows = activeRows_(sh);
+  var hit = rows.filter(function (r) { return matches_(r, key.by, key.q); });
+  log_('조회', p, null, '', '', hit.length + '건');
+  return { ok: true, items: hit.map(function (r) { return itemOf_(rows, r); }), counts: counts_() };
+}
+
+// 시간대 변경(빈자리 없으면 변경 대기) 또는 같은 시간대에서 인원 줄이기
+function change_(p) {
+  var slot = String(p.slot || '');
+  if (SLOTS.indexOf(slot) < 0) throw new Error('시간대를 선택해 주세요.');
+  var party = parseInt(p.party, 10);
+  if (!(party >= 1 && party <= 10)) throw new Error('인원을 확인해 주세요.');
+  var lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    var sh = getRegSheet_();
+    var r = findOwned_(sh, p);
+    var before = desc_(r.slot, r.party) + (r.wantSlot ? ' (대기: ' + desc_(r.wantSlot, r.wantParty) + ')' : '');
+    var result, pos = 0;
+    if (slot === r.slot) {
+      if (party >= r.party) throw new Error('시간대를 그대로 두면 인원은 줄이기만 할 수 있어요. (지금 ' + r.party + '명)');
+      sh.getRange(r.row, COL.party).setValue(party);
+      result = 'reduced';
+    } else {
+      if (r.role === '학생' && slot === FIRST_SLOT && !studentFirstOpen_()) throw new Error('첫 타임(' + FIRST_SLOT + ')은 주민 우선이라 학생은 옮길 수 없어요.');
+      var rows = activeRows_(sh);
+      var left = capacity_() - slotPeople_(rows, slot);
+      var waiting = rows.some(function (x) { return x.wantSlot === slot && x.id !== r.id; });
+      if (party <= left && !waiting) {
+        sh.getRange(r.row, COL.slot).setValue(slot);
+        sh.getRange(r.row, COL.party).setValue(party);
+        setWant_(sh, r, '');
+        result = 'moved';
+      } else {
+        // 꽉 찼거나 앞에 기다리는 사람이 있으면 변경 대기(지금 시간대 예약은 그대로 유지)
+        var keepAt = r.wantSlot === slot && r.wantParty === party ? r.wantAt : Date.now();
+        setWant_(sh, r, slot, party, keepAt);
+        result = 'waiting';
+      }
+    }
+    SpreadsheetApp.flush && SpreadsheetApp.flush();
+    var moved = processQueues_(sh, p);
+    var after = activeRows_(sh), me = after.filter(function (x) { return x.id === r.id; })[0];
+    if (result === 'waiting' && me && !me.wantSlot) result = 'moved'; // 대기 걸자마자 자리가 나서 바로 들어간 경우
+    if (me && me.wantSlot) pos = queuePos_(after, me);
+    log_(result === 'reduced' ? '인원 줄이기' : result === 'moved' ? '시간 변경' : '변경 대기 신청', p, r, before,
+      me ? desc_(me.slot, me.party) + (me.wantSlot ? ' (대기: ' + desc_(me.wantSlot, me.wantParty) + ', ' + pos + '번째)' : '') : '', moved.length ? '대기 ' + moved.length + '건 자동 이동' : '');
+    clearCaches_();
+    return { ok: true, result: result, pos: pos, item: me ? itemOf_(after, me) : null, counts: counts_() };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function cancel_(p) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    var sh = getRegSheet_();
+    var r = findOwned_(sh, p);
+    sh.getRange(r.row, COL.status).setValue('취소');
+    setWant_(sh, r, '');
+    var moved = processQueues_(sh, p);
+    log_('예약 취소', p, r, desc_(r.slot, r.party), '취소', moved.length ? '대기 ' + moved.length + '건 자동 이동' : '');
+    clearCaches_();
+    return { ok: true, counts: counts_() };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function cancelWait_(p) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    var sh = getRegSheet_();
+    var r = findOwned_(sh, p);
+    if (!r.wantSlot) throw new Error('기다리는 변경이 없어요.');
+    setWant_(sh, r, '');
+    var moved = processQueues_(sh, p);
+    log_('변경 대기 취소', p, r, desc_(r.slot, r.party) + ' (대기: ' + desc_(r.wantSlot, r.wantParty) + ')', desc_(r.slot, r.party), moved.length ? '대기 ' + moved.length + '건 자동 이동' : '');
+    clearCaches_();
+    var after = activeRows_(sh);
+    return { ok: true, item: itemOf_(after, after.filter(function (x) { return x.id === r.id; })[0]), counts: counts_() };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 // 신청한 사람이 "공개할까요?"에 답함 — 신청 번호(id)를 아는 사람만 바꿀 수 있음
@@ -272,7 +470,7 @@ function publicList_() {
   if (hit) return JSON.parse(hit);
   var bySlot = {};
   SLOTS.forEach(function (s) { bySlot[s] = []; });
-  readRows_(getRegSheet_()).forEach(function (r) {
+  activeRows_(getRegSheet_()).forEach(function (r) {
     if (!r.pub || !bySlot[r.slot]) return;
     var label = r.role === '학부모' ? shown_(r.childName) + ' ' + shown_(r.relation)
       : r.role === '교사' ? shown_(r.name) + ' 선생님' : shown_(r.name);
@@ -315,12 +513,13 @@ function counts_() {
   if (hit) return JSON.parse(hit);
 
   var bySlot = {}, byRole = {};
-  SLOTS.forEach(function (s) { bySlot[s] = { forms: 0, people: 0 }; });
+  SLOTS.forEach(function (s) { bySlot[s] = { forms: 0, people: 0, waiting: 0 }; });
   ROLES.forEach(function (r) { byRole[r] = { forms: 0, people: 0 }; });
   var total = { forms: 0, people: 0 };
 
   var cap = capacity_(), pubCount = 0;
-  readRows_(getRegSheet_()).forEach(function (r) {
+  activeRows_(getRegSheet_()).forEach(function (r) {
+    if (r.wantSlot && bySlot[r.wantSlot]) bySlot[r.wantSlot].waiting++;
     total.forms++; total.people += r.party;
     if (r.pub) pubCount++;
     if (bySlot[r.slot]) { bySlot[r.slot].forms++; bySlot[r.slot].people += r.party; }
