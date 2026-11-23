@@ -248,7 +248,7 @@
       '<dt>시간대</dt><dd>' + esc(CN.dateLabel(cfg.eventDate)) + ' ' + esc(p.slot) + '</dd><dt>인원</dt><dd>' + esc(p.party) + '명</dd>' +
       (p.phone ? '<dt>알림 문자</dt><dd>' + esc(p.phone) + '</dd>' : '') + '</dl>' +
       (id ? '<div class="pub-state" id="pubState"></div>' : '') +
-      '<p class="hint">바꾸거나 취소하려면 광수중학교 과학실(천체관측동아리 담당 선생님)로 알려 주세요.</p></div>' +
+      '<p class="hint">시간을 바꾸거나 인원을 줄이거나 취소하려면 <a href="manage.html">예약 확인·변경·취소</a>에서 ' + (p.phone ? '휴대폰 번호나 ' : '') + '이름으로 찾아 주세요.</p></div>' +
       (times.length ? '<a class="btn primary block" href="sky.html" id="goSky">🔭 ' + esc(times.join(' · ')) + '에 보이는 천체 미리 보기</a>' : '') +
       '<a class="btn ghost block" href="status.html" style="margin-top:8px">👥 사전신청 현황 보기</a>' +
       '<a class="btn ghost block" href="index.html" style="margin-top:8px">처음 화면으로</a>' +
@@ -285,6 +285,53 @@
     m.el.querySelector('[data-no]').onclick = function () { m.close(); };
   }
 
+  // ===== 이미 신청한 이름·휴대폰 번호인지 먼저 확인 =====
+  // 예약 조회(lookup)를 그대로 써서 서버 재배포 없이 동작. 확인이 실패하면(네트워크 등) 그냥 신청 진행
+  var skipDup = false;
+  var dev = (function () {
+    try { var d = localStorage.getItem('cn26dev'); if (!d) { d = 'd' + CN.uid(); localStorage.setItem('cn26dev', d); } return d; } catch (e) { return 'nostore'; }
+  })();
+  async function findExisting(p) {
+    var keys = [];
+    if (p.phone && p.phone.replace(/\D/g, '').length >= 10) keys.push({ by: 'phone', q: p.phone });
+    var nm = p.role === '학부모' ? p.childName : p.name;
+    if (nm && nm.replace(/\s+/g, '').length >= 2) keys.push({ by: 'name', q: nm });
+    if (!keys.length) return null;
+    var res = await Promise.all(keys.map(function (k) {
+      return CN.api('lookup', Object.assign({ dev: dev, ua: '[신청 전 중복 확인] ' + navigator.userAgent.slice(0, 150) }, k), 15000)
+        .then(function (r) { return r && r.ok ? (r.items || []) : []; }).catch(function () { return []; });
+    }));
+    var seen = {}, items = [], key = null, byPhone = false;
+    res.forEach(function (list, i) {
+      if (list.length && !key) { key = keys[i]; byPhone = keys[i].by === 'phone'; }
+      list.forEach(function (it) { if (!seen[it.id]) { seen[it.id] = 1; items.push(it); } });
+    });
+    return items.length ? { key: key, items: items, byPhone: byPhone } : null;
+  }
+  function showDup(d) {
+    var what = d.byPhone ? '이 휴대폰 번호로' : '이 이름으로';
+    var m = CN.modal(
+      '<div class="modal-head"><div class="t">이미 신청된 내역이 있어요</div></div>' +
+      '<p>' + what + ' 된 사전신청이 이미 있어요.</p>' +
+      d.items.map(function (it) {
+        return '<div class="pub-preview"><strong>' + esc(it.label) + '</strong> <span class="hint">(' + esc(it.role) + ')</span>' +
+          '<div>🕖 ' + esc(it.slot) + ' · ' + esc(it.party) + '명' + (it.want ? ' <span class="hint">· ' + esc(it.want.slot) + '로 변경 대기 중</span>' : '') + '</div></div>';
+      }).join('') +
+      '<p style="margin-top:12px"><strong>시간이나 인원 변경을 원하시는 거라면 변경 신청을 해 주세요.</strong></p>' +
+      '<button class="btn primary block" data-go>예약 변경 신청하러 가기 ›</button>' +
+      '<p class="hint" style="margin-top:12px">' + (d.byPhone ? '같은 번호로 다른 가족·일행을 따로 신청하시는 거라면' : '이름만 같은 다른 사람이라면') + ' 아래 버튼으로 새로 신청할 수 있어요.</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost small" data-new>' + (d.byPhone ? '따로 새로 신청할게요' : '다른 사람이에요, 새로 신청할게요') + '</button>' +
+      '<button class="btn ghost small" data-close>닫기</button></div>',
+      { narrow: true });
+    m.el.querySelector('[data-go]').onclick = function () {
+      // 조회 키를 URL에 넣지 않고 sessionStorage로 넘김
+      try { sessionStorage.setItem('cn26lookup', JSON.stringify(d.key)); } catch (e) {}
+      location.href = 'manage.html';
+    };
+    m.el.querySelector('[data-new]').onclick = function () { m.close(); skipDup = true; document.getElementById('submit').click(); };
+    m.el.querySelector('[data-close]').onclick = function () { m.close(); };
+  }
+
   // 휴대폰 칸: 입력하면 선택 동의 상자 보이기
   var phoneEl = document.getElementById('phone');
   phoneEl.addEventListener('input', function () { document.getElementById('phoneConsentBox').style.display = phoneEl.value.trim() ? 'block' : 'none'; });
@@ -295,7 +342,15 @@
     errEl.classList.remove('show');
     var p;
     try { p = await collect(); } catch (er) { showErr(er.message); return; }
-    btn.disabled = true; btn.textContent = '보내는 중…';
+    btn.disabled = true;
+    if (!skipDup && srvNew) {
+      btn.textContent = '신청 내역 확인 중…';
+      var dup = null;
+      try { dup = await findExisting(p); } catch (er) { dup = null; }
+      if (dup) { btn.disabled = false; btn.textContent = '신청하기'; showDup(dup); return; }
+    }
+    skipDup = false;
+    btn.textContent = '보내는 중…';
     try {
       var res = await CN.api('register', p, 30000);
       if (!res || !res.ok) {

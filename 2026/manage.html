@@ -213,6 +213,18 @@
     document.getElementById('lead').textContent = CN.dateLabel(c.eventDate) + ' 관측회 예약을 휴대폰 번호나 이름으로 찾아 시간 변경·인원 줄이기·취소를 할 수 있어요.';
   });
   CN.api('counts', {}, 20000).then(function (c) { if (c && c.ok && !counts) counts = c; }).catch(function () {});
+
+  // 신청 페이지에서 「이미 신청된 내역」으로 넘어온 경우: 그 번호·이름으로 바로 조회
+  try {
+    var pre = JSON.parse(sessionStorage.getItem('cn26lookup') || 'null');
+    sessionStorage.removeItem('cn26lookup');
+    if (pre && (pre.by === 'phone' || pre.by === 'name') && pre.q) {
+      var tab = document.querySelector('#tabs [data-by="' + pre.by + '"]');
+      if (tab) tab.click();
+      q.value = pre.q;
+      search();
+    }
+  } catch (e) {}
 })();
 </script>
 </body>
