@@ -5,7 +5,7 @@
   var CN = window.CN = {};
 
   // ===== 설정 =====
-  CN.VERSION = '20261123a';
+  CN.VERSION = '20261123b';
   CN.DB_URL = 'https://gwangsu-on-default-rtdb.firebaseio.com';
   CN.ROOT = 'years/2026/cosmosNight';          // 행사·천체 아카이브 데이터 (연도 바뀌어도 이 경로 고정)
   CN.ROSTER_YEAR = 2026;                        // 학생·교사 명단 연도
@@ -404,11 +404,20 @@
     document.body.insertBefore(bar, document.body.firstChild);
     var pp = CN.DEFAULTS.postponed;
     if (pp && pp.from !== CN.DEFAULTS.eventDate && !opts.href && !opts.noChange) {
-      var strip = document.createElement('a');
-      strip.className = 'change-strip';
-      strip.href = CN.asset(pp.keepRegs ? 'manage.html' : 'register.html');
-      strip.innerHTML = '<b>📢 날짜 변경</b> <s>' + CN.esc(CN.dateShortW(pp.from)) + '</s> → <strong>' + CN.esc(CN.dateShortW(CN.DEFAULTS.eventDate)) + '</strong> <span>· ' +
-        (pp.keepRegs ? '예약은 그대로 옮겨졌어요 · 확인·변경·취소 ›' : '새 날짜로 다시 신청해 주세요 ›') + '</span>';
+      var strip = document.createElement(pp.keepRegs ? 'div' : 'a');
+      strip.className = 'change-strip' + (pp.keepRegs ? ' two' : '');
+      var nd = CN.esc(CN.dateShortW(CN.DEFAULTS.eventDate)), od = CN.esc(CN.dateShortW(pp.from));
+      if (pp.keepRegs) {
+        // 예약이 그대로 옮겨진 사람 / 11월 3일에만 신청해서 지금 예약이 없는 사람을 나눠 안내
+        strip.innerHTML = '<div class="cs-h"><b>📢 날짜 변경</b> <s>' + od + '</s> → <strong>' + nd + '</strong> <span class="cs-t">저녁 6시 20분 · 시간·장소 그대로</span></div>' +
+          '<div class="cs-rows">' +
+          '<a class="cs-row" href="' + CN.asset('manage.html') + '"><span class="cs-who">' + od + '로 예약하신 분</span><span class="cs-what">예약이 <b>그대로 옮겨졌어요</b> · 시간 변경·취소 ›</span></a>' +
+          '<a class="cs-row" href="' + CN.asset('register.html') + '"><span class="cs-who">11월 3일(화)에만 신청하신 분</span><span class="cs-what">' + od + ' 때 다시 신청하지 않으셨다면 지금 예약이 없어요 · <b>' + nd + '로 새로 신청</b> ›</span></a>' +
+          '</div>';
+      } else {
+        strip.href = CN.asset('register.html');
+        strip.innerHTML = '<b>📢 일정 변경</b> <s>' + od + '</s> → <strong>' + nd + '</strong> <span>· 새 날짜로 다시 신청해 주세요 ›</span>';
+      }
       bar.parentNode.insertBefore(strip, bar.nextSibling);
     }
     bar.querySelector('#nightBtn').onclick = function () {

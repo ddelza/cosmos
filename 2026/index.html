@@ -14,7 +14,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="css/site.css?v=20261123a">
+<link rel="stylesheet" href="css/site.css?v=20261123b">
 <style>
 .poster-wrap { position: relative; margin: 12px auto 0; max-width: 560px; }
 .poster-img { display: block; width: 100%; border-radius: 16px; border: 1px solid var(--line); }
@@ -68,7 +68,7 @@
   <section class="card info" id="info" style="margin-top:16px"></section>
   <a class="cta" id="cta" href="register.html">사전신청 하기<small id="ctaSub">시간대를 골라 신청해 주세요</small></a>
   <a class="btn ghost block" href="status.html" style="margin-top:2px">👥 사전신청 현황 보기 <span id="statusSub" style="font-weight:400;color:var(--muted);font-size:.82rem"></span></a>
-  <a class="btn ghost block" href="manage.html" style="margin-top:8px">🔁 예약 확인·변경·취소 <span style="font-weight:400;color:var(--muted);font-size:.82rem">· 시간 바꾸기, 인원 줄이기</span></a>
+  <a class="btn ghost block" href="manage.html" style="margin-top:8px;flex-direction:column;gap:2px">🔁 예약 확인·변경·취소 <span style="display:block;font-weight:400;color:var(--muted);font-size:.8rem">시간 바꾸기 · 인원 줄이기 · 취소</span></a>
   <p class="cta-sub">사전신청을 하지 않아도 당일 참여할 수 있어요. 신청해 주시면 시간대별 인원을 나눠 더 여유롭게 관측할 수 있어요.</p>
   <nav class="menu">
     <a class="wide" href="sky.html"><span class="i">🔭</span><span class="t">시간대별 천체 미리보기</span><span class="s">몇 시에 어느 쪽 하늘에서 무엇이 보일까?</span></a>
@@ -80,7 +80,7 @@
   </nav>
 </main>
 
-<script src="js/core.js?v=20261123a"></script>
+<script src="js/core.js?v=20261123b"></script>
 <script>
 (function () {
   'use strict';
@@ -108,9 +108,12 @@
         '<span class="lbl">📢 관측회 날짜 변경</span>' +
         '<div class="dates"><span class="old">' + esc(CN.dateShortW(cfg.postponed.from)) + '</span><span class="arrow">→</span><span class="new">' + esc(CN.dateShortW(cfg.eventDate)) + '</span></div>' +
         '<div class="time">저녁 6시 20분 ~ 9시 40분 · 시간과 장소는 그대로예요</div>' +
-        '<p class="why">관측회 날짜가 <strong>' + esc(CN.dateShortW(cfg.eventDate)) + '</strong>로 바뀌었어요.<br>' +
-        '<strong>이미 하신 예약은 같은 시간대로 그대로 옮겨졌어요.</strong> 새 날짜에 오기 어려우시면 시간을 바꾸거나, 인원을 줄이거나, 취소해 주세요.</p>' +
-        '<a class="btn" href="manage.html">예약 확인·변경·취소</a>' +
+        '<div class="cases">' +
+        '<a class="case" href="manage.html"><span class="who">' + esc(CN.dateShortW(cfg.postponed.from)) + '로 예약하신 분</span>' +
+        '<span class="what">예약이 <b>같은 시간대로 그대로 옮겨졌어요.</b> 다시 신청하지 않으셔도 돼요.<br>오기 어려우시면 시간 변경·인원 줄이기·취소를 해 주세요.</span><span class="go">예약 확인·변경·취소 ›</span></a>' +
+        '<a class="case" href="register.html"><span class="who">11월 3일(화)에만 신청하신 분</span>' +
+        '<span class="what">' + esc(CN.dateShortW(cfg.postponed.from)) + '로 바뀔 때 다시 신청하지 않으셨다면 <b>지금 예약이 없어요.</b><br>' + esc(CN.dateShortW(cfg.eventDate)) + '로 새로 신청해 주세요.</span><span class="go">새로 신청하기 ›</span></a>' +
+        '</div>' +
         '</section>';
       return;
     }
