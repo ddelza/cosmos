@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0405">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
+<title>디지털 방명록 · 2026 광수중 주민 천체관측회</title>
+<link rel="stylesheet" href="../css/site.css?v=20261124a">
+<style>
+.gb-tabs { display: flex; gap: 6px; margin: 10px 0 0; }
+.gb-tab { flex: 1; padding: 10px 6px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg-2); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; line-height: 1.25; }
+.gb-tab small { display: block; font-weight: 500; font-size: .74rem; color: var(--muted); }
+.gb-tab.on { background: var(--red-deep); border-color: var(--red); color: #fff; }
+.gb-tab.on small { color: #ffd2cc; }
+
+.gb-top { position: sticky; top: 0; z-index: 20; background: var(--bg); padding: 10px 0 8px; }
+.gb-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.gb-stat { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 4px; text-align: center; }
+.gb-stat .v { font-size: 1.5rem; font-weight: 800; color: var(--text-strong); line-height: 1.15; }
+.gb-stat .l { font-size: .74rem; color: var(--muted); }
+.gb-stat.arr .v { color: #fff; }
+.gb-stat.del .v { color: var(--muted); }
+.gb-tools { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.gb-tools input { flex: 1; min-width: 160px; margin: 0; }
+.gb-sync { font-size: .76rem; color: var(--muted); }
+.gb-sync.warn { color: var(--warn); font-weight: 700; }
+
+/* 명단 판: 흰 칸에 검정 글씨, 도착하면 반전 */
+.gb-board { background: #eceef2; border-radius: 12px; padding: 12px; display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-start; min-height: 120px; }
+.gb-empty { color: #555; font-size: .9rem; padding: 20px; }
+.grp { display: inline-flex; align-items: center; flex-wrap: wrap; row-gap: 6px; }
+.ln { width: 14px; height: 3px; background: #9aa0ab; flex: none; }
+.bx { position: relative; min-width: 64px; padding: 8px 12px; border: 2px solid #20242c; border-radius: 8px; background: #fff; color: #111;
+  font-weight: 700; font-size: 1rem; line-height: 1.2; text-align: center; cursor: pointer;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+.bx small { display: block; font-size: .66rem; font-weight: 600; color: #6b7280; margin-top: 2px; }
+.bx.blank { border-style: dashed; color: #9aa0ab; font-weight: 600; min-width: 72px; }
+.grp.in .bx:not(.gone) { background: #111; color: #fff; border-color: #111; }
+.grp.in .bx:not(.gone) small { color: #c9ccd3; }
+.grp.in .ln { background: #111; }
+.bx.gone { opacity: .35; border-style: dashed; text-decoration: line-through; background: transparent; }
+.bx.busy::after { content: ''; position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; background: #f0a020; }
+.bx:focus-visible { outline: 3px solid #3b82f6; outline-offset: 2px; }
+
+/* 우클릭 메뉴 */
+.gb-menu { position: fixed; z-index: 1000; min-width: 170px; background: #fff; color: #111; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.45); padding: 6px; }
+.gb-menu .mh { font-size: .74rem; color: #6b7280; padding: 4px 10px 6px; border-bottom: 1px solid #e5e7eb; margin-bottom: 4px; }
+.gb-menu button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 10px; font: inherit; font-weight: 600; color: #111; border-radius: 6px; cursor: pointer; }
+.gb-menu button:hover, .gb-menu button:focus { background: #f1f3f6; outline: none; }
+.gb-menu button.danger { color: #c0262d; }
+
+.nm-list label { display: block; font-size: .82rem; color: var(--muted); margin: 10px 0 4px; }
+.nm-list input { margin: 0; }
+</style>
+</head>
+<body>
+<main class="wrap" id="app"><div class="loading">불러오는 중…</div></main>
+
+<script>window.CN_BASE = '../';</script>
+<script src="../js/core.js?v=20261124a"></script>
+<script>
+(function () {
+  'use strict';
+  var esc = CN.esc, app = document.getElementById('app');
+  CN.topbar({ title: '디지털 방명록', small: '문지기용', noChange: true });
+  if (!CN.isAdmin()) {
+    app.innerHTML = '<h1>디지털 방명록</h1><p class="sub">입장하는 손님을 확인하는 문지기용 화면이에요. 신청자 이름이 나오므로 관리자 로그인이 필요해요.</p>' +
+      '<button class="btn primary" id="lg">관리자 로그인</button>';
+    document.getElementById('lg').onclick = CN.openLogin;
+    return;
+  }
+  var A = CN.admin();
+  var TAB_KEY = 'cn26gbTab';
+  var G = { slots: CN.DEFAULTS.slots.slice(), items: [], state: {}, tab: 0, q: '', pending: {}, queue: [], sending: false, lastSync: 0, err: '' };
+  try { var t0 = parseInt(localStorage.getItem(TAB_KEY), 10); if (t0 >= 0 && t0 < 3) G.tab = t0; } catch (e) {}
+
+  app.innerHTML =
+    '<h1 style="margin-bottom:2px">디지털 방명록</h1>' +
+    '<p class="sub" style="margin:0">' + esc(CN.dateShort ? CN.dateShort(CN.DEFAULTS.eventDate) : '11월 26일') + ' · ' + esc(A.who.label) + ' 님 · ' +
+    '이름을 누르면 도착(검정), 다시 누르면 취소 · 우클릭(휴대폰은 길게 누르기)하면 메뉴</p>' +
+    '<div class="gb-tabs" id="tabs"></div>' +
+    '<div class="gb-top"><div class="gb-stats" id="stats"></div>' +
+    '<div class="gb-tools"><input type="text" inputmode="search" id="q" placeholder="이름 검색" autocomplete="off"><span class="gb-sync" id="sync"></span></div></div>' +
+    '<div class="gb-board" id="board"><div class="gb-empty">명단 불러오는 중…</div></div>' +
+    '<p class="hint" style="margin-top:10px">여러 명이 함께 신청한 경우 예약자 옆에 빈칸이 이어져 있어요. 함께 온 사람 이름을 모두 적어야 도착 처리할 수 있어요. 오지 않은 사람은 그 칸을 우클릭해서 「칸 삭제」하세요. 다른 문지기 화면과 5초마다 맞춰져요.</p>';
+  CN.footer({});
+
+  var $ = function (id) { return document.getElementById(id); };
+  var norm = function (s) { return String(s || '').replace(/^'/, '').replace(/\s+/g, ''); };
+
+  // ── 한 신청(그룹)의 칸 상태 ──
+  function st(id) { return G.state[id] || { a: false, c: [], x: [] }; }
+  function boxes(it) {
+    var s = st(it.id), out = [];
+    for (var i = 0; i < it.party; i++) {
+      out.push({ i: i, name: i === 0 ? it.label : String((s.c || [])[i - 1] || ''), gone: (s.x || []).indexOf(i) >= 0 });
+    }
+    return out;
+  }
+  function missing(it) { return boxes(it).filter(function (b) { return b.i > 0 && !b.gone && !b.name.trim(); }); }
+  function itemsOf(tab) { var slot = G.slots[tab]; return G.items.filter(function (it) { return it.slot === slot; }); }
+  function countOf(list) {
+    var c = { total: 0, arrived: 0, deleted: 0 };
+    list.forEach(function (it) {
+      var a = st(it.id).a;
+      boxes(it).forEach(function (b) { if (b.gone) c.deleted++; else { c.total++; if (a) c.arrived++; } });
+    });
+    c.waiting = c.total - c.arrived;
+    return c;
+  }
+
+  // ── 그리기 ──
+  function renderTabs() {
+    $('tabs').innerHTML = G.slots.map(function (slot, i) {
+      var c = countOf(itemsOf(i));
+      return '<button class="gb-tab' + (i === G.tab ? ' on' : '') + '" data-tab="' + i + '">' + (i + 1) + '부 <small>' + esc(slot) + '</small><small>도착 ' + c.arrived + '/' + c.total + '명</small></button>';
+    }).join('');
+  }
+  function renderStats() {
+    var c = countOf(itemsOf(G.tab));
+    $('stats').innerHTML =
+      '<div class="gb-stat"><div class="v">' + c.total + '</div><div class="l">전체</div></div>' +
+      '<div class="gb-stat arr"><div class="v">' + c.arrived + '</div><div class="l">도착</div></div>' +
+      '<div class="gb-stat"><div class="v">' + c.waiting + '</div><div class="l">아직 안 옴</div></div>' +
+      '<div class="gb-stat del"><div class="v">' + c.deleted + '</div><div class="l">삭제</div></div>';
+  }
+  function renderBoard() {
+    var q = norm(G.q);
+    var list = itemsOf(G.tab).slice().sort(function (a, b) { return norm(a.label).localeCompare(norm(b.label), 'ko'); });
+    if (q) list = list.filter(function (it) { return boxes(it).some(function (b) { return norm(b.name).indexOf(q) >= 0; }); });
+    if (!G.items.length && !G.lastSync) return;
+    $('board').innerHTML = list.length ? list.map(function (it) {
+      var s = st(it.id), busy = !!G.pending[it.id];
+      return '<div class="grp' + (s.a ? ' in' : '') + '" data-id="' + esc(it.id) + '">' + boxes(it).map(function (b) {
+        var cls = 'bx' + (b.i > 0 && !b.name ? ' blank' : '') + (b.gone ? ' gone' : '') + (busy && b.i === 0 ? ' busy' : '');
+        var txt = b.name ? esc(b.name.replace(/^'/, '')) : '이름 적기';
+        var sub = b.i === 0 && it.party > 1 ? '<small>' + it.party + '명 신청</small>' : '';
+        return (b.i ? '<i class="ln"></i>' : '') + '<div class="' + cls + '" data-i="' + b.i + '" tabindex="0" role="button">' + txt + sub + '</div>';
+      }).join('') + '</div>';
+    }).join('') : '<div class="gb-empty">' + (q ? '검색 결과가 없어요.' : '이 시간대 신청이 없어요.') + '</div>';
+  }
+  function renderSync() {
+    var n = G.queue.length + (G.sending ? 1 : 0), el = $('sync');
+    el.classList.toggle('warn', !!G.err);
+    el.textContent = G.err ? '⚠️ ' + G.err : n ? '저장 중… (' + n + '건)' : G.lastSync ? '맞춤 ' + new Date(G.lastSync).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+  }
+  function renderAll() { renderTabs(); renderStats(); renderBoard(); renderSync(); }
+
+  // ── 서버 ──
+  async function load() {
+    try {
+      var r = await CN.api('guestList', { pw: A.pw }, 20000);
+      if (!r || !r.ok) throw new Error(r && r.error ? r.error : '명단을 불러오지 못했어요.');
+      G.items = r.items || []; if (r.slots) G.slots = r.slots;
+      var next = r.state || {};
+      Object.keys(G.pending).forEach(function (id) { if (G.state[id]) next[id] = G.state[id]; }); // 저장 중인 건 내 화면 값 유지
+      G.state = next; G.lastSync = Date.now();
+      if (/명단|비밀번호|알 수 없는/.test(G.err)) G.err = '';
+      if (!G.queue.length && !G.sending) G.err = '';
+    } catch (e) {
+      G.err = /알 수 없는 요청/.test(e.message) ? '서버(Apps Script)를 새 버전으로 배포해야 방명록이 열려요.' : e.message;
+    }
+    renderAll();
+  }
+  function send(id, op, i, v) {
+    // 내 화면 먼저 바꾸고, 서버에는 차례대로 보냄
+    var s = JSON.parse(JSON.stringify(st(id)));
+    s.c = s.c || []; s.x = s.x || [];
+    if (op === 'arrive') { s.a = v === 'Y'; s.at = s.a ? Date.now() : 0; }
+    if (op === 'name') { while (s.c.length < i) s.c.push(''); s.c[i - 1] = v; }
+    if (op === 'del') { var p = s.x.indexOf(i); if (v === 'Y' && p < 0) s.x.push(i); if (v === 'N' && p >= 0) s.x.splice(p, 1); }
+    G.state[id] = s;
+    G.pending[id] = (G.pending[id] || 0) + 1;
+    G.queue.push({ id: id, op: op, i: i, v: v });
+    renderAll(); pump();
+  }
+  async function pump() {
+    if (G.sending || !G.queue.length) return;
+    G.sending = true; var job = G.queue[0];
+    try {
+      var r = await CN.api('guestSet', { pw: A.pw, who: A.who.label, id: job.id, op: job.op, i: job.i == null ? '' : job.i, v: job.v }, 20000);
+      G.queue.shift();
+      G.pending[job.id]--;
+      if (!r || !r.ok) { CN.toast((r && r.error) || '저장하지 못했어요', 4000); if (!G.pending[job.id]) { delete G.pending[job.id]; } G.sending = false; renderSync(); load(); pump(); return; }
+      if (!G.pending[job.id]) { delete G.pending[job.id]; G.state[job.id] = r.state; }
+      G.err = '';
+    } catch (e) {
+      G.err = '인터넷 연결 확인 — 저장 못 한 ' + G.queue.length + '건, 자동으로 다시 보내요';
+      G.sending = false; renderSync();
+      setTimeout(pump, 3000); return;
+    }
+    G.sending = false; renderAll(); pump();
+  }
+
+  // ── 누르기: 도착 / 이름 적기 ──
+  function itemById(id) { return G.items.filter(function (it) { return it.id === id; })[0]; }
+  function tap(id, i) {
+    var it = itemById(id); if (!it) return;
+    var b = boxes(it)[i];
+    if (b.gone) { CN.toast('삭제한 칸이에요. 우클릭(길게 누르기)해서 되살릴 수 있어요.'); return; }
+    var s = st(id);
+    if (!s.a && missing(it).length) { askNames(it, null); return; }
+    send(id, 'arrive', null, s.a ? 'N' : 'Y');
+    if (s.a) CN.toast(it.label + ' 도착을 취소했어요');
+  }
+  // only: 이름 고치기 할 칸 번호(없으면 빈칸 전부 → 저장 후 도착 처리)
+  function askNames(it, only) {
+    var bs = boxes(it).filter(function (b) { return b.i > 0 && !b.gone && (only == null ? true : b.i === only); });
+    var fill = only == null;
+    var m = CN.modal(
+      '<div class="modal-head"><div class="t">' + (fill ? '함께 온 사람 이름 적기' : '이름 고치기') + '</div><button class="icon-btn" data-close>닫기</button></div>' +
+      '<p class="sub"><b>' + esc(it.label) + '</b> 님 (' + it.party + '명 신청)' + (fill ? ' — 나머지 ' + bs.length + '명의 이름을 모두 적어야 도착 처리돼요. 오지 않은 사람은 닫고 그 칸을 「칸 삭제」하세요.' : '') + '</p>' +
+      '<div class="nm-list">' + bs.map(function (b, k) {
+        return '<label for="nm' + b.i + '">' + (fill ? '함께 온 사람 ' + (k + 1) : '이름') + '</label><input type="text" id="nm' + b.i + '" data-i="' + b.i + '" maxlength="20" autocomplete="off" value="' + esc(b.name) + '">';
+      }).join('') + '</div><div class="msg err" id="nmErr"></div>' +
+      '<button class="btn primary block" id="nmGo" style="margin-top:16px">' + (fill ? '저장하고 도착 처리' : '저장') + '</button>', { narrow: true });
+    var ins = [].slice.call(m.el.querySelectorAll('.nm-list input'));
+    var first = ins.filter(function (x) { return !x.value.trim(); })[0] || ins[0];
+    if (first) setTimeout(function () { first.focus(); }, 50);
+    var go = function () {
+      var empty = ins.filter(function (x) { return !x.value.trim(); });
+      if (fill && empty.length) { var er = m.el.querySelector('#nmErr'); er.textContent = '이름을 모두 적어 주세요. (' + empty.length + '칸 남음)'; er.classList.add('show'); empty[0].focus(); return; }
+      ins.forEach(function (x) {
+        var v = x.value.replace(/\s+/g, ' ').trim().slice(0, 20), i = +x.dataset.i;
+        if (v !== (boxes(it)[i].name || '')) send(it.id, 'name', i, v);
+      });
+      if (fill && !st(it.id).a) send(it.id, 'arrive', null, 'Y');
+      m.close();
+    };
+    m.el.querySelector('#nmGo').onclick = go;
+    ins.forEach(function (x, k) { x.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); if (ins[k + 1]) ins[k + 1].focus(); else go(); } }); });
+  }
+
+  // ── 우클릭 / 길게 누르기 메뉴 ──
+  var menu = null;
+  function closeMenu() { if (menu) { menu.remove(); menu = null; } }
+  function openMenu(id, i, x, y) {
+    closeMenu();
+    var it = itemById(id); if (!it) return;
+    var b = boxes(it)[i];
+    var acts = [];
+    if (b.gone) acts.push(['restore', '칸 되살리기', '']);
+    else {
+      acts.push(['del', '칸 삭제', 'danger']);
+      if (i > 0 && b.name) acts.push(['rename', '이름 고치기', '']);
+    }
+    menu = document.createElement('div');
+    menu.className = 'gb-menu'; menu.setAttribute('role', 'menu');
+    menu.innerHTML = '<div class="mh">' + esc(b.name || (it.label + ' 일행 빈칸')) + '</div>' +
+      acts.map(function (a) { return '<button role="menuitem" class="' + a[2] + '" data-act="' + a[0] + '">' + a[1] + '</button>'; }).join('');
+    document.body.appendChild(menu);
+    var w = menu.offsetWidth, h = menu.offsetHeight;
+    menu.style.left = Math.max(8, Math.min(x, innerWidth - w - 8)) + 'px';
+    menu.style.top = Math.max(8, Math.min(y, innerHeight - h - 8)) + 'px';
+    menu.querySelector('button').focus();
+    menu.onclick = function (e) {
+      var a = e.target.closest('[data-act]'); if (!a) return;
+      closeMenu();
+      if (a.dataset.act === 'del') { send(id, 'del', i, 'Y'); CN.toast('칸을 삭제했어요 (우클릭 → 되살리기 가능)'); }
+      if (a.dataset.act === 'restore') send(id, 'del', i, 'N');
+      if (a.dataset.act === 'rename') askNames(it, i);
+    };
+  }
+  document.addEventListener('pointerdown', function (e) { if (menu && !menu.contains(e.target)) closeMenu(); }, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
+  window.addEventListener('scroll', closeMenu, { passive: true });
+
+  var board = $('board'), press = null, suppress = 0, touchDown = false;
+  var hit = function (e) { var bx = e.target.closest('.bx'); return bx ? { id: bx.closest('.grp').dataset.id, i: +bx.dataset.i } : null; };
+  board.addEventListener('contextmenu', function (e) {
+    var h = hit(e); if (!h) return;
+    e.preventDefault();
+    if (press) { clearTimeout(press.t); press = null; }
+    if (!menu) openMenu(h.id, h.i, e.clientX, e.clientY);
+    if (touchDown) suppress = Date.now();
+  });
+  // 휴대폰(특히 아이폰)은 contextmenu가 안 올 수 있어 길게 누르기를 직접 잼
+  board.addEventListener('pointerdown', function (e) {
+    touchDown = e.pointerType !== 'mouse';
+    if (!touchDown) return;
+    var h = hit(e); if (!h) return;
+    var x = e.clientX, y = e.clientY;
+    press = { x: x, y: y, t: setTimeout(function () { press = null; suppress = Date.now(); openMenu(h.id, h.i, x, y); }, 550) };
+  });
+  var cancelPress = function (e) { if (press && (!e || e.type !== 'pointermove' || Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10)) { clearTimeout(press.t); press = null; } };
+  board.addEventListener('pointermove', cancelPress);
+  board.addEventListener('pointerup', function () { cancelPress(); });
+  board.addEventListener('pointercancel', function () { cancelPress(); });
+  board.addEventListener('click', function (e) {
+    var h = hit(e); if (!h) return;
+    if (Date.now() - suppress < 700) { suppress = 0; return; } // 메뉴를 연 길게 누르기 뒤에 따라오는 클릭 한 번은 무시
+    tap(h.id, h.i);
+  });
+  board.addEventListener('keydown', function (e) {
+    var h = hit(e); if (!h) return;
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(h.id, h.i); }
+    if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) { e.preventDefault(); var r = e.target.getBoundingClientRect(); openMenu(h.id, h.i, r.left, r.bottom); }
+  });
+
+  $('tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-tab]'); if (!b) return;
+    G.tab = +b.dataset.tab; try { localStorage.setItem(TAB_KEY, G.tab); } catch (er) {}
+    renderAll();
+  });
+  $('q').addEventListener('input', function (e) { G.q = e.target.value; renderBoard(); });
+
+  renderAll();
+  load();
+  setInterval(function () { if (!document.hidden && !G.sending && !G.queue.length) load(); }, 5000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+  window.addEventListener('beforeunload', function (e) { if (G.queue.length || G.sending) { e.preventDefault(); e.returnValue = ''; } });
+})();
+</script>
+</body>
+</html>

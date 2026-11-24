@@ -14,7 +14,7 @@
  * 시트 열 순서를 바꾸지 마세요 (아래 COL 번호로 읽음). 행 삭제는 자유롭게 해도 됨.
  */
 
-var VERSION = '2026-11-23';
+var VERSION = '2026-11-24';
 var INITIAL_ADMIN_PW = ''; // ← setup 실행 전에만 적기 (저장소에는 올리지 않음)
 var ROLES = ['학생', '교사', '학부모', '일반주민'];
 var SLOTS = ['18:20~19:20', '19:30~20:30', '20:40~21:40'];
@@ -29,6 +29,8 @@ var SHEET_NAME = '신청(11.26)';
 var PREV_SHEET_NAME = '신청(11.27)';
 var OLD_SHEET_NAME = '신청';
 var LOG_SHEET_NAME = '변경기록';
+var GB_SHEET_NAME = '방명록(11.26)'; // 디지털 방명록(문지기 입장 확인) — 도착·함께 온 사람 이름·삭제한 칸
+var GB_HEADERS = ['신청 번호', '시간대', '예약자', '도착', '도착 시각', '칸 상태(JSON)', '마지막 수정', '수정한 사람'];
 var LOG_HEADERS = ['시각', '한 일', '신청 번호', '예약자', '조회 방법', '조회 값', '변경 전', '변경 후', '결과', '기기 표시', '브라우저'];
 var ROOT_FOLDER_NAME = '2026 주민관측회 사진';
 var MAX_IMAGE_CHARS = 9 * 1024 * 1024; // base64 문자 수 상한(약 6.7MB 이미지)
@@ -99,6 +101,8 @@ function route_(action, p) {
     case 'change': return change_(p);
     case 'cancel': return cancel_(p);
     case 'cancelWait': return cancelWait_(p);
+    case 'guestList': return guestList_(p);
+    case 'guestSet': return guestSet_(p);
     default: return { ok: false, error: '알 수 없는 요청입니다: ' + action };
   }
 }
@@ -544,6 +548,90 @@ function links_(p) {
   requireAdmin_(p);
   var ss = openSheetFile_();
   return { ok: true, sheetUrl: ss ? ss.getUrl() : '', folderUrl: rootFolder_().getUrl() };
+}
+
+// ===== 디지털 방명록 (문지기 입장 확인, 관리자 로그인 필요) =====
+// 신청 1건 = 칸 [예약자, 함께 온 사람 1, 2, …] (인원 수만큼). 칸 상태는 「방명록」 탭에 신청 번호별로 한 줄
+//   c: 함께 온 사람 이름(칸 1번부터), x: 삭제한 칸 번호(0 = 예약자 칸), 도착은 신청 단위
+function gbSheet_() {
+  var ss = openSheetFile_();
+  if (!ss) throw new Error('setup()을 먼저 실행해 주세요.');
+  var sh = ss.getSheetByName(GB_SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(GB_SHEET_NAME);
+    sh.getRange(1, 1, 1, GB_HEADERS.length).setValues([GB_HEADERS]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+function gbRead_(sh) {
+  var n = sh.getLastRow() - 1, out = {};
+  if (n <= 0) return out;
+  sh.getRange(2, 1, n, GB_HEADERS.length).getValues().forEach(function (v, i) {
+    var id = String(v[0] || '');
+    if (!id) return;
+    var j = {};
+    try { j = JSON.parse(String(v[5] || '{}')) || {}; } catch (e) { j = {}; }
+    out[id] = {
+      row: i + 2, a: String(v[3]) === 'Y', at: v[4] instanceof Date ? v[4].getTime() : 0,
+      c: Array.isArray(j.c) ? j.c.map(String) : [], x: Array.isArray(j.x) ? j.x.map(Number) : [],
+      up: v[6] instanceof Date ? v[6].getTime() : 0, by: String(v[7] || ''),
+    };
+  });
+  return out;
+}
+function gbKey_(r) { return r.id || ('row' + r.row); }
+function gbOut_(s) { return { a: s.a, at: s.at, c: s.c, x: s.x, up: s.up, by: s.by }; }
+function gbName_(v) { return String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, '').trim().slice(0, 20); }
+
+function guestList_(p) {
+  requireAdmin_(p);
+  var items = activeRows_(getRegSheet_()).filter(function (r) { return SLOTS.indexOf(r.slot) >= 0; }).map(function (r) {
+    return { id: gbKey_(r), slot: r.slot, label: rowLabel_(r), role: r.role, party: r.party };
+  });
+  var st = gbRead_(gbSheet_()), state = {};
+  Object.keys(st).forEach(function (k) { state[k] = gbOut_(st[k]); });
+  return { ok: true, now: Date.now(), slots: SLOTS, items: items, state: state };
+}
+
+// op: arrive(v=Y/N) · name(i=1…, v=이름) · del(i=0…, v=Y 삭제/N 되살리기)
+function guestSet_(p) {
+  requireAdmin_(p);
+  var id = String(p.id || ''), op = String(p.op || ''), i = parseInt(p.i, 10);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    var r = activeRows_(getRegSheet_()).filter(function (x) { return gbKey_(x) === id; })[0];
+    if (!r) throw new Error('신청을 찾을 수 없어요. (취소됐을 수 있어요)');
+    var sh = gbSheet_(), s = gbRead_(sh)[id] || { row: 0, a: false, at: 0, c: [], x: [] };
+    var n = r.party;
+    while (s.c.length < n - 1) s.c.push('');
+    s.c = s.c.slice(0, Math.max(0, n - 1));
+    s.x = s.x.filter(function (k) { return k >= 0 && k < n; });
+    if (op === 'arrive') {
+      var on = String(p.v) === 'Y';
+      if (on) for (var k = 1; k < n; k++) {
+        if (s.x.indexOf(k) < 0 && !gbName_(s.c[k - 1])) throw new Error('함께 온 사람 이름을 모두 적어야 도착 처리할 수 있어요.');
+      }
+      s.a = on; s.at = on ? Date.now() : 0;
+    } else if (op === 'name') {
+      if (!(i >= 1 && i < n)) throw new Error('칸 번호가 올바르지 않습니다.');
+      s.c[i - 1] = gbName_(p.v);
+    } else if (op === 'del') {
+      if (!(i >= 0 && i < n)) throw new Error('칸 번호가 올바르지 않습니다.');
+      var pos = s.x.indexOf(i);
+      if (String(p.v) === 'Y') { if (pos < 0) s.x.push(i); } else if (pos >= 0) s.x.splice(pos, 1);
+      s.x.sort(function (a, b) { return a - b; });
+    } else {
+      throw new Error('알 수 없는 방명록 요청입니다.');
+    }
+    s.by = clean_(p.who, 40); s.up = Date.now();
+    var row = [id, r.slot, rowLabel_(r), s.a ? 'Y' : '', s.at ? new Date(s.at) : '', JSON.stringify({ c: s.c, x: s.x }), new Date(s.up), s.by];
+    if (s.row) sh.getRange(s.row, 1, 1, GB_HEADERS.length).setValues([row]); else sh.appendRow(row);
+    return { ok: true, id: id, state: gbOut_(s) };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 // ===== 사진 (구글 드라이브) =====

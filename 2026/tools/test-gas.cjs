@@ -9,7 +9,7 @@ const base = { action: 'register', consent: 'Y' };
 
 // 1) 기본 집계
 let c = g.call({ action: 'counts' });
-check('counts 기본', c.ok && c.capacity === 72 && c.studentFirstOpen === false && c.firstSlot === S1 && c.version === '2026-11-23' && c.eventDate === '2026-11-26', c);
+check('counts 기본', c.ok && c.capacity === 72 && c.studentFirstOpen === false && c.firstSlot === S1 && c.version === '2026-11-24' && c.eventDate === '2026-11-26', c);
 
 // 2) 첫 타임 학생 차단 / 다른 시간대 학생 허용 / 첫 타임 주민 허용
 let r = g.call({ ...base, role: '학생', slot: S1, studentNo: '2115', name: '김학생' });
@@ -111,7 +111,7 @@ const up = g.call({ action: 'uploadPhoto', pw: 'test-pw', folder: 'm31', data: i
 check('업로드', up.ok && up.fileId);
 check('잘못된 폴더명 거절', !g.call({ action: 'uploadPhoto', pw: 'test-pw', folder: '../x', data: img }).ok);
 check('휴지통', g.call({ action: 'trashPhoto', pw: 'test-pw', fileId: up.fileId }).ok && g.files.get(up.fileId).trashed);
-check('ping', g.call({ action: 'ping' }).version === '2026-11-23');
+check('ping', g.call({ action: 'ping' }).version === '2026-11-24');
 
 // 10) 예약 확인·변경·취소·변경 대기
 {
@@ -161,6 +161,33 @@ check('ping', g.call({ action: 'ping' }).version === '2026-11-23');
   check('변경 대기 취소', r.ok && !r.item.want && r.item.slot === S2);
   const log = h.tabs.get('변경기록');
   check('변경기록 탭에 남음', log && log.rows.length > 10 && log.rows.some((x) => x[1] === '대기 자동 이동') && log.rows.some((x) => x[9] === 'dev1'));
+}
+
+// 디지털 방명록
+{
+  const h = loadGas();
+  const reg = (o) => h.call({ ...base, slot: S1, ...o });
+  const p3 = reg({ role: '일반주민', name: '박주민', party: 3 }).id;
+  const p1 = reg({ role: '학부모', childName: '이학생', relation: '아버지', party: 1 }).id;
+  const pw = { pw: 'test-pw', who: '3221 이하리' };
+  check('guestList 비번 필요', !h.call({ action: 'guestList', pw: 'x' }).ok);
+  let L = h.call({ action: 'guestList', ...pw });
+  check('guestList 명단', L.ok && L.items.length === 2 && L.items.some((x) => x.id === p3 && x.party === 3 && x.label === '박주민') && L.items.some((x) => x.label === '이학생 아버지'), L.items);
+  let s = h.call({ action: 'guestSet', ...pw, id: p3, op: 'arrive', v: 'Y' });
+  check('이름 다 안 적으면 도착 거절', !s.ok && /이름/.test(s.error), s.error);
+  h.call({ action: 'guestSet', ...pw, id: p3, op: 'name', i: 1, v: '박동생' });
+  s = h.call({ action: 'guestSet', ...pw, id: p3, op: 'del', i: 2, v: 'Y' });
+  check('칸 삭제', s.ok && s.state.x.join() === '2' && s.state.c.join('|') === '박동생|', s.state);
+  s = h.call({ action: 'guestSet', ...pw, id: p3, op: 'arrive', v: 'Y' });
+  check('삭제한 칸 빼고 이름 다 있으면 도착', s.ok && s.state.a === true && s.state.at > 0, s);
+  check('1인 신청 바로 도착', h.call({ action: 'guestSet', ...pw, id: p1, op: 'arrive', v: 'Y' }).ok);
+  L = h.call({ action: 'guestList', ...pw });
+  check('상태 다시 읽기', L.state[p3].a && L.state[p3].x.join() === '2' && L.state[p3].by === '3221 이하리' && L.state[p1].a, L.state);
+  check('방명록 탭 한 신청 한 줄', h.tabs.get('방명록(11.26)').rows.length === 3);
+  s = h.call({ action: 'guestSet', ...pw, id: p3, op: 'del', i: 2, v: 'N' });
+  check('칸 되살리기', s.ok && s.state.x.length === 0);
+  check('없는 신청', !h.call({ action: 'guestSet', ...pw, id: 'nope', op: 'arrive', v: 'Y' }).ok);
+  check('칸 번호 범위', !h.call({ action: 'guestSet', ...pw, id: p3, op: 'name', i: 3, v: 'x' }).ok);
 }
 
 check('모르는 요청', !g.call({ action: 'nope' }).ok);
