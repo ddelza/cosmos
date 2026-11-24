@@ -289,3 +289,5 @@ svg.flow .now { stroke: #fff; stroke-width: 2; }
 .away-note:empty { display: none; }
 .away-note .chip { font-size: .72rem; padding: 0 6px; vertical-align: 1px; }
 .away-note b { color: var(--accent); }
+.chip.novote { background: #ff4d5e; color: #fff; }
+.chip.novote small { color: #ffe0e3; }

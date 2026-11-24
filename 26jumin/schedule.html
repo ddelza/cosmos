@@ -197,20 +197,24 @@ function paintTime() {
   applyAway();
 }
 
-// 시간 투표(11/26)에서 이 시각에 '가능'을 안 칠한 사람 → 이름표 반투명
+// 시간 투표(11/26)에서 이 시각에 '가능'을 안 칠한 사람 → 이름표 반투명 / 아직 투표 안 한 사람 → 빨간 이름표
 function applyAway() {
   if (!SC.voteAway) return;
-  const away = new Set();
+  const loaded = SC.votes != null, away = new Set();
   document.querySelectorAll('#map .chip[data-person], #poolList .chip[data-person]').forEach(c => {
-    const off = SC.voteAway(c.dataset.person, S.T);
+    const k = c.dataset.person, off = SC.voteAway(k, S.T);
     c.classList.toggle('away', off);
-    if (off) away.add(c.dataset.person);
+    c.classList.toggle('novote', loaded && !SC.votes[k]);
+    if (off) away.add(k);
   });
-  const voted = Object.keys(SC.votes || {}).filter(k => SC.person(k)).length;
-  const r = SC.voteRowAt ? SC.voteRowAt(S.T) : -1;
-  $('awayNote').innerHTML = !voted ? '' : r < 0
-    ? '<span class="chip away">이름</span> 반투명 = 시간 투표에서 그 시각에 자리를 비우는 사람 (21:30 이후는 투표 칸이 없어 표시 안 함)'
-    : `<span class="chip away">이름</span> 반투명 = 시간 투표에서 이 시각(${SC.fmt(14 * 60 + 30 + r * 30)}~${SC.fmt(15 * 60 + r * 30)})에 자리를 비우는 사람 · <b>${away.size}명</b> (투표 ${voted}명 기준)`;
+  if (!loaded) { $('awayNote').innerHTML = ''; return; }
+  const voted = SC.ROSTER.filter(p => SC.votes[p.key]).length, notYet = SC.ROSTER.length - voted;
+  const r = SC.voteRowAt(S.T);
+  const awayTxt = r < 0
+    ? '<span class="chip away">이름</span> 반투명 = 그 시각에 자리를 비우는 사람 (21:30 이후는 투표 칸이 없어 표시 안 함)'
+    : `<span class="chip away">이름</span> 반투명 = 이 시각(${SC.fmt(14 * 60 + 30 + r * 30)}~${SC.fmt(15 * 60 + r * 30)})에 자리를 비우는 사람 <b>${away.size}명</b>`;
+  $('awayNote').innerHTML = `시간 투표 기준 (투표 ${voted}명) · ${awayTxt}` +
+    (notYet ? ` · <span class="chip novote">이름</span> 빨강 = 아직 투표 안 한 사람 <b>${notYet}명</b>` : ' · 모두 투표했어요 🎉');
 }
 window.addEventListener('jm26votes', applyAway);
 
