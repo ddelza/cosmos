@@ -552,7 +552,7 @@ function links_(p) {
 
 // ===== 디지털 방명록 (문지기 입장 확인, 관리자 로그인 필요) =====
 // 신청 1건 = 칸 [예약자, 함께 온 사람 1, 2, …] (인원 수만큼). 칸 상태는 「방명록」 탭에 신청 번호별로 한 줄
-//   c: 함께 온 사람 이름(칸 1번부터), x: 삭제한 칸 번호(0 = 예약자 칸), 도착은 신청 단위
+//   c: 함께 온 사람 이름(칸 1번부터), x: 삭제한 칸 번호(0 = 예약자 칸), e: 현장에서 「이름 추가」한 칸 수, 도착은 신청 단위
 function gbSheet_() {
   var ss = openSheetFile_();
   if (!ss) throw new Error('setup()을 먼저 실행해 주세요.');
@@ -574,14 +574,14 @@ function gbRead_(sh) {
     try { j = JSON.parse(String(v[5] || '{}')) || {}; } catch (e) { j = {}; }
     out[id] = {
       row: i + 2, a: String(v[3]) === 'Y', at: v[4] instanceof Date ? v[4].getTime() : 0,
-      c: Array.isArray(j.c) ? j.c.map(String) : [], x: Array.isArray(j.x) ? j.x.map(Number) : [],
+      c: Array.isArray(j.c) ? j.c.map(String) : [], x: Array.isArray(j.x) ? j.x.map(Number) : [], e: Math.max(0, parseInt(j.e, 10) || 0),
       up: v[6] instanceof Date ? v[6].getTime() : 0, by: String(v[7] || ''),
     };
   });
   return out;
 }
 function gbKey_(r) { return r.id || ('row' + r.row); }
-function gbOut_(s) { return { a: s.a, at: s.at, c: s.c, x: s.x, up: s.up, by: s.by }; }
+function gbOut_(s) { return { a: s.a, at: s.at, c: s.c, x: s.x, e: s.e || 0, up: s.up, by: s.by }; }
 function gbName_(v) { return String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, '').trim().slice(0, 20); }
 
 function guestList_(p) {
@@ -594,7 +594,7 @@ function guestList_(p) {
   return { ok: true, now: Date.now(), slots: SLOTS, items: items, state: state };
 }
 
-// op: arrive(v=Y/N) · name(i=1…, v=이름) · del(i=0…, v=Y 삭제/N 되살리기)
+// op: arrive(v=Y/N) · name(i=1…, v=이름) · del(i=0…, v=Y 삭제/N 되살리기) · add(v=이름: 일행 끝에 칸 하나 추가) · unadd(i=마지막 칸: 추가 되돌리기)
 function guestSet_(p) {
   requireAdmin_(p);
   var id = String(p.id || ''), op = String(p.op || ''), i = parseInt(p.i, 10);
@@ -603,8 +603,8 @@ function guestSet_(p) {
   try {
     var r = activeRows_(getRegSheet_()).filter(function (x) { return gbKey_(x) === id; })[0];
     if (!r) throw new Error('신청을 찾을 수 없어요. (취소됐을 수 있어요)');
-    var sh = gbSheet_(), s = gbRead_(sh)[id] || { row: 0, a: false, at: 0, c: [], x: [] };
-    var n = r.party;
+    var sh = gbSheet_(), s = gbRead_(sh)[id] || { row: 0, a: false, at: 0, c: [], x: [], e: 0 };
+    var n = r.party + (s.e || 0);
     while (s.c.length < n - 1) s.c.push('');
     s.c = s.c.slice(0, Math.max(0, n - 1));
     s.x = s.x.filter(function (k) { return k >= 0 && k < n; });
@@ -622,11 +622,20 @@ function guestSet_(p) {
       var pos = s.x.indexOf(i);
       if (String(p.v) === 'Y') { if (pos < 0) s.x.push(i); } else if (pos >= 0) s.x.splice(pos, 1);
       s.x.sort(function (a, b) { return a - b; });
+    } else if (op === 'add') {
+      var nm = gbName_(p.v);
+      if (!nm) throw new Error('추가할 사람 이름을 적어 주세요.');
+      if (n >= 30) throw new Error('한 신청에 칸을 더 늘릴 수 없어요.');
+      s.c.push(nm); s.e = (s.e || 0) + 1;
+    } else if (op === 'unadd') {
+      if (!(s.e > 0) || i !== n - 1) throw new Error('되돌릴 추가 칸이 없어요. (다른 화면에서 바뀌었을 수 있어요)');
+      s.c.pop(); s.e--;
+      s.x = s.x.filter(function (k) { return k !== i; });
     } else {
       throw new Error('알 수 없는 방명록 요청입니다.');
     }
     s.by = clean_(p.who, 40); s.up = Date.now();
-    var row = [id, r.slot, rowLabel_(r), s.a ? 'Y' : '', s.at ? new Date(s.at) : '', JSON.stringify({ c: s.c, x: s.x }), new Date(s.up), s.by];
+    var row = [id, r.slot, rowLabel_(r), s.a ? 'Y' : '', s.at ? new Date(s.at) : '', JSON.stringify({ c: s.c, x: s.x, e: s.e || 0 }), new Date(s.up), s.by];
     if (s.row) sh.getRange(s.row, 1, 1, GB_HEADERS.length).setValues([row]); else sh.appendRow(row);
     return { ok: true, id: id, state: gbOut_(s) };
   } finally {

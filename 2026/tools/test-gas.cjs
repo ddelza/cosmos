@@ -186,8 +186,19 @@ check('ping', g.call({ action: 'ping' }).version === '2026-11-24');
   check('방명록 탭 한 신청 한 줄', h.tabs.get('방명록(11.26)').rows.length === 3);
   s = h.call({ action: 'guestSet', ...pw, id: p3, op: 'del', i: 2, v: 'N' });
   check('칸 되살리기', s.ok && s.state.x.length === 0);
+  check('이름 추가 — 빈 이름 거절', !h.call({ action: 'guestSet', ...pw, id: p3, op: 'add', v: ' ' }).ok);
+  s = h.call({ action: 'guestSet', ...pw, id: p3, op: 'add', v: '박막내' });
+  check('이름 추가', s.ok && s.state.e === 1 && s.state.c.join('|') === '박동생||박막내', s.state);
+  s = h.call({ action: 'guestSet', ...pw, id: p3, op: 'del', i: 3, v: 'Y' });
+  check('추가한 칸도 삭제', s.ok && s.state.x.join() === '3', s.state);
+  L = h.call({ action: 'guestList', ...pw });
+  check('추가 되돌리기 — 마지막 칸만', !h.call({ action: 'guestSet', ...pw, id: p3, op: 'unadd', i: 2 }).ok);
+  s = h.call({ action: 'guestSet', ...pw, id: p3, op: 'add', v: '임시' });
+  s = h.call({ action: 'guestSet', ...pw, id: p3, op: 'unadd', i: 4 });
+  check('추가 되돌리기', s.ok && s.state.e === 1 && s.state.c.length === 3, s.state);
+  check('추가 칸 유지', L.state[p3].e === 1 && L.state[p3].c.length === 3, L.state[p3]);
   check('없는 신청', !h.call({ action: 'guestSet', ...pw, id: 'nope', op: 'arrive', v: 'Y' }).ok);
-  check('칸 번호 범위', !h.call({ action: 'guestSet', ...pw, id: p3, op: 'name', i: 3, v: 'x' }).ok);
+  check('칸 번호 범위', !h.call({ action: 'guestSet', ...pw, id: p3, op: 'name', i: 4, v: 'x' }).ok);
 }
 
 check('모르는 요청', !g.call({ action: 'nope' }).ok);

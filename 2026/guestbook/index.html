@@ -73,7 +73,7 @@
   }
   var A = CN.admin();
   var TAB_KEY = 'cn26gbTab';
-  var G = { slots: CN.DEFAULTS.slots.slice(), items: [], state: {}, tab: 0, q: '', pending: {}, queue: [], sending: false, lastSync: 0, err: '' };
+  var G = { slots: CN.DEFAULTS.slots.slice(), items: [], state: {}, tab: 0, q: '', pending: {}, queue: [], sending: false, undo: [], rec: null, lastSync: 0, err: '' };
   try { var t0 = parseInt(localStorage.getItem(TAB_KEY), 10); if (t0 >= 0 && t0 < 3) G.tab = t0; } catch (e) {}
 
   app.innerHTML =
@@ -82,9 +82,9 @@
     '이름을 누르면 도착(검정), 다시 누르면 취소 · 우클릭(휴대폰은 길게 누르기)하면 메뉴</p>' +
     '<div class="gb-tabs" id="tabs"></div>' +
     '<div class="gb-top"><div class="gb-stats" id="stats"></div>' +
-    '<div class="gb-tools"><input type="text" inputmode="search" id="q" placeholder="이름 검색" autocomplete="off"><span class="gb-sync" id="sync"></span></div></div>' +
+    '<div class="gb-tools"><input type="text" inputmode="search" id="q" placeholder="이름 검색" autocomplete="off"><button class="btn small" id="undoBtn" disabled title="Ctrl+Z">↶ 되돌리기</button><span class="gb-sync" id="sync"></span></div></div>' +
     '<div class="gb-board" id="board"><div class="gb-empty">명단 불러오는 중…</div></div>' +
-    '<p class="hint" style="margin-top:10px">여러 명이 함께 신청한 경우 예약자 옆에 빈칸이 이어져 있어요. 함께 온 사람 이름을 모두 적어야 도착 처리할 수 있어요. 오지 않은 사람은 그 칸을 우클릭해서 「칸 삭제」하세요. 다른 문지기 화면과 5초마다 맞춰져요.</p>';
+    '<p class="hint" style="margin-top:10px">여러 명이 함께 신청한 경우 예약자 옆에 빈칸이 이어져 있어요. 함께 온 사람 이름을 모두 적어야 도착 처리할 수 있어요. 오지 않은 사람은 그 칸을 우클릭해서 「칸 삭제」, 더 온 사람은 「이름 추가」하세요. 잘못 눌렀으면 Ctrl+Z(또는 ↶ 되돌리기). 다른 문지기 화면과 5초마다 맞춰져요.</p>';
   CN.footer({});
 
   var $ = function (id) { return document.getElementById(id); };
@@ -93,8 +93,8 @@
   // ── 한 신청(그룹)의 칸 상태 ──
   function st(id) { return G.state[id] || { a: false, c: [], x: [] }; }
   function boxes(it) {
-    var s = st(it.id), out = [];
-    for (var i = 0; i < it.party; i++) {
+    var s = st(it.id), out = [], n = it.party + (s.e || 0);
+    for (var i = 0; i < n; i++) {
       out.push({ i: i, name: i === 0 ? it.label : String((s.c || [])[i - 1] || ''), gone: (s.x || []).indexOf(i) >= 0 });
     }
     return out;
@@ -136,7 +136,7 @@
       return '<div class="grp' + (s.a ? ' in' : '') + '" data-id="' + esc(it.id) + '">' + boxes(it).map(function (b) {
         var cls = 'bx' + (b.i > 0 && !b.name ? ' blank' : '') + (b.gone ? ' gone' : '') + (busy && b.i === 0 ? ' busy' : '');
         var txt = b.name ? esc(b.name.replace(/^'/, '')) : '이름 적기';
-        var sub = b.i === 0 && it.party > 1 ? '<small>' + it.party + '명 신청</small>' : '';
+        var sub = b.i === 0 && (it.party > 1 || s.e) ? '<small>' + it.party + '명 신청' + (s.e ? ' +' + s.e : '') + '</small>' : '';
         return (b.i ? '<i class="ln"></i>' : '') + '<div class="' + cls + '" data-i="' + b.i + '" tabindex="0" role="button">' + txt + sub + '</div>';
       }).join('') + '</div>';
     }).join('') : '<div class="gb-empty">' + (q ? '검색 결과가 없어요.' : '이 시간대 신청이 없어요.') + '</div>';
@@ -165,12 +165,30 @@
     renderAll();
   }
   function send(id, op, i, v) {
+    // 되돌리기용: 바꾸기 전 상태로 돌아가는 요청을 기록 중인 묶음 앞쪽에 쌓음(거꾸로 실행되도록)
+    if (G.rec) {
+      var b0 = st(id), inv = null, it1 = itemById(id);
+      if (op === 'arrive') inv = { op: 'arrive', v: b0.a ? 'Y' : 'N' };
+      if (op === 'name') inv = { op: 'name', i: i, v: (b0.c || [])[i - 1] || '' };
+      if (op === 'del') inv = { op: 'del', i: i, v: (b0.x || []).indexOf(i) >= 0 ? 'Y' : 'N' };
+      if (op === 'add') inv = { op: 'unadd', i: (it1 ? it1.party : 1) + (b0.e || 0), v: '' };
+      if (inv) { inv.id = id; G.rec.ops.unshift(inv); }
+    }
     // 내 화면 먼저 바꾸고, 서버에는 차례대로 보냄
     var s = JSON.parse(JSON.stringify(st(id)));
     s.c = s.c || []; s.x = s.x || [];
     if (op === 'arrive') { s.a = v === 'Y'; s.at = s.a ? Date.now() : 0; }
     if (op === 'name') { while (s.c.length < i) s.c.push(''); s.c[i - 1] = v; }
     if (op === 'del') { var p = s.x.indexOf(i); if (v === 'Y' && p < 0) s.x.push(i); if (v === 'N' && p >= 0) s.x.splice(p, 1); }
+    if (op === 'add') {
+      var it0 = itemById(id), n = (it0 ? it0.party : 1) + (s.e || 0);
+      while (s.c.length < n - 1) s.c.push('');
+      s.c = s.c.slice(0, n - 1); s.c.push(v); s.e = (s.e || 0) + 1;
+    }
+    if (op === 'unadd' && s.e > 0) {
+      var it2 = itemById(id), n2 = (it2 ? it2.party : 1) + s.e;
+      if (i === n2 - 1) { s.c = s.c.slice(0, n2 - 1); s.c.pop(); s.e--; s.x = s.x.filter(function (k) { return k !== i; }); }
+    }
     G.state[id] = s;
     G.pending[id] = (G.pending[id] || 0) + 1;
     G.queue.push({ id: id, op: op, i: i, v: v });
@@ -194,6 +212,27 @@
     G.sending = false; renderAll(); pump();
   }
 
+  // ── 되돌리기 (Ctrl+Z · 버튼): 이 화면에서 한 일만, 최근 50개 ──
+  function record(label, fn) {
+    var e = { label: label, ops: [] };
+    G.rec = e;
+    try { fn(); } finally { G.rec = null; }
+    if (e.ops.length) { G.undo.push(e); if (G.undo.length > 50) G.undo.shift(); }
+    renderUndo();
+  }
+  function undo() {
+    var e = G.undo.pop();
+    if (!e) { CN.toast('되돌릴 작업이 없어요'); return; }
+    e.ops.forEach(function (o) { send(o.id, o.op, o.i, o.v); });
+    CN.toast('되돌렸어요: ' + e.label);
+    renderUndo();
+  }
+  function renderUndo() {
+    var b = $('undoBtn'), e = G.undo[G.undo.length - 1];
+    b.disabled = !e;
+    b.title = e ? '되돌리기: ' + e.label + ' (Ctrl+Z)' : '되돌릴 작업이 없어요 (Ctrl+Z)';
+  }
+
   // ── 누르기: 도착 / 이름 적기 ──
   function itemById(id) { return G.items.filter(function (it) { return it.id === id; })[0]; }
   function tap(id, i) {
@@ -202,8 +241,8 @@
     if (b.gone) { CN.toast('삭제한 칸이에요. 우클릭(길게 누르기)해서 되살릴 수 있어요.'); return; }
     var s = st(id);
     if (!s.a && missing(it).length) { askNames(it, null); return; }
-    send(id, 'arrive', null, s.a ? 'N' : 'Y');
-    if (s.a) CN.toast(it.label + ' 도착을 취소했어요');
+    record(it.label + (s.a ? ' 도착 취소' : ' 도착'), function () { send(id, 'arrive', null, s.a ? 'N' : 'Y'); });
+    if (s.a) CN.toast(it.label + ' 도착을 취소했어요 (Ctrl+Z로 되돌리기)');
   }
   // only: 이름 고치기 할 칸 번호(없으면 빈칸 전부 → 저장 후 도착 처리)
   function askNames(it, only) {
@@ -222,15 +261,36 @@
     var go = function () {
       var empty = ins.filter(function (x) { return !x.value.trim(); });
       if (fill && empty.length) { var er = m.el.querySelector('#nmErr'); er.textContent = '이름을 모두 적어 주세요. (' + empty.length + '칸 남음)'; er.classList.add('show'); empty[0].focus(); return; }
-      ins.forEach(function (x) {
-        var v = x.value.replace(/\s+/g, ' ').trim().slice(0, 20), i = +x.dataset.i;
-        if (v !== (boxes(it)[i].name || '')) send(it.id, 'name', i, v);
+      record(it.label + (fill ? ' 일행 이름 적고 도착' : ' 일행 이름 고치기'), function () {
+        ins.forEach(function (x) {
+          var v = x.value.replace(/\s+/g, ' ').trim().slice(0, 20), i = +x.dataset.i;
+          if (v !== (boxes(it)[i].name || '')) send(it.id, 'name', i, v);
+        });
+        if (fill && !st(it.id).a) send(it.id, 'arrive', null, 'Y');
       });
-      if (fill && !st(it.id).a) send(it.id, 'arrive', null, 'Y');
       m.close();
     };
     m.el.querySelector('#nmGo').onclick = go;
     ins.forEach(function (x, k) { x.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); if (ins[k + 1]) ins[k + 1].focus(); else go(); } }); });
+  }
+
+  // 현장에서 일행이 더 온 경우: 칸 하나를 끝에 이어 붙임
+  function askAdd(it) {
+    var m = CN.modal(
+      '<div class="modal-head"><div class="t">이름 추가</div><button class="icon-btn" data-close>닫기</button></div>' +
+      '<p class="sub"><b>' + esc(it.label) + '</b> 님 일행에 한 명을 더 이어 붙여요.' + (st(it.id).a ? ' 이미 도착 처리된 일행이라 추가한 사람도 도착으로 셉니다.' : '') + '</p>' +
+      '<div class="nm-list"><label for="addNm">추가할 사람 이름</label><input type="text" id="addNm" maxlength="20" autocomplete="off"></div>' +
+      '<div class="msg err" id="addErr"></div><button class="btn primary block" id="addGo" style="margin-top:16px">추가</button>', { narrow: true });
+    var inp = m.el.querySelector('#addNm');
+    setTimeout(function () { inp.focus(); }, 50);
+    var go = function () {
+      var v = inp.value.replace(/\s+/g, ' ').trim().slice(0, 20);
+      if (!v) { var er = m.el.querySelector('#addErr'); er.textContent = '이름을 적어 주세요.'; er.classList.add('show'); inp.focus(); return; }
+      record(it.label + ' 일행에 ' + v + ' 추가', function () { send(it.id, 'add', null, v); });
+      m.close(); CN.toast(v + ' 님을 추가했어요');
+    };
+    m.el.querySelector('#addGo').onclick = go;
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } });
   }
 
   // ── 우클릭 / 길게 누르기 메뉴 ──
@@ -246,6 +306,7 @@
       acts.push(['del', '칸 삭제', 'danger']);
       if (i > 0 && b.name) acts.push(['rename', '이름 고치기', '']);
     }
+    acts.push(['add', '이름 추가 (일행 한 명 더)', '']);
     menu = document.createElement('div');
     menu.className = 'gb-menu'; menu.setAttribute('role', 'menu');
     menu.innerHTML = '<div class="mh">' + esc(b.name || (it.label + ' 일행 빈칸')) + '</div>' +
@@ -258,9 +319,11 @@
     menu.onclick = function (e) {
       var a = e.target.closest('[data-act]'); if (!a) return;
       closeMenu();
-      if (a.dataset.act === 'del') { send(id, 'del', i, 'Y'); CN.toast('칸을 삭제했어요 (우클릭 → 되살리기 가능)'); }
-      if (a.dataset.act === 'restore') send(id, 'del', i, 'N');
+      var nm = b.name || (it.label + ' 일행 빈칸');
+      if (a.dataset.act === 'del') { record('칸 삭제 (' + nm + ')', function () { send(id, 'del', i, 'Y'); }); CN.toast('칸을 삭제했어요 (Ctrl+Z로 되돌리기)'); }
+      if (a.dataset.act === 'restore') record('칸 되살리기 (' + nm + ')', function () { send(id, 'del', i, 'N'); });
       if (a.dataset.act === 'rename') askNames(it, i);
+      if (a.dataset.act === 'add') askAdd(it);
     };
   }
   document.addEventListener('pointerdown', function (e) { if (menu && !menu.contains(e.target)) closeMenu(); }, true);
@@ -305,6 +368,14 @@
     renderAll();
   });
   $('q').addEventListener('input', function (e) { G.q = e.target.value; renderBoard(); });
+  $('undoBtn').onclick = undo;
+  document.addEventListener('keydown', function (e) {
+    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || String(e.key).toLowerCase() !== 'z') return;
+    var t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return; // 글자 입력 중엔 입력칸 되돌리기
+    if (document.querySelector('.modal-back')) return;
+    e.preventDefault(); closeMenu(); undo();
+  });
 
   renderAll();
   load();
