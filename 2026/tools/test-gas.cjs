@@ -167,12 +167,12 @@ check('ping', g.call({ action: 'ping' }).version === '2026-11-24');
 {
   const h = loadGas();
   const reg = (o) => h.call({ ...base, slot: S1, ...o });
-  const p3 = reg({ role: '일반주민', name: '박주민', party: 3 }).id;
+  const p3 = reg({ role: '일반주민', name: '박주민', party: 3, phone: '01012345678', phoneConsent: 'Y' }).id;
   const p1 = reg({ role: '학부모', childName: '이학생', relation: '아버지', party: 1 }).id;
   const pw = { pw: 'test-pw', who: '3221 이하리' };
   check('guestList 비번 필요', !h.call({ action: 'guestList', pw: 'x' }).ok);
   let L = h.call({ action: 'guestList', ...pw });
-  check('guestList 명단', L.ok && L.items.length === 2 && L.items.some((x) => x.id === p3 && x.party === 3 && x.label === '박주민') && L.items.some((x) => x.label === '이학생 아버지'), L.items);
+  check('guestList 명단', L.ok && L.items.length === 2 && L.items.some((x) => x.id === p3 && x.party === 3 && x.label === '박주민' && x.phone === '010-1234-5678') && L.items.some((x) => x.label === '이학생 아버지'), L.items);
   let s = h.call({ action: 'guestSet', ...pw, id: p3, op: 'arrive', v: 'Y' });
   check('이름 다 안 적으면 도착 거절', !s.ok && /이름/.test(s.error), s.error);
   h.call({ action: 'guestSet', ...pw, id: p3, op: 'name', i: 1, v: '박동생' });

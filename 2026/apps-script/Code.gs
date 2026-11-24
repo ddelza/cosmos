@@ -587,7 +587,7 @@ function gbName_(v) { return String(v == null ? '' : v).replace(/[\u0000-\u001f]
 function guestList_(p) {
   requireAdmin_(p);
   var items = activeRows_(getRegSheet_()).filter(function (r) { return SLOTS.indexOf(r.slot) >= 0; }).map(function (r) {
-    return { id: gbKey_(r), slot: r.slot, label: rowLabel_(r), role: r.role, party: r.party };
+    return { id: gbKey_(r), slot: r.slot, label: rowLabel_(r), role: r.role, party: r.party, phone: shown_(r.phone) }; // 관리자 전용 응답이라 휴대폰 포함
   });
   var st = gbRead_(gbSheet_()), state = {};
   Object.keys(st).forEach(function (k) { state[k] = gbOut_(st[k]); });
