@@ -81,6 +81,7 @@
         <button class="qbtn" id="playBtn">▶ 재생</button>
       </div>
       <div class="quick" id="quick" style="margin-top:6px"></div>
+      <div class="away-note" id="awayNote"></div>
     </div>
     <div class="edit-bar" style="margin-top:12px">
       <span class="fill-meter" id="fillMeter"></span>
@@ -193,7 +194,25 @@ function paintTime() {
   });
   if (st.part && st.part !== S.part) { S.part = st.part; renderTabs(); }
   renderFlow();
+  applyAway();
 }
+
+// 시간 투표(11/26)에서 이 시각에 '가능'을 안 칠한 사람 → 이름표 반투명
+function applyAway() {
+  if (!SC.voteAway) return;
+  const away = new Set();
+  document.querySelectorAll('#map .chip[data-person], #poolList .chip[data-person]').forEach(c => {
+    const off = SC.voteAway(c.dataset.person, S.T);
+    c.classList.toggle('away', off);
+    if (off) away.add(c.dataset.person);
+  });
+  const voted = Object.keys(SC.votes || {}).filter(k => SC.person(k)).length;
+  const r = SC.voteRowAt ? SC.voteRowAt(S.T) : -1;
+  $('awayNote').innerHTML = !voted ? '' : r < 0
+    ? '<span class="chip away">이름</span> 반투명 = 시간 투표에서 그 시각에 자리를 비우는 사람 (21:30 이후는 투표 칸이 없어 표시 안 함)'
+    : `<span class="chip away">이름</span> 반투명 = 시간 투표에서 이 시각(${SC.fmt(14 * 60 + 30 + r * 30)}~${SC.fmt(15 * 60 + r * 30)})에 자리를 비우는 사람 · <b>${away.size}명</b> (투표 ${voted}명 기준)`;
+}
+window.addEventListener('jm26votes', applyAway);
 
 function renderTabs() {
   $('partTabs').innerHTML = [1, 2, 3].map(n => `<button class="qbtn${n === S.part ? ' on' : ''}" data-part="${n}">${n}부 · ${SC.fmt(SC.PARTS[n - 1].start)}</button>`).join('');
@@ -228,6 +247,7 @@ function renderPool() {
   const shown = free.filter(p => !q || (p.name + p.id + p.dept).includes(q));
   $('poolCount').textContent = `· 남은 ${free.length}명`;
   $('poolList').innerHTML = shown.map(p => `<span class="chip${S.sel === p.key ? ' sel' : ''}" data-person="${SC.esc(p.key)}" title="${SC.esc(p.dept)}">${SC.esc(p.name)}${p.id ? `<small>${p.id}</small>` : ''}</span>`).join('') || '<span class="slot-empty">모두 배정됨</span>';
+  applyAway();
 }
 
 function renderCounts() {

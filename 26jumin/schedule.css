@@ -282,3 +282,10 @@ svg.flow .now { stroke: #fff; stroke-width: 2; }
 .vote-who { margin-top: 12px; font-size: .85rem; line-height: 2; }
 .vchip { display: inline-block; background: var(--surface2); border: 1px solid var(--line); border-radius: 999px; padding: 0 9px; margin: 0 2px; font-size: .8rem; line-height: 1.8; }
 .vchip.ok { border-color: #2fbf71; color: #b6ffd6; }
+
+/* 시간 투표 기준 자리 비움(배치도 재생) */
+.chip.away { opacity: .3; filter: grayscale(.6); }
+.away-note { margin-top: 6px; font-size: .8rem; color: var(--muted); line-height: 1.5; }
+.away-note:empty { display: none; }
+.away-note .chip { font-size: .72rem; padding: 0 6px; vertical-align: 1px; }
+.away-note b { color: var(--accent); }

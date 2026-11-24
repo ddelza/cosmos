@@ -19,6 +19,13 @@
   const V = { me: null, sel: blank(), saved: '', votes: {}, detail: null };
   const url = async k => (await jmBase()) + '/timeVote' + (k ? '/' + encodeURIComponent(k) : '') + '.json';
   const loadVotes = async () => (await fetch(await url(), { cache: 'no-store' }).then(r => r.json())) || {};
+  // 배치도(schedule.html)에서 쓰는 값: 투표 결과 공유 + 그 시각(11/26)에 자리를 비우는지
+  const publish = () => { SC.votes = V.votes; window.dispatchEvent(new Event('jm26votes')); };
+  SC.voteRowAt = T => { const r = Math.floor((T - ROW_FROM) / 30); return r >= 0 && r < ROWS && enabled(1, r) ? r : -1; };
+  SC.voteAway = (key, T) => {
+    const v = (SC.votes || {})[key], r = SC.voteRowAt(T);
+    return !!v && r >= 0 && String(v.d1 || '')[r] !== '1';
+  };
 
   // ── 펼침 상태 기억 ──
   ['voteFold', 'resFold'].forEach(id => {
@@ -45,7 +52,7 @@
     V.me = p;
     $('voteWho').hidden = true; $('voteBody').hidden = false;
     $('voteState').textContent = '불러오는 중…';
-    try { V.votes = await loadVotes(); } catch (e) {}
+    try { V.votes = await loadVotes(); publish(); } catch (e) {}
     const v = V.votes[k];
     V.sel = v ? DAYS.map(d => fromStr(v[d.key])) : blank();
     V.saved = snap();
@@ -114,7 +121,7 @@
     try {
       const r = await fetch(await url(V.me.key), { method: 'PUT', body: JSON.stringify(body) });
       if (!r.ok) throw new Error('저장 실패 (' + r.status + ')');
-      V.votes[V.me.key] = body; V.saved = snap(); setState();
+      V.votes[V.me.key] = body; V.saved = snap(); setState(); publish();
       $('voteState').textContent = '✅ 저장했어요! ' + $('voteState').textContent;
       renderResults();
     } catch (e) { setState('⚠️ ' + e.message + ' — 다시 눌러 주세요'); }
@@ -124,7 +131,7 @@
   // ── 결과 ──
   async function refresh() {
     try { V.votes = await loadVotes(); } catch (e) { $('resSummary').textContent = '결과를 불러오지 못했어요'; return; }
-    renderResults();
+    publish(); renderResults();
   }
   function voters() {
     // 명단 순서대로, 명단에 없는 키(명단에서 빠진 사람)는 결과에서 제외
