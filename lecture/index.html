@@ -102,6 +102,16 @@
   .dots i{width:12px;height:12px;border-radius:50%;background:#34416e;cursor:pointer}
   .dots i.on{background:#9db6ff}
   .close{position:absolute;right:14px;top:10px;width:46px;height:46px;border-radius:50%;background:rgba(40,50,90,.8);border:1px solid var(--line);font-size:26px;line-height:1;z-index:2}
+  /* 사진 화면 가득 보기 (은하수처럼 긴 사진) */
+  #fullview{position:fixed;inset:0;background:#000;z-index:30;overflow-x:auto;overflow-y:hidden;display:none;cursor:grab;scrollbar-width:none}
+  #fullview::-webkit-scrollbar{display:none}
+  #fullview.open{display:block}
+  #fullview.drag{cursor:grabbing}
+  #fullview .fvin{display:flex;justify-content:center;min-width:100%;width:max-content;height:100%}
+  #fullview img{height:100%;width:auto;max-width:none;display:block;-webkit-user-drag:none}
+  #fullview .fvhint{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#dfe6ff;
+    font-size:clamp(14px,1.1vw,20px);font-weight:700;padding:8px 18px;border-radius:999px;pointer-events:none;transition:opacity .8s;white-space:nowrap}
+  #fullview .fvhint.off{opacity:0}
   #panel.zoom .pbox{grid-template-columns:1fr}
   #panel.zoom .ptext{display:none}
   #panel.zoom .frame{cursor:zoom-out}
@@ -155,6 +165,8 @@
     </div>
   </div>
 </div>
+
+<div id="fullview"><div class="fvin"><img alt=""></div><div class="fvhint">← → 또는 끌어서 둘러보기 · 누르면 닫기</div></div>
 
 <script>
 // ───────── 단위·위치 (모든 좌표는 km) ─────────
@@ -898,7 +910,7 @@ const PANELS = {
         <li>지름 약 <b class="r">3만 pc (약 10만 광년)</b>, 별 약 2천억 개 이상</li>
         <li>위에서 보면 막대 모양 중심부와 <b>나선팔</b>, 옆에서 보면 가운데가 볼록한 <b>원반</b> 모양</li>
         <li>태양계는 중심에서 약 8500 pc(약 3만 광년) 떨어진 나선팔에 있음</li></ul>` },
-    { tag: '은하', title: '은하수 — 안에서 본 우리은하', img: 'milkywayarch', cap: '칠레 파라날 천문대 위의 은하수',
+    { tag: '은하', title: '은하수 — 안에서 본 우리은하', img: 'milkywayarch', full: 'milkywayarch_full', cap: '칠레 파라날 천문대 위의 은하수 (사진을 누르면 화면 가득)',
       credit: 'Bruno Gilli / ESO · CC BY 4.0',
       body: `<ul>
         <li>밤하늘을 가로지르는 희뿌연 띠 = <b>은하수</b></li>
@@ -982,8 +994,53 @@ function panelPrev() { if (pIdx > 0) { pIdx--; renderPanel(); } }
 panel.querySelector('.pn').onclick = panelNext;
 panel.querySelector('.pp').onclick = panelPrev;
 panel.querySelector('.close').onclick = closePanel;
-panel.querySelector('.frame').onclick = () => panel.classList.toggle('zoom');
+panel.querySelector('.frame').onclick = () => {
+  const d = PANELS[pGroup][pIdx];
+  if (d.full) openFull(d); else panel.classList.toggle('zoom');
+};
 panel.addEventListener('click', e => { if (e.target === panel) closePanel(); });
+
+// ───────── 사진 화면 가득 보기: 높이를 화면에 맞추고 좌우는 끌거나 화살표로 둘러봄 ─────────
+const fv = document.getElementById('fullview'), fvImg = fv.querySelector('img'), fvHint = fv.querySelector('.fvhint');
+let fvMine = false, fvHintTimer = null; // fvMine: 이 보기가 브라우저 전체 화면을 켰는지
+const fvCenter = () => { fv.scrollLeft = (fv.scrollWidth - fv.clientWidth) / 2; };
+function openFull(d) {
+  fvImg.onload = fvCenter;
+  fvImg.src = 'img/' + d.img + '.jpg'; // 이미 받은 사진을 먼저 보여 주고
+  const hi = new Image(); hi.onload = () => { if (fv.classList.contains('open')) { const r = fvRatio(); fvImg.onload = () => fvRestore(r); fvImg.src = hi.src; } };
+  hi.src = 'img/' + d.full + '.jpg'; // 고해상도가 오면 바꿔 끼움
+  fv.classList.add('open'); requestAnimationFrame(fvCenter);
+  if (!document.fullscreenElement && document.documentElement.requestFullscreen)
+    document.documentElement.requestFullscreen().then(() => { fvMine = true; }).catch(() => {});
+  fvHint.classList.remove('off'); clearTimeout(fvHintTimer);
+  fvHintTimer = setTimeout(() => fvHint.classList.add('off'), 3500);
+}
+function closeFull() {
+  fv.classList.remove('open');
+  if (fvMine && document.fullscreenElement) document.exitFullscreen?.();
+  fvMine = false;
+}
+// 크기가 바뀌어도(전체 화면 전환, 고해상도 교체) 보던 자리 유지
+const fvRatio = () => fv.scrollWidth ? (fv.scrollLeft + fv.clientWidth / 2) / fv.scrollWidth : 0.5;
+const fvRestore = r => { fv.scrollLeft = r * fv.scrollWidth - fv.clientWidth / 2; };
+let fvR = 0.5;
+fv.addEventListener('scroll', () => { fvR = fvRatio(); });
+addEventListener('resize', () => { if (fv.classList.contains('open')) requestAnimationFrame(() => fvRestore(fvR)); });
+function fvPan(dir) {
+  const max = fv.scrollWidth - fv.clientWidth;
+  if (dir > 0 && fv.scrollLeft >= max - 2) return closeFull(); // 오른쪽 끝에서 한 번 더 → 닫기
+  fv.scrollBy({ left: dir * fv.clientWidth * 0.3, behavior: 'smooth' });
+}
+let fvDrag = null;
+fv.addEventListener('pointerdown', e => { fvDrag = { x: e.clientX, s: fv.scrollLeft, moved: false }; fv.setPointerCapture(e.pointerId); });
+fv.addEventListener('pointermove', e => {
+  if (!fvDrag) return;
+  const dx = e.clientX - fvDrag.x;
+  if (Math.abs(dx) > 5) { fvDrag.moved = true; fv.classList.add('drag'); }
+  fv.scrollLeft = fvDrag.s - dx;
+});
+fv.addEventListener('pointerup', () => { const tap = fvDrag && !fvDrag.moved; fvDrag = null; fv.classList.remove('drag'); if (tap) closeFull(); });
+fv.addEventListener('wheel', e => { fv.scrollLeft += e.deltaY + e.deltaX; e.preventDefault(); }, { passive: false });
 
 // ───────── 조작 ─────────
 function toggleFull() { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
@@ -995,6 +1052,12 @@ document.querySelectorAll('button').forEach(b => b.addEventListener('mouseup', (
 addEventListener('keydown', e => {
   const k = e.key;
   const NEXT = ['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'], PREV = ['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'];
+  if (fv.classList.contains('open')) { // 화면 가득 보기: 좌우로 둘러보기, 누르고 있으면 계속 이동
+    if (['ArrowRight', 'ArrowDown', 'PageDown'].includes(k)) { e.preventDefault(); fvPan(1); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(k)) { e.preventDefault(); fvPan(-1); }
+    else if (['Escape', 'Enter', ' ', 'Backspace'].includes(k) && !e.repeat) { e.preventDefault(); closeFull(); }
+    return;
+  }
   if (k === 'f' || k === 'F') { if (!e.repeat) toggleFull(); return; } // 패널이 열려 있어도 전체 화면
   if (e.repeat) { if (NEXT.includes(k) || PREV.includes(k)) e.preventDefault(); return; } // 리모컨 누르고 있을 때 자동 반복 무시
   if (pGroup) {
