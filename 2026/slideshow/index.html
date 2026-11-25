@@ -86,7 +86,9 @@ button { font-family: inherit; }
 .intro h2 small { display: block; font-size: .42em; color: var(--red); font-weight: 800; margin-bottom: calc(var(--u) * .8); letter-spacing: .02em; }
 .intro .sky { margin-top: calc(var(--u) * 1.4); font-size: calc(var(--u) * 1.9); line-height: 1.6; }
 .intro .sky b { color: var(--strong); }
-.grid { flex: 1; min-height: 0; margin-top: calc(var(--u) * 2.2); display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 11.5), 1fr)); grid-auto-rows: min-content; gap: calc(var(--u) * 1.1); overflow: hidden; align-content: start; }
+.grid { flex: 1; min-height: 0; margin-top: calc(var(--u) * 2.2); overflow: hidden; position: relative; }
+.grid.scroll { -webkit-mask-image: linear-gradient(#000 0, #000 calc(100% - var(--u) * 4), transparent); mask-image: linear-gradient(#000 0, #000 calc(100% - var(--u) * 4), transparent); }
+.gin { will-change: transform; padding-bottom: calc(var(--u) * 3); display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 11.5), 1fr)); grid-auto-rows: min-content; gap: calc(var(--u) * 1.1); align-content: start; }
 .gi { text-align: center; }
 .gi .t { position: relative; aspect-ratio: 1; border-radius: calc(var(--u) * 1); overflow: hidden; background: #120708; border: 1px solid var(--line); }
 .gi .t img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -100,7 +102,7 @@ button { font-family: inherit; }
   :root { --u: min(1.55vw, 1vh); }
   .obj { grid-template-columns: 1fr; grid-template-rows: 42% 58%; }
   .tx { padding: calc(var(--u) * 2.4) calc(var(--u) * 3) calc(var(--u) * 3); }
-  .grid { grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 13), 1fr)); }
+  .gin { grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 13), 1fr)); }
 }
 
 /* 조작 버튼(마우스·터치하면 잠깐 보임) */
@@ -308,9 +310,10 @@ body:not(.idle) .ctl { opacity: 1; pointer-events: auto; }
       html: '<div class="intro"><h2><small>' + (S.part + 1) + '부 · ' + esc(slots[S.part]) + '</small>지금 하늘에서 볼 수 있는 천체 ' + S.items.length + '개</h2>' +
         '<div class="sky"><b>' + esc(sky.label) + '</b> — ' + esc(sky.desc) + '<br>' + esc(moonTxt) +
         '<br>☀ 해 지는 시각 ' + Astro.hhmm(st.sunset) + ' · 완전히 어두워지는 시각 ' + Astro.hhmm(st.dark) + '</div>' +
-        '<div class="grid">' + grid + '</div>' +
+        '<div class="grid"><div class="gin">' + grid + '</div></div>' +
         '<div class="foot">빨간 테두리 ' + feats + '개는 오늘 동아리가 망원경으로 보여 드리는 「관측회 추천」 천체예요. 이 부 동안 높이 ' + MIN_ALT + '° 이상 올라오는 천체만 골랐어요 · 광수중학교 기준 계산</div></div>',
       dur: FIXED_SEC || 16,
+      scroll: true,
     };
   }
 
@@ -337,6 +340,18 @@ body:not(.idle) .ctl { opacity: 1; pointer-events: auto; }
   }
   function sentences(t) { return String(t).replace(/\s*…$/, '').split(/(?<=[.!?])\s+/).filter(function (x) { return x.trim(); }); }
 
+  // 첫 장 사진 모음이 화면보다 길면: 3초 보여 준 뒤 천천히 아래로 내려가며 전부 보여 주고, 끝에서 4초 멈춤
+  var SCROLL_PX_PER_SEC = 45;
+  function setupScroll(el, sl) {
+    var box = el.querySelector('.grid'), inner = el.querySelector('.gin'); if (!box || !inner) return;
+    var dist = inner.scrollHeight - box.clientHeight;
+    if (dist <= 4) return;
+    box.classList.add('scroll');
+    var wait = 3000, move = dist / SCROLL_PX_PER_SEC * 1000, hold = 4000;
+    sl.dur = Math.max(sl.dur, (wait + move + hold) / 1000);
+    S.scroll = { el: inner, dist: dist, wait: wait, move: move };
+  }
+
   function preload(k) {
     var it = S.items[(k - 1 + S.items.length) % S.items.length]; if (!it || k === 0) return;
     var ph = photoOf(it.o, 1600); if (ph) { var im = new Image(); im.src = ph.src; }
@@ -352,6 +367,8 @@ body:not(.idle) .ctl { opacity: 1; pointer-events: auto; }
     stage.appendChild(el);
     if (CN.wrapEmoji) try { CN.wrapEmoji(el); } catch (e) {}
     if (sl.fit) fitDesc(el);
+    S.scroll = null;
+    if (sl.scroll) setupScroll(el, sl);
     requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.add('in'); }); });
     var old = stage.querySelectorAll('.slide'); for (var i = 0; i < old.length - 1; i++) (function (x) { x.classList.remove('in'); setTimeout(function () { x.remove(); }, 1000); })(old[i]);
     var lo = stage.querySelector('.loading'); if (lo) lo.remove();
@@ -370,6 +387,8 @@ body:not(.idle) .ctl { opacity: 1; pointer-events: auto; }
     var bar = document.getElementById('bar');
     var done = S.paused ? S.dur - S.left : S.dur - S.left + (Date.now() - S.t0);
     bar.style.width = (S.dur ? Math.min(100, done / S.dur * 100) : 0) + '%';
+    var sc = S.scroll;
+    if (sc) { var f = Math.max(0, Math.min(1, (done - sc.wait) / sc.move)); sc.el.style.transform = 'translateY(' + (-f * sc.dist).toFixed(1) + 'px)'; }
     var k = new Date(Date.now() + 9 * 3600e3);
     document.getElementById('clock').textContent = String(k.getUTCHours()).padStart(2, '0') + ':' + String(k.getUTCMinutes()).padStart(2, '0');
     requestAnimationFrame(tick);
