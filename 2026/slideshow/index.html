@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
+<title>오늘 밤 천체 슬라이드쇼 · 2026 광수중 주민 천체관측회</title>
+<style>
+* { box-sizing: border-box; }
+:root {
+  --bg: #050203; --line: #3a1a1c; --text: #f1d2ce; --strong: #fff1ee; --muted: #b08480; --red: #ff5a4e; --red-deep: #8f2621;
+  --font: "Pretendard", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  --u: min(1vw, 1.78vh);   /* 화면 비율이 달라도 글자 크기가 비슷하게 */
+}
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow: hidden; }
+body.idle, body.idle * { cursor: none !important; }
+button { font-family: inherit; }
+
+/* ===== 고르기 화면 ===== */
+#pick { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--u) * 2.4); padding: 24px; text-align: center; overflow: auto; }
+#pick h1 { margin: 0; color: var(--strong); font-size: calc(var(--u) * 4.2); line-height: 1.25; }
+#pick p { margin: 0; color: var(--muted); font-size: calc(var(--u) * 1.6); }
+.pick-row { display: flex; gap: calc(var(--u) * 1.6); flex-wrap: wrap; justify-content: center; }
+.pick-row button { min-width: calc(var(--u) * 20); padding: calc(var(--u) * 1.8) calc(var(--u) * 2.4); border-radius: calc(var(--u) * 1.4); border: 2px solid var(--line); background: #140809; color: var(--strong); font-size: calc(var(--u) * 3); font-weight: 800; cursor: pointer; line-height: 1.25; }
+.pick-row button small { display: block; font-size: .5em; font-weight: 600; color: var(--muted); margin-top: 4px; }
+.pick-row button:hover, .pick-row button:focus { border-color: var(--red); outline: none; }
+.pick-row button.auto { background: var(--red-deep); border-color: var(--red); }
+.pick-row button.auto small { color: #ffd2cc; }
+
+/* ===== 슬라이드 ===== */
+#show { position: fixed; inset: 0; display: none; }
+#show.on { display: block; }
+.top { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--u) * 5); display: flex; align-items: center; gap: calc(var(--u) * 1.4); padding: 0 calc(var(--u) * 2.4); z-index: 5;
+  background: linear-gradient(#000c, #0000); font-size: calc(var(--u) * 1.55); color: var(--muted); }
+.top .ev { color: var(--text); font-weight: 700; }
+.top .part { background: var(--red-deep); color: #fff; font-weight: 800; padding: 2px calc(var(--u) * 1); border-radius: 99px; }
+.top .clock { margin-left: auto; color: var(--strong); font-weight: 800; font-size: calc(var(--u) * 2.1); font-variant-numeric: tabular-nums; }
+.bottom { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--u) * 0.55); background: #ffffff14; z-index: 5; }
+.bottom i { display: block; height: 100%; width: 0; background: var(--red); }
+.count { position: absolute; right: calc(var(--u) * 2.4); bottom: calc(var(--u) * 1.2); z-index: 5; color: var(--muted); font-size: calc(var(--u) * 1.3); font-variant-numeric: tabular-nums; }
+.paused-badge { position: absolute; left: 50%; top: calc(var(--u) * 9.4); transform: translateX(-50%); z-index: 6; background: #000c; border: 1px solid var(--line); color: var(--strong); padding: 6px 16px; border-radius: 99px; font-size: calc(var(--u) * 1.4); display: none; }
+#show.paused .paused-badge { display: block; }
+
+.slide { position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease; }
+.slide.in { opacity: 1; }
+
+/* 천체 슬라이드: 가로 화면 = 왼쪽 사진 / 오른쪽 글 */
+.obj { display: grid; grid-template-columns: 50% 50%; height: 100%; }
+.ph { position: relative; overflow: hidden; background: #000; }
+.ph .blur { position: absolute; inset: -40px; background-size: cover; background-position: center; filter: blur(40px) brightness(.35) saturate(1.2); }
+.ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: brightness(.95); }
+.ph .icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: calc(var(--u) * 16); }
+.ph .cap { position: absolute; left: calc(var(--u) * 1.4); bottom: calc(var(--u) * 1.4); right: calc(var(--u) * 1.4); color: #ffffffa0; font-size: calc(var(--u) * 1.05); text-shadow: 0 1px 3px #000; }
+.slide.in .ph img { animation: kb 30s ease-out both; }
+@keyframes kb { from { transform: scale(1); } to { transform: scale(1.06); } }
+
+.tx { display: flex; flex-direction: column; padding: calc(var(--u) * 6) calc(var(--u) * 3.2) calc(var(--u) * 2.6) calc(var(--u) * 3); min-height: 0; }
+.tags { display: flex; flex-wrap: wrap; gap: calc(var(--u) * .7); }
+.tag { border: 1px solid var(--line); color: var(--text); border-radius: 99px; padding: 2px calc(var(--u) * 1); font-size: calc(var(--u) * 1.35); white-space: nowrap; }
+.tag.feat { background: var(--red-deep); border-color: var(--red); color: #fff; font-weight: 800; }
+.nm { margin: calc(var(--u) * 1) 0 0; color: var(--strong); font-size: calc(var(--u) * 4.2); font-weight: 900; line-height: 1.12; letter-spacing: -.02em; word-break: keep-all; }
+.en { color: var(--muted); font-size: calc(var(--u) * 1.5); margin-top: calc(var(--u) * .3); }
+
+.where { display: flex; align-items: center; gap: calc(var(--u) * 1.6); margin-top: calc(var(--u) * 1.6); padding: calc(var(--u) * 1.1) calc(var(--u) * 1.6); background: #1a0b0c; border: 1px solid var(--line); border-radius: calc(var(--u) * 1.4); }
+.where svg { width: calc(var(--u) * 7.6); height: calc(var(--u) * 7.6); flex: none; }
+.where .d { color: var(--strong); font-size: calc(var(--u) * 2.9); font-weight: 900; line-height: 1.1; }
+.where .h { font-size: calc(var(--u) * 1.7); color: var(--text); margin-top: calc(var(--u) * .4); }
+.where .h b { color: var(--strong); }
+.where .s { font-size: calc(var(--u) * 1.2); color: var(--muted); margin-top: calc(var(--u) * .4); }
+
+.facts { display: flex; flex-wrap: wrap; gap: calc(var(--u) * .4) calc(var(--u) * 1.8); margin-top: calc(var(--u) * 1.2); font-size: calc(var(--u) * 1.4); color: var(--muted); }
+.facts b { color: var(--text); font-weight: 700; }
+
+.desc { flex: 1; min-height: 0; overflow: hidden; margin-top: calc(var(--u) * 1.4); font-size: calc(var(--u) * 1.75); line-height: 1.6; color: var(--text); word-break: keep-all; }
+.desc p { margin: 0 0 .5em; }
+.desc ul { margin: .2em 0 0; padding: 0; list-style: none; }
+.desc li { position: relative; padding-left: 1.1em; color: var(--strong); font-weight: 700; margin-bottom: .2em; }
+.desc li::before { content: '✦'; position: absolute; left: 0; color: var(--red); }
+.by { color: var(--muted); font-size: calc(var(--u) * 1.15); margin-top: calc(var(--u) * .8); }
+
+/* 첫 장(이번 부 소개) */
+.intro { display: flex; flex-direction: column; height: 100%; padding: calc(var(--u) * 7) calc(var(--u) * 4) calc(var(--u) * 3); }
+.intro h2 { margin: 0; color: var(--strong); font-size: calc(var(--u) * 5.4); line-height: 1.15; font-weight: 900; }
+.intro h2 small { display: block; font-size: .42em; color: var(--red); font-weight: 800; margin-bottom: calc(var(--u) * .8); letter-spacing: .02em; }
+.intro .sky { margin-top: calc(var(--u) * 1.4); font-size: calc(var(--u) * 1.9); line-height: 1.6; }
+.intro .sky b { color: var(--strong); }
+.grid { flex: 1; min-height: 0; margin-top: calc(var(--u) * 2.2); display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 11.5), 1fr)); grid-auto-rows: min-content; gap: calc(var(--u) * 1.1); overflow: hidden; align-content: start; }
+.gi { text-align: center; }
+.gi .t { position: relative; aspect-ratio: 1; border-radius: calc(var(--u) * 1); overflow: hidden; background: #120708; border: 1px solid var(--line); }
+.gi .t img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gi .t .ic { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: calc(var(--u) * 4); }
+.gi.f .t { border-color: var(--red); }
+.gi .n { margin-top: calc(var(--u) * .4); font-size: calc(var(--u) * 1.2); color: var(--text); line-height: 1.25; word-break: keep-all; }
+.intro .foot { margin-top: calc(var(--u) * 1.2); font-size: calc(var(--u) * 1.35); color: var(--muted); }
+
+/* 세로 화면(스탠바이미 세로) = 위 사진 / 아래 글 */
+@media (orientation: portrait) {
+  :root { --u: min(1.55vw, 1vh); }
+  .obj { grid-template-columns: 1fr; grid-template-rows: 42% 58%; }
+  .tx { padding: calc(var(--u) * 2.4) calc(var(--u) * 3) calc(var(--u) * 3); }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 13), 1fr)); }
+}
+
+/* 조작 버튼(마우스·터치하면 잠깐 보임) */
+.ctl { position: absolute; left: 50%; top: calc(var(--u) * 5.4); transform: translateX(-50%); z-index: 7; display: flex; gap: 8px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+body:not(.idle) .ctl { opacity: 1; pointer-events: auto; }
+.ctl button { background: #000c; color: var(--strong); border: 1px solid var(--line); border-radius: 99px; padding: 10px 18px; font-size: 16px; cursor: pointer; white-space: nowrap; }
+.ctl button:hover { border-color: var(--red); }
+.loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: calc(var(--u) * 2.4); color: var(--muted); }
+</style>
+</head>
+<body>
+<div id="pick">
+  <h1>오늘 밤 천체 슬라이드쇼</h1>
+  <p id="pickSub">2026 광수중 주민 천체관측회</p>
+  <div class="pick-row" id="pickRow"></div>
+  <p>화면을 누르면 전체 화면으로 바뀌어요. 끝까지 가면 처음부터 다시 반복해요.</p>
+</div>
+<div id="show">
+  <div class="top"><span class="part" id="partLbl"></span><span class="ev" id="evLbl"></span><span class="clock" id="clock"></span></div>
+  <div id="stage"><div class="loading">하늘을 계산하는 중…</div></div>
+  <div class="paused-badge">⏸ 멈춤 — 화면 가운데를 누르면 다시 재생</div>
+  <div class="count" id="count"></div>
+  <div class="bottom"><i id="bar"></i></div>
+  <div class="ctl">
+    <button data-c="prev">◀ 이전</button>
+    <button data-c="pause">⏸ 멈춤</button>
+    <button data-c="next">다음 ▶</button>
+    <button data-c="full">⛶ 전체 화면</button>
+    <button data-c="menu">☰ 부 바꾸기</button>
+  </div>
+</div>
+
+<script>window.CN_BASE = '../';</script>
+<script src="../js/core.js?v=20261125a"></script>
+<script src="../js/vendor/astronomy.browser.min.js"></script>
+<script src="../js/astro.js?v=20261125a"></script>
+<script src="../js/catalog.js?v=20261125a"></script>
+<script>
+(function () {
+  'use strict';
+  var esc = CN.esc;
+  var Q = new URLSearchParams(location.search);
+  var MIN_ALT = Number(Q.get('alt')) || 20;     // 이 부 동안 한 번이라도 이 높이 이상 올라오면 보여 줌
+  var MOON_MIN_ALT = 10;                       // 달은 낮아도 잘 보여서 기준을 낮춤
+  var FIXED_SEC = Number(Q.get('sec')) || 0;   // ?sec=15 → 모든 장 15초 고정
+  var TYPE_ORDER = { moon: 0, planet: 1, star: 2, cluster: 3, nebula: 4, galaxy: 5, other: 6, constellation: 7 };
+
+  var state, cfg, slots = [];
+  var S = { part: null, auto: false, items: [], idx: 0, timer: null, t0: 0, dur: 0, left: 0, paused: false, loadedAt: Date.now() };
+
+  // ---------- 시간 ----------
+  function slotRange(i) { var s = slots[i].split('~'); return { a: s[0], b: s[1], t0: Astro.kst(cfg.eventDate, s[0]), t1: Astro.kst(cfg.eventDate, s[1]) }; }
+  function partByNow() {
+    var now = Date.now();
+    for (var i = 0; i < slots.length; i++) { var r = slotRange(i); if (now < r.t1.getTime() + 5 * 60e3) return i; }
+    return slots.length - 1;
+  }
+  function inSlotNow(i) { var r = slotRange(i), n = Date.now(); return n >= r.t0.getTime() - 10 * 60e3 && n <= r.t1.getTime() + 10 * 60e3; }
+  // 화면에 보여 줄 위치 기준 시각: 이 부 시간이면 '지금', 아니면 부 가운데
+  function refTime(i) {
+    if (inSlotNow(i)) return { d: new Date(), label: '지금 ' + Astro.hhmm(new Date()) };
+    var r = slotRange(i), d = new Date((r.t0.getTime() + r.t1.getTime()) / 2);
+    return { d: d, label: Astro.hhmm(d) + ' 기준' };
+  }
+
+  // ---------- 고르기 ----------
+  function brightness(o) { return o.mag != null ? o.mag : (o.magRange ? o.magRange[0] : 99); }
+  function skyObjects() { return state.list.filter(function (o) { return o.id !== 'sun' && !(o.type === 'moon' && o.parent && o.parent !== 'earth'); }); }
+
+  function tOrder(o) { return o.type in TYPE_ORDER ? TYPE_ORDER[o.type] : 6; }
+  function buildItems(i) {
+    var r = slotRange(i), out = [];
+    skyObjects().forEach(function (o) {
+      var feat = CN.isEventFeatured(state, o), nf = CN.isNightlyFeatured(state, o);
+      if (!feat && !nf) return;
+      var mx = -90, first = null, last = null;
+      for (var t = r.t0.getTime(); t <= r.t1.getTime(); t += 10 * 60e3) {
+        var p = Astro.position(o, new Date(t));
+        if (!p) return;
+        if (p.alt > mx) mx = p.alt;
+        if (!first) first = p;
+        last = p;
+      }
+      if (mx < (o.type === 'moon' ? MOON_MIN_ALT : MIN_ALT)) return;
+      out.push({ o: o, feat: feat, first: first, last: last });
+    });
+    out.sort(function (a, b) {
+      return (b.feat - a.feat) || (tOrder(a.o) - tOrder(b.o)) || (brightness(a.o) - brightness(b.o));
+    });
+    return out;
+  }
+
+  // ---------- 그림 ----------
+  function photoOf(o, w) {
+    var photos = CN.sortedPhotos((state.content[o.id] || {}).photos);
+    var def = state.credits[o.id] ? CN.asset('img/objects/' + o.id + '.jpg') : '';
+    if (photos.length) return { src: CN.photoUrl(photos[0].fileId, w), fid: photos[0].fileId, alt: def, cap: [photos[0].caption, photos[0].credit].filter(Boolean).join(' · ') };
+    if (def) return { src: def, cap: state.credits[o.id].author ? '사진: ' + state.credits[o.id].author + (state.credits[o.id].license ? ' (' + state.credits[o.id].license + ')' : '') : '' };
+    if (o.type === 'star') return { src: CN.starImg(o.bv, o.mag), cap: '' };
+    return null;
+  }
+  function imgTag(ph, w, cls) {
+    if (ph.fid) return CN.driveImgTag(ph.fid, w, cls || '', ph.alt, '').replace(' loading="lazy"', '');
+    return '<img class="' + (cls || '') + '" decoding="async" src="' + esc(ph.src) + '" alt="">';
+  }
+  function icon(o) { return (CN.TYPES[o.type] || CN.TYPES.other).icon; }
+
+  // 나침반 + 높이: 바깥 원 = 방향(북이 위), 안쪽 호 = 지평선 0°~머리 위 90°
+  function compass(az, alt) {
+    var c = 50, R = 44, a = (az - 90) * Math.PI / 180;
+    var rr = R * (1 - Math.max(0, Math.min(90, alt)) / 90) ;  // 높을수록 가운데
+    var x = c + rr * Math.cos(a), y = c + rr * Math.sin(a);
+    var lbl = function (t, ang) { var q = (ang - 90) * Math.PI / 180; return '<text x="' + (c + 37 * Math.cos(q)).toFixed(1) + '" y="' + (c + 37 * Math.sin(q) + 3.5).toFixed(1) + '" text-anchor="middle" font-size="9" font-weight="700" fill="' + (t === '북' ? '#ff5a4e' : '#b08480') + '">' + t + '</text>'; };
+    return '<svg viewBox="0 0 100 100" aria-hidden="true">' +
+      '<circle cx="50" cy="50" r="46" fill="#0c0506" stroke="#5a2a28" stroke-width="1.5"/>' +
+      '<circle cx="50" cy="50" r="30.7" fill="none" stroke="#3a1a1c" stroke-dasharray="2 2"/>' +
+      '<circle cx="50" cy="50" r="15.3" fill="none" stroke="#3a1a1c" stroke-dasharray="2 2"/>' +
+      lbl('북', 0) + lbl('동', 90) + lbl('남', 180) + lbl('서', 270) +
+      '<line x1="50" y1="50" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="#ff5a4e" stroke-width="1.2" stroke-dasharray="2 2"/>' +
+      '<circle cx="50" cy="50" r="2" fill="#b08480"/>' +
+      '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="5.5" fill="#ffd36e" stroke="#fff" stroke-width="1.2"/></svg>';
+  }
+
+  function nf(n) { return Number(n).toLocaleString('ko-KR'); }
+  function distText(o, d) {
+    if (o.type === 'moon') return '약 38만 km';
+    if (o.dynamic && o.body) { try { var pn = Astro.planetNow(o.body, d); return '약 ' + nf(Math.round(pn.geoAU * 1.496)) + '억 km'; } catch (e) { return ''; } }
+    if (o.distanceLy) { var ly = o.distanceLy; return '약 ' + (ly >= 1e6 ? nf(Math.round(ly / 1e4)) + '만' : ly >= 1e4 ? nf(Math.round(ly / 1e3) / 10) + '만' : nf(ly)) + ' 광년'; }
+    return '';
+  }
+  function magText(o, d) {
+    if (o.dynamic && o.body && o.type !== 'moon') { try { return Astro.planetNow(o.body, d).mag.toFixed(1) + '등급'; } catch (e) {} }
+    if (o.type === 'moon') { var mi = Astro.moonInfo(d); return mi.name + ' · 밝은 부분 ' + Math.round(mi.illum * 100) + '%'; }
+    return o.mag != null ? o.mag + '등급' : '';
+  }
+
+  function stripId(s) { return String(s || '').replace(/^\s*\d{4,5}\s*/, '').replace(/\s*선생님$/, ' 선생님'); }
+
+  function descHtml(o) {
+    var c = CN.contentOf(state, o.id), h = '';
+    var d = c.description && c.description.v;
+    if (d) h += String(d).replace(/\r\n?/g, '\n').split(/\n+/).filter(function (x) { return x.trim(); }).map(function (x) { return '<p>' + esc(x.trim()) + '</p>'; }).join('');
+    else {
+      var bits = [];
+      if (o.constellationKo) bits.push(o.constellationKo + '에 있는 ' + CN.typeLabel(o) + '이에요.');
+      if (o.type === 'constellation') bits.push('맨눈으로 별을 이어 모양을 찾아보세요.');
+      if (bits.length) h += '<p>' + esc(bits.join(' ')) + '</p>';
+    }
+    var pts = c.points && c.points.v ? String(c.points.v).split(/\n+/).map(function (x) { return x.replace(/^\s*(\d+[.)]|[-•*])\s*/, '').trim(); }).filter(Boolean) : [];
+    if (pts.length) h += '<ul>' + pts.slice(0, 3).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+    var by = d && (c.description.author || c.description.by);
+    return { html: h, by: by ? '설명 글: ' + stripId(by) : '', len: (d || '').length + pts.join('').length };
+  }
+
+  function objSlide(it) {
+    var o = it.o, rt = refTime(S.part), p = Astro.position(o, rt.d) || it.first;
+    var meta = ((state.content[o.id] || {}).meta) || {};
+    var tags = '';
+    if (it.feat) tags += '<span class="tag feat">★ 관측회 추천</span>';
+    tags += '<span class="tag">' + esc(CN.typeLabel(o)) + '</span>';
+    if (o.constellationKo) tags += '<span class="tag">' + esc(o.constellationKo) + '</span>';
+    Object.keys(meta.places || {}).forEach(function (k) { if (meta.places[k] && CN.PLACES[k]) tags += '<span class="tag">📍 ' + esc(CN.PLACES[k]) + '</span>'; });
+
+    var r = slotRange(S.part);
+    var move = Astro.dir8(it.first.az) + ' ' + Math.round(it.first.alt) + '° (' + r.a + ') → ' + Astro.dir8(it.last.az) + ' ' + Math.round(it.last.alt) + '° (' + r.b + ')';
+    var where = p.alt > 0
+      ? '<div class="d">' + esc(Astro.dir8(p.az)) + '쪽 하늘</div><div class="h">높이 <b>' + Math.round(p.alt) + '°</b> · ' + esc(Astro.fists(p.alt)) + '</div>'
+      : '<div class="d">아직 지평선 아래</div><div class="h">' + esc(r.b) + '쯤 ' + esc(Astro.dir8(it.last.az)) + '쪽 ' + Math.round(it.last.alt) + '°까지 올라와요</div>';
+
+    var facts = [], m = magText(o, rt.d), ds = distText(o, rt.d);
+    if (m) facts.push('<span>밝기 <b>' + esc(m) + '</b></span>');
+    if (ds) facts.push('<span>거리 <b>' + esc(ds) + '</b></span>');
+    var gear = Object.keys(meta.gear || {}).filter(function (k) { return meta.gear[k]; }).map(CN.gearLabel);
+    if (gear.length) facts.push('<span>추천 장비 <b>' + esc(gear.slice(0, 2).join(', ')) + '</b></span>');
+
+    var ph = photoOf(o, 1600), dsc = descHtml(o);
+    var phHtml = ph
+      ? '<div class="blur" style="background-image:url(\'' + esc(ph.fid ? CN.photoUrl(ph.fid, 400) : ph.src) + '\')"></div>' + imgTag(ph, 1600) + (ph.cap ? '<div class="cap">' + esc(ph.cap) + '</div>' : '')
+      : '<div class="icon">' + icon(o) + '</div>';
+    return {
+      html: '<div class="obj"><div class="ph">' + phHtml + '</div><div class="tx">' +
+        '<div class="tags">' + tags + '</div>' +
+        '<div class="nm">' + esc(o.nameKo) + '</div>' +
+        '<div class="en">' + esc([o.nameEn, o.catalog !== o.nameEn ? o.catalog : '', o.altCatalog].filter(Boolean).join(' · ')) + '</div>' +
+        '<div class="where">' + compass(p.az, Math.max(0, p.alt)) + '<div>' + where + '<div class="s">' + esc(rt.label) + ' · 이 부 동안 ' + esc(move) + '</div></div></div>' +
+        (facts.length ? '<div class="facts">' + facts.join('') + '</div>' : '') +
+        '<div class="desc">' + dsc.html + '</div>' + (dsc.by ? '<div class="by">' + esc(dsc.by) + '</div>' : '') +
+        '</div></div>',
+      dur: FIXED_SEC || Math.max(14, Math.min(32, 10 + dsc.len / 22)),
+      fit: true,
+    };
+  }
+
+  function introSlide() {
+    var r = slotRange(S.part), mid = new Date((r.t0.getTime() + r.t1.getTime()) / 2);
+    var sky = Astro.sky(mid), st = Astro.sunTimes(cfg.eventDate), moon = Astro.body('Moon', mid), mi = Astro.moonInfo(mid);
+    var moonTxt = moon.alt > 0 ? '🌙 달(' + mi.name + ')이 ' + Astro.dir8(moon.az) + '쪽 ' + Math.round(moon.alt) + '° 높이에 떠 있어요.'
+      : '🌙 이 시간엔 달이 아직 안 떴어요' + (mi.rise ? ' (월출 ' + Astro.hhmm(mi.rise) + ')' : '') + '. 희미한 천체를 보기 좋아요.';
+    var feats = S.items.filter(function (x) { return x.feat; }).length;
+    var grid = S.items.map(function (it) {
+      var ph = photoOf(it.o, 300);
+      return '<div class="gi' + (it.feat ? ' f' : '') + '"><div class="t">' + (ph ? imgTag(ph, 300) : '<div class="ic">' + icon(it.o) + '</div>') + '</div><div class="n">' + esc(it.o.nameKo) + '</div></div>';
+    }).join('');
+    return {
+      html: '<div class="intro"><h2><small>' + (S.part + 1) + '부 · ' + esc(slots[S.part]) + '</small>지금 하늘에서 볼 수 있는 천체 ' + S.items.length + '개</h2>' +
+        '<div class="sky"><b>' + esc(sky.label) + '</b> — ' + esc(sky.desc) + '<br>' + esc(moonTxt) +
+        '<br>☀ 해 지는 시각 ' + Astro.hhmm(st.sunset) + ' · 완전히 어두워지는 시각 ' + Astro.hhmm(st.dark) + '</div>' +
+        '<div class="grid">' + grid + '</div>' +
+        '<div class="foot">빨간 테두리 ' + feats + '개는 오늘 동아리가 망원경으로 보여 드리는 「관측회 추천」 천체예요. 이 부 동안 높이 ' + MIN_ALT + '° 이상 올라오는 천체만 골랐어요 · 광수중학교 기준 계산</div></div>',
+      dur: FIXED_SEC || 16,
+    };
+  }
+
+  // ---------- 재생 ----------
+  function slideAt(k) { return k === 0 ? introSlide() : objSlide(S.items[k - 1]); }
+  function total() { return S.items.length + 1; }
+
+  // 글이 넘치면 글씨를 조금 줄이고, 그래도 넘치면 설명의 끝 문장부터 덜어냄(관측 포인트 ✦는 되도록 남김)
+  function fitDesc(el) {
+    var d = el.querySelector('.desc'); if (!d) return;
+    var over = function () { return d.scrollHeight > d.clientHeight + 2; };
+    var base = parseFloat(getComputedStyle(d).fontSize), size = base;
+    while (over() && size > base * 0.8) { size -= base * 0.04; d.style.fontSize = size + 'px'; }
+    var guard = 200;
+    while (over() && guard--) {
+      var ps = [].slice.call(d.querySelectorAll('p')), lis = d.querySelectorAll('li');
+      var multi = ps.filter(function (p) { return sentences(p.textContent).length > 1; }).pop();
+      if (multi) { var ss = sentences(multi.textContent); ss.pop(); multi.textContent = ss.join(' ') + ' …'; continue; }
+      if (ps.length > 1) { ps[ps.length - 1].remove(); continue; }
+      if (lis.length > 1) { lis[lis.length - 1].remove(); continue; }
+      if (lis.length === 1 && ps.length) { lis[0].parentNode.remove(); continue; }
+      break;
+    }
+  }
+  function sentences(t) { return String(t).replace(/\s*…$/, '').split(/(?<=[.!?])\s+/).filter(function (x) { return x.trim(); }); }
+
+  function preload(k) {
+    var it = S.items[(k - 1 + S.items.length) % S.items.length]; if (!it || k === 0) return;
+    var ph = photoOf(it.o, 1600); if (ph) { var im = new Image(); im.src = ph.src; }
+  }
+
+  function show(k) {
+    clearTimeout(S.timer);
+    S.idx = (k + total()) % total();
+    if (S.idx === 0 && S.started) onLoop();
+    S.started = true;
+    var sl = slideAt(S.idx), stage = document.getElementById('stage');
+    var el = document.createElement('div'); el.className = 'slide'; el.innerHTML = sl.html;
+    stage.appendChild(el);
+    if (CN.wrapEmoji) try { CN.wrapEmoji(el); } catch (e) {}
+    if (sl.fit) fitDesc(el);
+    requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.add('in'); }); });
+    var old = stage.querySelectorAll('.slide'); for (var i = 0; i < old.length - 1; i++) (function (x) { x.classList.remove('in'); setTimeout(function () { x.remove(); }, 1000); })(old[i]);
+    var lo = stage.querySelector('.loading'); if (lo) lo.remove();
+    document.getElementById('count').textContent = (S.idx === 0 ? '소개' : S.idx + ' / ' + S.items.length);
+    S.dur = sl.dur * 1000; S.left = S.dur;
+    run();
+    preload(S.idx + 1);
+  }
+  function run() {
+    clearTimeout(S.timer);
+    if (S.paused) return;
+    S.t0 = Date.now();
+    S.timer = setTimeout(function () { show(S.idx + 1); }, S.left);
+  }
+  function tick() {
+    var bar = document.getElementById('bar');
+    var done = S.paused ? S.dur - S.left : S.dur - S.left + (Date.now() - S.t0);
+    bar.style.width = (S.dur ? Math.min(100, done / S.dur * 100) : 0) + '%';
+    var k = new Date(Date.now() + 9 * 3600e3);
+    document.getElementById('clock').textContent = String(k.getUTCHours()).padStart(2, '0') + ':' + String(k.getUTCMinutes()).padStart(2, '0');
+    requestAnimationFrame(tick);
+  }
+  function setPaused(v) {
+    if (v === S.paused) return;
+    S.paused = v;
+    if (v) { clearTimeout(S.timer); S.left = Math.max(0, S.left - (Date.now() - S.t0)); }
+    else run();
+    document.getElementById('show').classList.toggle('paused', v);
+    document.querySelector('[data-c="pause"]').textContent = v ? '▶ 재생' : '⏸ 멈춤';
+  }
+
+  // 한 바퀴 돌 때마다: 자동 모드면 부 바꾸기 + 학생 편집 내용 새로 받기(인터넷 끊겨도 그대로 계속)
+  function onLoop() {
+    if (S.auto) { var p = partByNow(); if (p !== S.part) { setPart(p); } }
+    CN.db.get(CN.path('objects')).then(function (objs) { if (objs) state.content = objs; }).catch(function () {});
+  }
+
+  function setPart(i) {
+    S.part = i;
+    S.items = buildItems(i);
+    document.getElementById('partLbl').textContent = (S.auto ? '자동 · ' : '') + (i + 1) + '부 ' + slots[i];
+  }
+
+  function start(part, auto) {
+    S.auto = !!auto;
+    setPart(auto ? partByNow() : part);
+    document.getElementById('pick').style.display = 'none';
+    document.getElementById('show').classList.add('on');
+    var u = new URL(location.href); u.searchParams.set('p', auto ? 'auto' : String(part + 1)); history.replaceState(null, '', u);
+    S.started = false;
+    show(0);
+    keepAwake();
+  }
+
+  // ---------- 화면 꺼짐 방지 ----------
+  var lock = null;
+  function keepAwake() {
+    try { if (navigator.wakeLock && !lock) navigator.wakeLock.request('screen').then(function (l) { lock = l; l.addEventListener('release', function () { lock = null; }); }).catch(function () {}); } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') keepAwake(); });
+
+  function fullscreen() {
+    var d = document.documentElement;
+    if (document.fullscreenElement || document.webkitFullscreenElement) return;
+    try { (d.requestFullscreen || d.webkitRequestFullscreen).call(d); } catch (e) {}
+  }
+
+  // ---------- 조작 ----------
+  var idleT;
+  function wake() { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(function () { document.body.classList.add('idle'); }, 3000); }
+  ['mousemove', 'touchstart', 'keydown'].forEach(function (e) { document.addEventListener(e, wake, { passive: true }); });
+
+  document.querySelector('.ctl').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-c]'); if (!b) return;
+    e.stopPropagation();
+    var c = b.dataset.c;
+    if (c === 'prev') show(S.idx - 1);
+    else if (c === 'next') show(S.idx + 1);
+    else if (c === 'pause') setPaused(!S.paused);
+    else if (c === 'full') fullscreen();
+    else if (c === 'menu') { clearTimeout(S.timer); document.getElementById('show').classList.remove('on'); document.getElementById('pick').style.display = ''; history.replaceState(null, '', location.pathname); }
+  });
+  // 화면 왼쪽 1/4 = 이전, 오른쪽 1/4 = 다음, 가운데 = 멈춤/재생 (스탠바이미 터치)
+  document.getElementById('show').addEventListener('click', function (e) {
+    if (e.target.closest('.ctl')) return;
+    var x = e.clientX / window.innerWidth;
+    if (x < 0.25) show(S.idx - 1); else if (x > 0.75) show(S.idx + 1); else setPaused(!S.paused);
+    fullscreen(); keepAwake();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('show').classList.contains('on')) return;
+    if (e.key === 'ArrowLeft') show(S.idx - 1);
+    else if (e.key === 'ArrowRight') show(S.idx + 1);
+    else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setPaused(!S.paused); }
+    else if (e.key === 'f' || e.key === 'F') fullscreen();
+  });
+
+  // ---------- 시작 ----------
+  function pickButtons(counts) {
+    var row = document.getElementById('pickRow');
+    row.innerHTML = slots.map(function (t, i) { return '<button data-p="' + i + '">' + (i + 1) + '부<small>' + esc(t) + (counts ? ' · ' + counts[i] + '개' : '') + '</small></button>'; }).join('') +
+      '<button class="auto" data-p="auto">자동<small>시각에 맞춰 부가 바뀜</small></button>';
+    row.querySelectorAll('[data-p]').forEach(function (b) {
+      b.onclick = function () { if (!state) return; fullscreen(); if (b.dataset.p === 'auto') start(0, true); else start(Number(b.dataset.p), false); };
+    });
+  }
+  slots = CN.DEFAULTS.slots; pickButtons(null);
+  CN.loadAll().then(function (s) {
+    state = s; cfg = s.config; slots = cfg.slots || CN.DEFAULTS.slots;
+    document.getElementById('evLbl').textContent = '2026 광수중 주민 천체관측회 · ' + CN.dateShortW(cfg.eventDate);
+    document.getElementById('pickSub').textContent = '2026 광수중 주민 천체관측회 · ' + CN.dateLabel(cfg.eventDate);
+    pickButtons(slots.map(function (t, i) { return buildItems(i).length; }));
+    requestAnimationFrame(tick);
+    var p = Q.get('p');
+    if (p === 'auto') start(0, true);
+    else if (p && slots[Number(p) - 1]) start(Number(p) - 1, false);
+    wake();
+  });
+})();
+</script>
+</body>
+</html>
