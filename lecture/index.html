@@ -60,7 +60,11 @@
   #ctrl{position:fixed;right:18px;bottom:18px;display:flex;gap:8px}
   #ctrl button{width:52px;height:52px;border-radius:50%;background:rgba(20,28,52,.8);border:1px solid var(--line);font-size:22px}
   #ctrl button:hover{background:rgba(50,64,110,.9)}
-  #hint{position:fixed;right:22px;top:20px;font-size:clamp(12px,.9vw,16px);color:var(--dim);text-align:right;line-height:1.5}
+  #topBtns{position:fixed;right:18px;top:16px;z-index:9;display:flex;gap:8px}
+  #topBtns a{color:var(--ink);text-decoration:none;font-weight:700;font-size:clamp(13px,1vw,18px);
+    background:rgba(20,28,52,.85);border:1px solid var(--line);border-radius:999px;padding:.5em 1.1em;white-space:nowrap}
+  #topBtns a:hover{background:rgba(50,64,110,.95)}
+  #hint{position:fixed;right:22px;top:72px;font-size:clamp(12px,.9vw,16px);color:var(--dim);text-align:right;line-height:1.5}
 
   /* 설명 패널 */
   #panel{position:fixed;inset:0;background:rgba(2,4,10,.78);display:flex;align-items:center;justify-content:center;
@@ -141,6 +145,7 @@
 
 <div id="heading"><b>우주의 크기 가늠해 보기</b><br>한 칸 갈 때마다 몇 배씩 멀어질까?
   <div id="note">※ 천체 크기는 보기 쉽게 키움<br>(거리 비율은 실제)</div></div>
+<div id="topBtns"><a href="https://sites.google.com/gwangsu.ms.kr/2025-cosmos/%EC%A3%BC%EC%9D%98%EC%82%AC%ED%95%AD" target="_blank" rel="noopener" title="관측회 주의사항 (새 탭)">⚠️ 주의사항</a><a href="seats.html" title="과학실 좌석 배치 · 조별 이동 순서">🪑 좌석 배치도</a></div>
 <div id="hint">→ / 스페이스 : 다음 &nbsp; ← : 이전<br>천체를 클릭하면 설명이 나와요</div>
 <div id="card"><div class="no"></div><div class="tt"></div><div class="dd"></div><div class="ss"></div></div>
 <div id="counter"></div>

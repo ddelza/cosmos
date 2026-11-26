@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>과학실 좌석 배치 · 이동 순서</title>
+<style>
+  :root{
+    --bg:#03050c; --ink:#eef2ff; --dim:#9aa6c8; --line:rgba(150,170,230,.28); --glass:rgba(14,20,40,.72);
+    --A1:#F43838; --A2:#F9A9A9; --B1:#FFB800; --B2:#FFE08A;
+    --roof:#FF7A1A; --deck2:#B06CFF; --deck3:#2FD27A; --lab:#7f8bb0; --me:#4C9BFF;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;
+    font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;user-select:none}
+  body{display:flex;flex-direction:column;padding:1.6vh 2vw 1.4vh;gap:1.4vh;
+    background:radial-gradient(ellipse at 30% 0%,#0d1530 0%,var(--bg) 60%)}
+  header{display:flex;align-items:center;gap:1.4vw}
+  header a.back{color:var(--dim);text-decoration:none;font-size:clamp(12px,1vw,17px);border:1px solid var(--line);border-radius:999px;padding:.45em 1em}
+  header a.back:hover{color:var(--ink);background:rgba(50,64,110,.5)}
+  header h1{margin:0;font-size:clamp(18px,2vw,34px);letter-spacing:-.02em}
+  header h1 small{font-size:.5em;color:var(--dim);font-weight:500;margin-left:.6em}
+  .parts{margin-left:auto;display:flex;gap:.6vw}
+  .parts button{font:inherit;cursor:pointer;color:var(--dim);background:rgba(20,28,52,.8);border:1px solid var(--line);
+    border-radius:14px;padding:.5em 1.1em;font-size:clamp(14px,1.45vw,26px);font-weight:800;line-height:1.1;text-align:center}
+  .parts button small{display:block;font-size:.55em;font-weight:600;margin-top:.15em}
+  .parts button.on{color:#10131f;background:var(--ink);border-color:var(--ink)}
+  .parts button:hover:not(.on){background:rgba(50,64,110,.9);color:var(--ink)}
+
+  main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:2vw}
+
+  /* ── 좌석 ── */
+  .room{position:relative;display:flex;flex-direction:column;min-height:0;background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:1.6vh 1.4vw}
+  .screen{align-self:center;width:72%;text-align:center;background:#2a3150;color:#dfe6ff;border-radius:8px;
+    font-size:clamp(11px,1vw,17px);font-weight:700;padding:.35em 0;margin:0 0 1.4vh 3.2em}
+  #map{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-between}
+  .grp{display:flex;align-items:stretch;gap:.8vw;flex:1;min-height:0;padding:.35vh 0;border-radius:12px;cursor:pointer}
+  .grp + .grp{margin-top:.6vh}
+  .glabel{width:3.2em;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;
+    font-weight:900;font-size:clamp(14px,1.5vw,28px);color:#111;line-height:1}
+  .glabel small{font-size:.42em;font-weight:700;margin-top:.35em;opacity:.8}
+  .rows{flex:1;display:flex;flex-direction:column;gap:.6vh}
+  .row{flex:1;display:flex;gap:1.4vw;min-height:0}
+  .blk{flex:1;display:flex;gap:.45vw}
+  .seat{flex:1;border-radius:7px;background:var(--c);opacity:.9;transition:opacity .15s,transform .15s,box-shadow .15s;position:relative;cursor:pointer}
+  .seat:hover{transform:scale(1.06)}
+  #map.focus .seat{opacity:.16}
+  #map.focus .seat.lit{opacity:.95}
+  #map.focus .seat.me{opacity:1;background:var(--me);box-shadow:0 0 0 3px #fff,0 0 18px var(--me)}
+  .seat.me::after{content:"나";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:clamp(11px,1vw,18px)}
+  .box{position:absolute;pointer-events:none;border-radius:12px;border:3px solid;transition:all .15s}
+  .box .tag{position:absolute;right:6px;top:-0.95em;font-size:clamp(10px,.85vw,15px);font-weight:800;padding:0 .45em;border-radius:6px;color:#10131f;white-space:nowrap}
+  .box.roof{border-color:var(--roof)} .box.roof .tag{background:var(--roof)}
+  .box.deck2{border-color:var(--deck2)} .box.deck2 .tag{background:var(--deck2)}
+  .box.deck3{border-color:var(--deck3)} .box.deck3 .tag{background:var(--deck3)}
+  .box.deck3 .tag{right:auto;left:6px}
+  .blabels{display:flex;gap:1.4vw;margin:.8vh 0 0 calc(3.2em + .8vw);color:var(--dim);font-size:clamp(11px,.9vw,16px);text-align:center}
+  .blabels div{flex:1}
+  .boxlegend{display:flex;justify-content:center;gap:1.4vw;margin-top:.7vh;font-size:clamp(11px,.95vw,17px);font-weight:700}
+  .boxlegend span{color:var(--k)}
+  .door{position:absolute;left:1.4vw;bottom:1.2vh;color:var(--dim);font-size:clamp(10px,.8vw,14px)}
+
+  /* ── 오른쪽: 이동 안내 ── */
+  .side{display:flex;flex-direction:column;gap:1.4vh;min-height:0}
+  .card{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:1.6vh 1.4vw}
+  #info{flex:1;min-height:0;display:flex;flex-direction:column}
+  .who{display:flex;align-items:center;gap:.8vw;margin-bottom:1.2vh}
+  .who .chip{font-weight:900;font-size:clamp(20px,2.4vw,44px);color:#111;border-radius:12px;padding:.05em .45em;line-height:1.15}
+  .who .txt{font-size:clamp(13px,1.15vw,21px);color:var(--dim);line-height:1.35}
+  .who .txt b{color:var(--ink)}
+  .steps{flex:1;display:flex;flex-direction:column;gap:1vh;min-height:0}
+  .step{flex:1;display:flex;align-items:center;gap:1vw;border-radius:14px;padding:.6vh 1vw;background:rgba(255,255,255,.04);border-left:8px solid var(--pc)}
+  .step .n{flex:none;width:2em;height:2em;border-radius:50%;background:var(--pc);color:#10131f;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:clamp(13px,1.2vw,22px)}
+  .step .pl{font-size:clamp(18px,2vw,36px);font-weight:900;line-height:1.1}
+  .step .tm{font-size:clamp(16px,1.7vw,31px);font-weight:800;color:var(--pc);line-height:1.15;font-variant-numeric:tabular-nums}
+  .step .tm span{font-size:.55em;color:var(--dim);font-weight:600;margin-left:.3em}
+  .step .ds{font-size:clamp(11px,1vw,18px);color:var(--dim);line-height:1.3}
+  .step .ds b{color:var(--ink)}
+  .step.lab{flex:.75}
+  .step.lab .pl{font-size:clamp(15px,1.5vw,27px)}
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--dim);font-size:clamp(14px,1.4vw,25px);line-height:1.6}
+  .empty b{color:var(--ink)}
+
+  /* 시간표 막대 */
+  #tl .head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.8vh}
+  #tl .head b{font-size:clamp(13px,1.15vw,21px)}
+  #tl .legend{display:flex;gap:.9vw;font-size:clamp(10px,.85vw,15px);color:var(--dim)}
+  #tl .legend i{display:inline-block;width:.9em;height:.9em;border-radius:3px;vertical-align:-.1em;margin-right:.3em}
+  .lane{display:flex;align-items:center;gap:.6vw;margin:.45vh 0;cursor:pointer;border-radius:8px;transition:opacity .15s}
+  .lane .lb{width:2.8em;flex:none;text-align:center;font-weight:900;color:#111;border-radius:6px;font-size:clamp(12px,1vw,18px);padding:.15em 0}
+  .lane .bar{flex:1;position:relative;height:clamp(20px,3.2vh,36px)}
+  .seg{position:absolute;top:0;bottom:0;border-radius:5px;background:var(--pc);color:#10131f;font-weight:800;font-size:clamp(10px,.85vw,15px);
+    display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap}
+  #tl.focus .lane{opacity:.3}
+  #tl.focus .lane.on{opacity:1}
+  .ticks{position:relative;height:1.4em;margin-left:calc(2.8em + .6vw);font-size:clamp(10px,.8vw,14px);color:var(--dim);font-variant-numeric:tabular-nums}
+  .ticks span{position:absolute;transform:translateX(-50%)}
+  .nowline{position:absolute;top:-2px;bottom:-2px;width:3px;background:#fff;border-radius:2px;box-shadow:0 0 8px #fff}
+  .hint{color:var(--dim);font-size:clamp(10px,.8vw,14px);text-align:right}
+
+  @media (max-aspect-ratio: 1/1){
+    html,body{overflow:auto}
+    body{height:auto;min-height:100%}
+    main{grid-template-columns:1fr}
+    .room{height:62vh}
+    header{flex-wrap:wrap}
+    .parts{margin-left:0;width:100%}
+    .parts button{flex:1}
+  }
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="./">← 강의 화면</a>
+  <h1>과학실 좌석 배치 · 이동 순서<small>2026 주민 천체관측회 · 11월 26일(목)</small></h1>
+  <div class="parts" id="parts"></div>
+</header>
+<main>
+  <section class="room">
+    <div class="screen">▲ 앞 (강의 화면)</div>
+    <div id="map"></div>
+    <div class="blabels"><div>왼쪽 묶음</div><div>가운데 묶음</div><div>오른쪽 묶음</div></div>
+    <div class="boxlegend"><span style="--k:var(--me)">■ 나</span><span style="--k:var(--deck3)">□ 쌍안경 조 3명</span><span style="--k:var(--deck2)">□ 굴절망원경 조 6명</span><span style="--k:var(--roof)">□ 옥상 조 12명</span></div>
+  </section>
+  <section class="side">
+    <div class="card" id="info"></div>
+    <div class="card" id="tl"></div>
+    <div class="hint">조 이름이나 좌석에 마우스를 올려 보세요 · 1·2·3 키 = 부 바꾸기 · Esc = 지우기</div>
+  </section>
+</main>
+<script>
+(function () {
+  'use strict';
+  // 흐름은 26jumin/schedule.js의 SC.FLOW, 좌석 자리표(seatcard/build.mjs)와 같음 — 부 시작 기준 분
+  var PARTS = [1, 2, 3].map(function (n, i) { return { n: n, start: 18 * 60 + 20 + i * 70 }; });
+  var GROUPS = ['A1', 'A2', 'B1', 'B2'];
+  var ROUTE = {
+    A1: [['roof', 10, 35], ['deck3', 35, 47], ['deck2', 48, 60]],
+    A2: [['roof', 10, 35], ['deck2', 35, 47], ['deck3', 48, 60]],
+    B1: [['deck3', 10, 22], ['deck2', 23, 35], ['roof', 35, 60]],
+    B2: [['deck2', 10, 22], ['deck3', 23, 35], ['roof', 35, 60]]
+  };
+  var PLACE = { lab: '3층 과학실', roof: '옥상', deck3: '3층 데크', deck2: '2층 데크' };
+  var SHORT = { lab: '과학실', roof: '옥상', deck3: '3층 데크', deck2: '2층 데크' };
+  var WHAT = { roof: '주망원경으로 성단·성운·은하', deck3: '쌍안경으로 별자리·성단', deck2: '굴절망원경으로 토성 찾기' };
+  var BLOCK = ['왼쪽', '가운데', '오른쪽'];
+  var label = function (g) { return g[0] + '-' + g[1]; };
+  var color = function (g) { return 'var(--' + g + ')'; };
+  var fmt = function (m) { return Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0'); };
+  var $ = function (id) { return document.getElementById(id); };
+
+  // 좌석 72개: 앞줄부터 A1 2줄, A2 2줄, B1 2줄, B2 2줄 · 한 줄 9자리 = 3자리 묶음 3개
+  var seats = [];
+  GROUPS.forEach(function (g, gi) {
+    for (var r = 1; r <= 2; r++) for (var b = 1; b <= 3; b++) for (var c = 1; c <= 3; c++)
+      seats.push({ g: g, team: g[0], gi: gi, r: r, b: b, c: c, row: gi * 2 + r });
+  });
+  var binoNo = function (s) { return (s.b - 1) * 2 + s.r; };
+
+  var ui = { part: autoPart(), g: null, seat: null };
+  function autoPart() {
+    // 행사 날 지금 진행 중이거나 다음에 시작할 부를 기본으로
+    var now = new Date(), kst = new Date(now.getTime() + (now.getTimezoneOffset() + 540) * 60000);
+    var m = kst.getHours() * 60 + kst.getMinutes();
+    for (var i = 0; i < PARTS.length; i++) if (m < PARTS[i].start + 60) return i;
+    return 0;
+  }
+
+  // ── 부 버튼 ──
+  function renderParts() {
+    $('parts').innerHTML = PARTS.map(function (p, i) {
+      return '<button data-i="' + i + '" class="' + (i === ui.part ? 'on' : '') + '">' + p.n + '부<small>' + fmt(p.start) + '~' + fmt(p.start + 60) + '</small></button>';
+    }).join('');
+    $('parts').querySelectorAll('button').forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); setPart(+b.dataset.i); }; });
+  }
+  function setPart(i) { ui.part = i; renderParts(); renderInfo(); renderTl(); }
+
+  // ── 좌석 그림 ──
+  var seatEls = [];
+  function renderMap() {
+    var h = '';
+    GROUPS.forEach(function (g, gi) {
+      h += '<div class="grp" data-g="' + g + '"><div class="glabel" style="background:' + color(g) + '">' + label(g) + '<small>' + (gi * 2 + 1) + '·' + (gi * 2 + 2) + '번째 줄</small></div><div class="rows">';
+      for (var r = 1; r <= 2; r++) {
+        h += '<div class="row">';
+        for (var b = 1; b <= 3; b++) {
+          h += '<div class="blk">';
+          for (var c = 1; c <= 3; c++) {
+            var k = seats.findIndex(function (s) { return s.g === g && s.r === r && s.b === b && s.c === c; });
+            h += '<div class="seat" data-k="' + k + '" style="--c:' + color(g) + '"></div>';
+          }
+          h += '</div>';
+        }
+        h += '</div>';
+      }
+      h += '</div></div>';
+    });
+    $('map').innerHTML = h;
+    seatEls = [];
+    $('map').querySelectorAll('.seat').forEach(function (el) { seatEls[+el.dataset.k] = el; });
+    $('map').querySelectorAll('.grp').forEach(function (el) {
+      el.addEventListener('pointerover', function (e) {
+        var se = e.target.closest('.seat');
+        if (se) pickSeat(+se.dataset.k); else if (e.target.closest('.glabel')) pickGroup(el.dataset.g);
+      });
+    });
+  }
+
+  function pickGroup(g) { if (ui.g === g && ui.seat == null) return; ui.g = g; ui.seat = null; refresh(); }
+  function pickSeat(k) { if (ui.seat === k) return; ui.seat = k; ui.g = seats[k].g; refresh(); }
+  function clear() { ui.g = null; ui.seat = null; refresh(); }
+  function refresh() { renderHighlight(); renderInfo(); renderTl(); }
+
+  // 조 묶음 상자: 옥상(같은 팀·같은 묶음 12명) > 굴절망원경(같은 조·같은 묶음 6명) > 쌍안경(같은 줄·같은 묶음 3명)
+  function sets(me) {
+    return {
+      roof: seats.filter(function (s) { return s.team === me.team && s.b === me.b; }),
+      deck2: seats.filter(function (s) { return s.g === me.g && s.b === me.b; }),
+      deck3: seats.filter(function (s) { return s.g === me.g && s.b === me.b && s.r === me.r; })
+    };
+  }
+  function renderHighlight() {
+    var map = $('map');
+    map.querySelectorAll('.box').forEach(function (b) { b.remove(); });
+    seatEls.forEach(function (el) { el.classList.remove('lit', 'me'); });
+    map.classList.toggle('focus', !!ui.g);
+    if (!ui.g) return;
+    if (ui.seat == null) {
+      seats.forEach(function (s, k) { if (s.g === ui.g) seatEls[k].classList.add('lit'); });
+      return;
+    }
+    var me = seats[ui.seat], S = sets(me);
+    S.roof.forEach(function (s) { seatEls[seats.indexOf(s)].classList.add('lit'); });
+    seatEls[ui.seat].classList.add('me');
+    var mr = map.getBoundingClientRect();
+    [['roof', 9, '옥상 ' + me.b + '조 · 12명'], ['deck2', 5, '굴절망원경 ' + me.b + '번 · 6명'], ['deck3', 2, '쌍안경 ' + binoNo(me) + '번 · 3명']].forEach(function (d) {
+      var x1 = 1e9, y1 = 1e9, x2 = -1e9, y2 = -1e9;
+      S[d[0]].forEach(function (s) {
+        var r = seatEls[seats.indexOf(s)].getBoundingClientRect();
+        x1 = Math.min(x1, r.left); y1 = Math.min(y1, r.top); x2 = Math.max(x2, r.right); y2 = Math.max(y2, r.bottom);
+      });
+      var pad = d[1], bx = document.createElement('div');
+      bx.className = 'box ' + d[0];
+      bx.style.cssText = 'left:' + (x1 - mr.left - pad) + 'px;top:' + (y1 - mr.top - pad) + 'px;width:' + (x2 - x1 + 2 * pad) + 'px;height:' + (y2 - y1 + 2 * pad) + 'px';
+      bx.innerHTML = d[0] === 'deck2' ? '' : '<span class="tag">' + d[2] + '</span>';
+      map.appendChild(bx);
+    });
+  }
+
+  // ── 오른쪽 안내 ──
+  function mates(me, pl) {
+    if (pl === 'roof') return '<b>옥상 ' + me.b + '조</b> · ' + BLOCK[me.b - 1] + ' 묶음 ' + me.team + '-1·' + me.team + '-2 <b>12명</b>이 함께';
+    if (pl === 'deck2') return '<b>굴절망원경 ' + me.b + '번</b> · 내 조 ' + BLOCK[me.b - 1] + ' 묶음 <b>6명</b>이 함께';
+    return '<b>쌍안경 ' + binoNo(me) + '번</b> · 내 줄 ' + BLOCK[me.b - 1] + ' 묶음 <b>3명</b>이 쌍안경 1개';
+  }
+  function renderInfo() {
+    var el = $('info'), p = PARTS[ui.part];
+    if (!ui.g) {
+      el.innerHTML = '<div class="empty"><div>왼쪽 <b>조 이름</b>이나 <b>좌석</b>에<br>마우스를 올려 보세요</div><div style="font-size:.75em;margin-top:1em">조마다 언제 어디로 가는지,<br>좌석마다 누구와 함께 움직이는지 보여 줘요</div></div>';
+      return;
+    }
+    var g = ui.g, me = ui.seat != null ? seats[ui.seat] : null;
+    var who = '<div class="who"><span class="chip" style="background:' + color(g) + '">' + label(g) + '</span><div class="txt">' +
+      (me ? '<b>앞에서 ' + me.row + '번째 줄 · ' + BLOCK[me.b - 1] + ' 묶음 ' + BLOCK[me.c - 1] + ' 자리</b><br>' : '<b>과학실 앞에서 ' + (GROUPS.indexOf(g) * 2 + 1) + '·' + (GROUPS.indexOf(g) * 2 + 2) + '번째 줄 · 18명</b><br>') +
+      p.n + '부 ' + fmt(p.start) + '~' + fmt(p.start + 60) + '</div></div>';
+    var st = '<div class="step lab" style="--pc:var(--lab)"><div class="n">0</div><div><div class="pl">3층 과학실 <span class="tm" style="font-size:.8em">' + fmt(p.start) + '~' + fmt(p.start + 10) + '</span></div><div class="ds">강의 6분 → 안전교육 2분 → 이동</div></div></div>';
+    st += ROUTE[g].map(function (r, i) {
+      var pl = r[0];
+      return '<div class="step" style="--pc:var(--' + pl + ')"><div class="n">' + (i + 1) + '</div><div><div class="pl">' + PLACE[pl] + '</div>' +
+        '<div class="tm">' + fmt(p.start + r[1]) + ' ~ ' + fmt(p.start + r[2]) + '<span>' + (r[2] - r[1]) + '분</span></div>' +
+        '<div class="ds">' + (me ? mates(me, pl) : WHAT[pl]) + '</div></div></div>';
+    }).join('');
+    el.innerHTML = who + '<div class="steps">' + st + '</div>';
+  }
+
+  // ── 아래: 네 조 시간표 막대 ──
+  function renderTl() {
+    var p = PARTS[ui.part], el = $('tl');
+    var x = function (m) { return (m / 60 * 100).toFixed(2) + '%'; };
+    var h = '<div class="head"><b>' + p.n + '부 한눈에 보기</b><div class="legend">' +
+      ['lab', 'roof', 'deck3', 'deck2'].map(function (k) { return '<span><i style="background:var(--' + k + ')"></i>' + SHORT[k] + '</span>'; }).join('') + '</div></div>';
+    GROUPS.forEach(function (g) {
+      h += '<div class="lane' + (ui.g === g ? ' on' : '') + '" data-g="' + g + '"><div class="lb" style="background:' + color(g) + '">' + label(g) + '</div><div class="bar">' +
+        '<div class="seg" style="--pc:var(--lab);left:0;width:' + x(10) + '">강의</div>' +
+        ROUTE[g].map(function (r) { return '<div class="seg" style="--pc:var(--' + r[0] + ');left:calc(' + x(r[1]) + ' + 2px);width:calc(' + x(r[2] - r[1]) + ' - 4px)">' + SHORT[r[0]] + '</div>'; }).join('') +
+        '</div></div>';
+    });
+    h += '<div class="ticks">' + [0, 10, 23, 35, 48, 60].map(function (m) { return '<span style="left:' + x(m) + '">' + fmt(p.start + m) + '</span>'; }).join('') + '</div>';
+    el.innerHTML = h;
+    el.classList.toggle('focus', !!ui.g);
+    el.querySelectorAll('.lane').forEach(function (ln) { ln.addEventListener('pointerover', function () { pickGroup(ln.dataset.g); }); });
+    // 지금 시각 표시(그 부 진행 중일 때만)
+    var now = new Date(), kst = new Date(now.getTime() + (now.getTimezoneOffset() + 540) * 60000);
+    var m = kst.getHours() * 60 + kst.getMinutes() + kst.getSeconds() / 60 - p.start;
+    if (m >= 0 && m <= 60) el.querySelectorAll('.bar').forEach(function (b) { var n = document.createElement('div'); n.className = 'nowline'; n.style.left = x(m); b.appendChild(n); });
+  }
+
+  // 빈 곳을 누르면 지우기, 마우스가 좌석 밖으로 나가도 마지막 선택은 유지(설명하는 동안 깜빡이지 않게)
+  document.addEventListener('click', function (e) { if (e.target.isConnected && !e.target.closest('.grp, .lane, .parts, a')) clear(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '1' || e.key === '2' || e.key === '3') setPart(+e.key - 1);
+    else if (e.key === 'Escape') clear();
+  });
+  window.addEventListener('resize', renderHighlight);
+  setInterval(renderTl, 30000);
+
+  renderParts(); renderMap(); refresh();
+})();
+</script>
+</body>
+</html>
