@@ -84,8 +84,13 @@
       var angle = A.MoonPhase(time);                // 0=삭, 90=상현, 180=망, 270=하현
       var illum = A.Illumination('Moon', time).phase_fraction;
       var age = angle / 360 * 29.530588;
-      var name = angle < 10 || angle >= 350 ? '삭(그믐 직후)' : angle < 80 ? '초승달' : angle < 100 ? '상현달' : angle < 170 ? '상현~보름 사이(차오르는 달)'
-        : angle < 190 ? '보름달' : angle < 260 ? '보름~하현 사이(기우는 달)' : angle < 280 ? '하현달' : '그믐달';
+      var fromFull = (angle - 180) / 360 * 29.530588;   // 보름에서 며칠 지났나(음수 = 보름 전)
+      var dd = Math.round(Math.abs(fromFull));
+      var name = angle < 10 || angle >= 350 ? '삭(그믐 직후)' : angle < 80 ? '초승달' : angle < 100 ? '상현달'
+        : angle < 170 ? (dd <= 4 ? '보름 ' + dd + '일 전, 거의 둥근 달' : '상현~보름 사이(차오르는 달)')
+        : angle < 190 ? '보름달'
+        : angle < 260 ? (dd <= 4 ? '보름 ' + dd + '일 뒤, 거의 둥근 달' : '보름~하현 사이(기우는 달)')
+        : angle < 280 ? '하현달' : '그믐달';
       var dayStart = new Date(date.getTime() - 12 * 3600e3);
       var rise = A.SearchRiseSet('Moon', observer, +1, A.MakeTime(dayStart), 2);
       var set = A.SearchRiseSet('Moon', observer, -1, A.MakeTime(dayStart), 2);
