@@ -9,7 +9,7 @@ const base = { action: 'register', consent: 'Y' };
 
 // 1) 기본 집계
 let c = g.call({ action: 'counts' });
-check('counts 기본', c.ok && c.capacity === 72 && c.studentFirstOpen === false && c.firstSlot === S1 && c.version === '2026-11-24' && c.eventDate === '2026-11-26', c);
+check('counts 기본', c.ok && c.capacity === 72 && c.studentFirstOpen === false && c.firstSlot === S1 && c.version === '2026-11-26' && c.eventDate === '2026-11-26', c);
 
 // 2) 첫 타임 학생 차단 / 다른 시간대 학생 허용 / 첫 타임 주민 허용
 let r = g.call({ ...base, role: '학생', slot: S1, studentNo: '2115', name: '김학생' });
@@ -111,7 +111,7 @@ const up = g.call({ action: 'uploadPhoto', pw: 'test-pw', folder: 'm31', data: i
 check('업로드', up.ok && up.fileId);
 check('잘못된 폴더명 거절', !g.call({ action: 'uploadPhoto', pw: 'test-pw', folder: '../x', data: img }).ok);
 check('휴지통', g.call({ action: 'trashPhoto', pw: 'test-pw', fileId: up.fileId }).ok && g.files.get(up.fileId).trashed);
-check('ping', g.call({ action: 'ping' }).version === '2026-11-24');
+check('ping', g.call({ action: 'ping' }).version === '2026-11-26');
 
 // 10) 예약 확인·변경·취소·변경 대기
 {
@@ -199,6 +199,28 @@ check('ping', g.call({ action: 'ping' }).version === '2026-11-24');
   check('추가 칸 유지', L.state[p3].e === 1 && L.state[p3].c.length === 3, L.state[p3]);
   check('없는 신청', !h.call({ action: 'guestSet', ...pw, id: 'nope', op: 'arrive', v: 'Y' }).ok);
   check('칸 번호 범위', !h.call({ action: 'guestSet', ...pw, id: p3, op: 'name', i: 4, v: 'x' }).ok);
+  // 현장 입장 (사전신청 없음)
+  check('ops 알림', L.ops && L.ops.includes('add') && L.ops.includes('walkin'), L.ops);
+  check('현장 입장 — 이름 필요', !h.call({ action: 'guestSet', ...pw, op: 'walkin', slot: S2, v: ' ' }).ok);
+  check('현장 입장 — 시간대 필요', !h.call({ action: 'guestSet', ...pw, op: 'walkin', slot: 'x', v: '최현장' }).ok);
+  const regRows = h.tabs.get('신청(11.26)').rows.length;
+  let w = h.call({ action: 'guestSet', ...pw, op: 'walkin', slot: S2, v: '최현장', role: '학부모', names: JSON.stringify(['최아들', ' ', '최딸']) });
+  check('현장 입장 만들기', w.ok && /^w-/.test(w.id) && w.item.party === 3 && w.item.walk && w.state.a === true && w.state.c.join('|') === '최아들|최딸', w);
+  check('신청 탭은 그대로', h.tabs.get('신청(11.26)').rows.length === regRows);
+  L = h.call({ action: 'guestList', ...pw });
+  check('명단에 현장 입장 포함', L.items.some((x) => x.id === w.id && x.slot === S2 && x.label === '최현장' && x.role === '학부모') && L.state[w.id].a, L.items.length);
+  s = h.call({ action: 'guestSet', ...pw, id: w.id, op: 'add', v: '최막내' });
+  check('현장 입장에도 이름 추가', s.ok && s.state.e === 1 && s.state.c.length === 3, s);
+  s = h.call({ action: 'guestSet', ...pw, id: w.id, op: 'arrive', v: 'N' });
+  check('현장 입장 도착 취소', s.ok && !s.state.a);
+  s = h.call({ action: 'guestSet', ...pw, id: w.id, op: 'unwalk', v: 'Y' });
+  check('현장 입장 지우기', s.ok && s.state.off === true);
+  check('신청 건은 unwalk 거절', !h.call({ action: 'guestSet', ...pw, id: p3, op: 'unwalk', v: 'Y' }).ok);
+  L = h.call({ action: 'guestList', ...pw });
+  check('지운 현장 입장 상태 유지', L.state[w.id].off === true && L.state[w.id].e === 1 && L.items.some((x) => x.id === w.id), L.state[w.id]);
+  s = h.call({ action: 'guestSet', ...pw, id: w.id, op: 'unwalk', v: 'N' });
+  check('현장 입장 되살리기', s.ok && s.state.off === false);
+  check('현장 입장 비번 필요', !h.call({ action: 'guestSet', pw: 'x', op: 'walkin', slot: S2, v: '해커' }).ok);
 }
 
 check('모르는 요청', !g.call({ action: 'nope' }).ok);

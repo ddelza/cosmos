@@ -14,7 +14,7 @@
  * 시트 열 순서를 바꾸지 마세요 (아래 COL 번호로 읽음). 행 삭제는 자유롭게 해도 됨.
  */
 
-var VERSION = '2026-11-24';
+var VERSION = '2026-11-26';
 var INITIAL_ADMIN_PW = ''; // ← setup 실행 전에만 적기 (저장소에는 올리지 않음)
 var ROLES = ['학생', '교사', '학부모', '일반주민'];
 var SLOTS = ['18:20~19:20', '19:30~20:30', '20:40~21:40'];
@@ -575,14 +575,18 @@ function gbRead_(sh) {
     out[id] = {
       row: i + 2, a: String(v[3]) === 'Y', at: v[4] instanceof Date ? v[4].getTime() : 0,
       c: Array.isArray(j.c) ? j.c.map(String) : [], x: Array.isArray(j.x) ? j.x.map(Number) : [], e: Math.max(0, parseInt(j.e, 10) || 0),
+      w: j.w && typeof j.w === 'object' ? j.w : null, // 현장 입장(사전신청 없음) 그룹이면 {slot, name, role, party, off}
       up: v[6] instanceof Date ? v[6].getTime() : 0, by: String(v[7] || ''),
     };
   });
   return out;
 }
 function gbKey_(r) { return r.id || ('row' + r.row); }
-function gbOut_(s) { return { a: s.a, at: s.at, c: s.c, x: s.x, e: s.e || 0, up: s.up, by: s.by }; }
+function gbOut_(s) { return { a: s.a, at: s.at, c: s.c, x: s.x, e: s.e || 0, off: !!(s.w && s.w.off), up: s.up, by: s.by }; }
 function gbName_(v) { return String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, '').trim().slice(0, 20); }
+function gbWalkItem_(id, w) { return { id: id, slot: w.slot, label: w.name, role: w.role, party: w.party, phone: '', walk: true }; }
+// 이 서버가 알아듣는 방명록 요청 — 화면은 이걸 보고 버튼을 켬(화면만 새 버전이고 서버는 옛 버전일 때 추가한 사람이 사라지는 일 방지)
+var GB_OPS = ['arrive', 'name', 'del', 'add', 'unadd', 'walkin', 'unwalk'];
 
 function guestList_(p) {
   requireAdmin_(p);
@@ -590,20 +594,33 @@ function guestList_(p) {
     return { id: gbKey_(r), slot: r.slot, label: rowLabel_(r), role: r.role, party: r.party, phone: shown_(r.phone) }; // 관리자 전용 응답이라 휴대폰 포함
   });
   var st = gbRead_(gbSheet_()), state = {};
-  Object.keys(st).forEach(function (k) { state[k] = gbOut_(st[k]); });
-  return { ok: true, now: Date.now(), slots: SLOTS, items: items, state: state };
+  Object.keys(st).forEach(function (k) {
+    state[k] = gbOut_(st[k]);
+    if (st[k].w) items.push(gbWalkItem_(k, st[k].w));
+  });
+  return { ok: true, now: Date.now(), slots: SLOTS, ops: GB_OPS, items: items, state: state };
 }
 
 // op: arrive(v=Y/N) · name(i=1…, v=이름) · del(i=0…, v=Y 삭제/N 되살리기) · add(v=이름: 일행 끝에 칸 하나 추가) · unadd(i=마지막 칸: 추가 되돌리기)
+//     walkin(slot, v=대표 이름, role, names=JSON 함께 온 사람 이름들: 사전신청 없이 온 사람을 새 그룹으로, 바로 도착) · unwalk(v=Y 현장 입장 지우기/N 되살리기)
 function guestSet_(p) {
   requireAdmin_(p);
   var id = String(p.id || ''), op = String(p.op || ''), i = parseInt(p.i, 10);
   var lock = LockService.getScriptLock();
   lock.waitLock(15000);
   try {
-    var r = activeRows_(getRegSheet_()).filter(function (x) { return gbKey_(x) === id; })[0];
-    if (!r) throw new Error('신청을 찾을 수 없어요. (취소됐을 수 있어요)');
-    var sh = gbSheet_(), s = gbRead_(sh)[id] || { row: 0, a: false, at: 0, c: [], x: [], e: 0 };
+    var sh = gbSheet_(), all = gbRead_(sh);
+    if (op === 'walkin') return walkIn_(p, sh);
+    var r;
+    if (/^w-/.test(id)) {
+      var w0 = all[id] && all[id].w;
+      if (!w0) throw new Error('현장 입장 기록을 찾을 수 없어요.');
+      r = { slot: w0.slot, party: Math.max(1, parseInt(w0.party, 10) || 1), label: w0.name + ' (현장)' };
+    } else {
+      r = activeRows_(getRegSheet_()).filter(function (x) { return gbKey_(x) === id; })[0];
+      if (!r) throw new Error('신청을 찾을 수 없어요. (취소됐을 수 있어요)');
+    }
+    var s = all[id] || { row: 0, a: false, at: 0, c: [], x: [], e: 0, w: null };
     var n = r.party + (s.e || 0);
     while (s.c.length < n - 1) s.c.push('');
     s.c = s.c.slice(0, Math.max(0, n - 1));
@@ -631,16 +648,39 @@ function guestSet_(p) {
       if (!(s.e > 0) || i !== n - 1) throw new Error('되돌릴 추가 칸이 없어요. (다른 화면에서 바뀌었을 수 있어요)');
       s.c.pop(); s.e--;
       s.x = s.x.filter(function (k) { return k !== i; });
+    } else if (op === 'unwalk') {
+      if (!s.w) throw new Error('현장 입장으로 추가한 사람만 지울 수 있어요.');
+      s.w.off = String(p.v) === 'Y';
     } else {
       throw new Error('알 수 없는 방명록 요청입니다.');
     }
     s.by = clean_(p.who, 40); s.up = Date.now();
-    var row = [id, r.slot, rowLabel_(r), s.a ? 'Y' : '', s.at ? new Date(s.at) : '', JSON.stringify({ c: s.c, x: s.x, e: s.e || 0 }), new Date(s.up), s.by];
-    if (s.row) sh.getRange(s.row, 1, 1, GB_HEADERS.length).setValues([row]); else sh.appendRow(row);
+    gbWrite_(sh, id, s, r.slot, r.label || rowLabel_(r));
     return { ok: true, id: id, state: gbOut_(s) };
   } finally {
     lock.releaseLock();
   }
+}
+function gbWrite_(sh, id, s, slot, label) {
+  var j = { c: s.c, x: s.x, e: s.e || 0 };
+  if (s.w) j.w = s.w;
+  var row = [id, slot, label, s.a ? 'Y' : '', s.at ? new Date(s.at) : '', JSON.stringify(j), new Date(s.up), s.by];
+  if (s.row) sh.getRange(s.row, 1, 1, GB_HEADERS.length).setValues([row]); else sh.appendRow(row);
+}
+// 사전신청 없이 온 사람: 신청 탭은 건드리지 않고 「방명록」 탭에만 새 그룹(번호 w-…)으로 남김. 문 앞에 와 있으니 바로 도착
+function walkIn_(p, sh) {
+  var slot = String(p.slot || '');
+  if (SLOTS.indexOf(slot) < 0) throw new Error('시간대를 골라 주세요.');
+  var nm = gbName_(p.v);
+  if (!nm) throw new Error('이름을 적어 주세요.');
+  var names = [];
+  try { names = JSON.parse(String(p.names || '[]')); } catch (e) { names = []; }
+  names = (Array.isArray(names) ? names : []).map(gbName_).filter(Boolean).slice(0, 29);
+  var id = 'w-' + Utilities.getUuid(), now = Date.now();
+  var s = { row: 0, a: true, at: now, c: names, x: [], e: 0, up: now, by: clean_(p.who, 40),
+    w: { slot: slot, name: nm, role: ROLES.indexOf(String(p.role)) >= 0 ? String(p.role) : '일반주민', party: 1 + names.length, off: false } };
+  gbWrite_(sh, id, s, slot, nm + ' (현장)');
+  return { ok: true, id: id, item: gbWalkItem_(id, s.w), state: gbOut_(s) };
 }
 
 // ===== 사진 (구글 드라이브) =====

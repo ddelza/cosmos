@@ -60,6 +60,10 @@
 .gb-menu button:hover, .gb-menu button:focus { background: #f1f3f6; outline: none; }
 .gb-menu button.danger { color: #c0262d; }
 
+.grp.walk .bx:first-child { border-style: double; border-width: 4px; padding: 6px 10px; }
+.gb-warn { background: #4a1d00; border: 1px solid #e65c00; color: #ffd9bf; border-radius: 10px; padding: 8px 12px; margin-top: 8px; font-size: .84rem; font-weight: 700; display: none; }
+.gb-warn.show { display: block; }
+.nm-list select { margin: 0; width: 100%; }
 .nm-list label { display: block; font-size: .82rem; color: var(--muted); margin: 10px 0 4px; }
 .nm-list input { margin: 0; }
 </style>
@@ -82,7 +86,7 @@
   }
   var A = CN.admin();
   var TAB_KEY = 'cn26gbTab';
-  var G = { slots: CN.DEFAULTS.slots.slice(), items: [], state: {}, tab: 0, q: '', pending: {}, queue: [], sending: false, undo: [], rec: null, lastSync: 0, err: '' };
+  var G = { slots: CN.DEFAULTS.slots.slice(), items: [], state: {}, tab: 0, q: '', pending: {}, queue: [], sending: false, undo: [], rec: null, lastSync: 0, err: '', ops: null };
   try { var t0 = parseInt(localStorage.getItem(TAB_KEY), 10); if (t0 >= 0 && t0 < 3) G.tab = t0; } catch (e) {}
 
   app.innerHTML =
@@ -91,10 +95,10 @@
     '이름을 누르면 도착(검정), 다시 누르면 취소 · 우클릭(휴대폰은 길게 누르기)하면 메뉴</p>' +
     '<div class="gb-tabs" id="tabs"></div>' +
     '<div class="gb-top"><div class="gb-stats" id="stats"></div>' +
-    '<div class="gb-tools"><input type="text" inputmode="search" id="q" placeholder="이름 검색" autocomplete="off"><button class="btn small" id="undoBtn" disabled title="Ctrl+Z">↶ 되돌리기</button><span class="gb-sync" id="sync"></span></div>' +
-    '<div class="gb-legend"><span><i style="background:#fff6c2"></i>교사</span><span><i style="background:#d9f5dd"></i>학부모</span><span><i style="background:#d8e9ff"></i>학생</span><span><i style="background:#ffdcdc"></i>마을 주민</span><span><i style="background:#111"></i>도착</span><span><i style="background:#fff;border-style:dashed"></i>이름 적을 칸</span><span><b style="color:#e65c00">●</b> 저장 중</span></div></div>' +
+    '<div class="gb-tools"><input type="text" inputmode="search" id="q" placeholder="이름 검색" autocomplete="off"><button class="btn small primary" id="walkBtn" title="사전신청 안 하고 온 사람을 새로 넣기">＋ 현장 입장</button><button class="btn small" id="undoBtn" disabled title="Ctrl+Z">↶ 되돌리기</button><span class="gb-sync" id="sync"></span></div>' +
+    '<div class="gb-legend"><span><i style="background:#fff6c2"></i>교사</span><span><i style="background:#d9f5dd"></i>학부모</span><span><i style="background:#d8e9ff"></i>학생</span><span><i style="background:#ffdcdc"></i>마을 주민</span><span><i style="background:#111"></i>도착</span><span><i style="background:#fff;border-style:dashed"></i>이름 적을 칸</span><span><b style="color:#e65c00">●</b> 저장 중</span><span><i style="border-style:double;border-width:4px"></i>현장 입장(사전신청 없음)</span></div><div class="gb-warn" id="warn"></div></div>' +
     '<div class="gb-board" id="board"><div class="gb-empty">명단 불러오는 중…</div></div>' +
-    '<p class="hint" style="margin-top:10px">여러 명이 함께 신청한 경우 예약자 옆에 빈칸이 이어져 있어요. 함께 온 사람 이름을 모두 적어야 도착 처리할 수 있어요. 오지 않은 사람은 그 칸을 우클릭해서 「칸 삭제」, 더 온 사람은 「이름 추가」하세요. 잘못 눌렀으면 Ctrl+Z(또는 ↶ 되돌리기). 다른 문지기 화면과 5초마다 맞춰져요.</p>';
+    '<p class="hint" style="margin-top:10px">여러 명이 함께 신청한 경우 예약자 옆에 빈칸이 이어져 있어요. 함께 온 사람 이름을 모두 적어야 도착 처리할 수 있어요. 오지 않은 사람은 그 칸을 우클릭해서 「칸 삭제」, 일행이 더 왔으면 「이름 추가」, 사전신청 없이 온 사람은 위의 「＋ 현장 입장」으로 넣으세요. 잘못 눌렀으면 Ctrl+Z(또는 ↶ 되돌리기). 다른 문지기 화면과 5초마다 맞춰져요.</p>';
   CN.footer({});
 
   var $ = function (id) { return document.getElementById(id); };
@@ -112,7 +116,12 @@
     return out;
   }
   function missing(it) { return boxes(it).filter(function (b) { return b.i > 0 && !b.gone && !b.name.trim(); }); }
-  function itemsOf(tab) { var slot = G.slots[tab]; return G.items.filter(function (it) { return it.slot === slot; }); }
+  function itemsOf(tab) { var slot = G.slots[tab]; return G.items.filter(function (it) { return it.slot === slot && !st(it.id).off; }); }
+  // 서버가 알아듣는 요청인지 (화면만 새 버전이고 서버가 옛 버전이면 보내자마자 거절당해 추가한 사람이 사라졌음 → 미리 막음)
+  var BASE_OPS = ['arrive', 'name', 'del'];
+  function can(op) { return (G.ops || BASE_OPS).indexOf(op) >= 0; }
+  var OLD_SERVER = '서버(Apps Script)가 옛 버전이라 「이름 추가」·「현장 입장」이 저장되지 않아요. 관리자에게 Apps Script 새 버전 배포를 부탁하세요. (그동안은 종이에 적어 두세요)';
+  function needServer(op) { if (can(op)) return false; CN.toast(OLD_SERVER, 6000); return true; }
   function countOf(list) {
     var c = { total: 0, arrived: 0, deleted: 0 };
     list.forEach(function (it) {
@@ -145,10 +154,12 @@
     if (!G.items.length && !G.lastSync) return;
     $('board').innerHTML = list.length ? list.map(function (it) {
       var s = st(it.id), busy = !!G.pending[it.id];
-      return '<div class="grp' + (s.a ? ' in' : '') + ' r-' + (ROLE_CLS[it.role] || 'resident') + '" data-id="' + esc(it.id) + '">' + boxes(it).map(function (b) {
+      return '<div class="grp' + (s.a ? ' in' : '') + (it.walk ? ' walk' : '') + ' r-' + (ROLE_CLS[it.role] || 'resident') + '" data-id="' + esc(it.id) + '">' + boxes(it).map(function (b) {
         var cls = 'bx' + (b.i > 0 && !b.name ? ' blank' : '') + (b.gone ? ' gone' : '') + (busy && b.i === 0 ? ' busy' : '');
         var txt = b.name ? esc(b.name.replace(/^'/, '')) : '이름 적기';
-        var sub = b.i === 0 && (it.party > 1 || s.e) ? '<small>' + it.party + '명 신청' + (s.e ? ' +' + s.e : '') + '</small>' : '';
+        var tot = it.party + (s.e || 0);
+        var sub = b.i === 0 && it.walk ? '<small>현장 입장' + (tot > 1 ? ' ' + tot + '명' : '') + '</small>'
+          : b.i === 0 && (it.party > 1 || s.e) ? '<small>' + it.party + '명 신청' + (s.e ? ' +' + s.e : '') + '</small>' : '';
         return (b.i ? '<i class="ln"></i>' : '') + '<div class="' + cls + '" data-i="' + b.i + '" tabindex="0" role="button" title="' + esc(phoneTip(it)) + '">' + txt + sub + '</div>';
       }).join('') + '</div>';
     }).join('') : '<div class="gb-empty">' + (q ? '검색 결과가 없어요.' : '이 시간대 신청이 없어요.') + '</div>';
@@ -158,7 +169,8 @@
     el.classList.toggle('warn', !!G.err);
     el.textContent = G.err ? '⚠️ ' + G.err : n ? '저장 중… (' + n + '건)' : G.lastSync ? '맞춤 ' + new Date(G.lastSync).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
   }
-  function renderAll() { renderTabs(); renderStats(); renderBoard(); renderSync(); }
+  function renderWarn() { var w = $('warn'), old = G.ops && !can('walkin'); w.textContent = old ? '⚠️ ' + OLD_SERVER : ''; w.classList.toggle('show', !!old); }
+  function renderAll() { renderTabs(); renderStats(); renderBoard(); renderSync(); renderWarn(); }
 
   // ── 서버 ──
   async function load() {
@@ -166,6 +178,7 @@
       var r = await CN.api('guestList', { pw: A.pw }, 20000);
       if (!r || !r.ok) throw new Error(r && r.error ? r.error : '명단을 불러오지 못했어요.');
       G.items = r.items || []; if (r.slots) G.slots = r.slots;
+      G.ops = Array.isArray(r.ops) ? r.ops : BASE_OPS; // 옛 서버는 ops를 안 보냄 = 기본 3가지만
       var next = r.state || {};
       Object.keys(G.pending).forEach(function (id) { if (G.state[id]) next[id] = G.state[id]; }); // 저장 중인 건 내 화면 값 유지
       G.state = next; G.lastSync = Date.now();
@@ -184,6 +197,7 @@
       if (op === 'name') inv = { op: 'name', i: i, v: (b0.c || [])[i - 1] || '' };
       if (op === 'del') inv = { op: 'del', i: i, v: (b0.x || []).indexOf(i) >= 0 ? 'Y' : 'N' };
       if (op === 'add') inv = { op: 'unadd', i: (it1 ? it1.party : 1) + (b0.e || 0), v: '' };
+      if (op === 'unwalk') inv = { op: 'unwalk', v: b0.off ? 'Y' : 'N' };
       if (inv) { inv.id = id; G.rec.ops.unshift(inv); }
     }
     // 내 화면 먼저 바꾸고, 서버에는 차례대로 보냄
@@ -201,6 +215,7 @@
       var it2 = itemById(id), n2 = (it2 ? it2.party : 1) + s.e;
       if (i === n2 - 1) { s.c = s.c.slice(0, n2 - 1); s.c.pop(); s.e--; s.x = s.x.filter(function (k) { return k !== i; }); }
     }
+    if (op === 'unwalk') s.off = v === 'Y';
     G.state[id] = s;
     G.pending[id] = (G.pending[id] || 0) + 1;
     G.queue.push({ id: id, op: op, i: i, v: v });
@@ -213,7 +228,7 @@
       var r = await CN.api('guestSet', { pw: A.pw, who: A.who.label, id: job.id, op: job.op, i: job.i == null ? '' : job.i, v: job.v }, 20000);
       G.queue.shift();
       G.pending[job.id]--;
-      if (!r || !r.ok) { CN.toast((r && r.error) || '저장하지 못했어요', 4000); if (!G.pending[job.id]) { delete G.pending[job.id]; } G.sending = false; renderSync(); load(); pump(); return; }
+      if (!r || !r.ok) { var em = (r && r.error) || '저장하지 못했어요'; if (/알 수 없는/.test(em)) { G.ops = BASE_OPS; em = OLD_SERVER; } CN.toast(em, 6000); if (!G.pending[job.id]) { delete G.pending[job.id]; } G.sending = false; renderSync(); load(); pump(); return; }
       if (!G.pending[job.id]) { delete G.pending[job.id]; G.state[job.id] = r.state; }
       G.err = '';
     } catch (e) {
@@ -305,6 +320,63 @@
     inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } });
   }
 
+  // 사전신청 없이 온 사람: 새 그룹으로 넣고 바로 도착 처리 (서버 저장을 확인한 뒤에만 판에 올림 → 잠깐 보였다 사라지는 일 없음)
+  function askWalkIn() {
+    if (needServer('walkin')) return;
+    var RL = [['일반주민', '마을 주민'], ['학부모', '학부모'], ['학생', '학생'], ['교사', '교사']];
+    var m = CN.modal(
+      '<div class="modal-head"><div class="t">현장 입장 (사전신청 없음)</div><button class="icon-btn" data-close>닫기</button></div>' +
+      '<p class="sub">사전신청 안 하고 온 사람을 넣어요. 넣으면 바로 도착으로 셉니다.</p>' +
+      '<div class="nm-list"><label for="wkSlot">시간대</label><select id="wkSlot">' + G.slots.map(function (sl, i) { return '<option value="' + esc(sl) + '"' + (i === G.tab ? ' selected' : '') + '>' + (i + 1) + '부 ' + esc(sl) + '</option>'; }).join('') + '</select>' +
+      '<label for="wkRole">신분</label><select id="wkRole">' + RL.map(function (r) { return '<option value="' + r[0] + '">' + r[1] + '</option>'; }).join('') + '</select>' +
+      '<label for="wkName">대표 이름</label><input type="text" id="wkName" maxlength="20" autocomplete="off">' +
+      '<div id="wkMore"></div></div>' +
+      '<button class="btn small" id="wkPlus" style="margin-top:10px">＋ 함께 온 사람 한 명 더</button>' +
+      '<div class="msg err" id="wkErr"></div><button class="btn primary block" id="wkGo" style="margin-top:16px">넣고 도착 처리</button>', { narrow: true });
+    var q = function (sel) { return m.el.querySelector(sel); };
+    var more = q('#wkMore'), n = 0;
+    q('#wkPlus').onclick = function () {
+      n++;
+      more.insertAdjacentHTML('beforeend', '<label for="wkC' + n + '">함께 온 사람 ' + n + '</label><input type="text" id="wkC' + n + '" class="wkC" maxlength="20" autocomplete="off">');
+      q('#wkC' + n).focus();
+    };
+    setTimeout(function () { q('#wkName').focus(); }, 50);
+    var busy = false;
+    var go = async function () {
+      if (busy) return;
+      var clean = function (v) { return v.replace(/\s+/g, ' ').trim().slice(0, 20); };
+      var nm = clean(q('#wkName').value), er = q('#wkErr');
+      if (!nm) { er.textContent = '대표 이름을 적어 주세요.'; er.classList.add('show'); q('#wkName').focus(); return; }
+      var names = [].slice.call(m.el.querySelectorAll('.wkC')).map(function (x) { return clean(x.value); }).filter(Boolean);
+      var slot = q('#wkSlot').value, role = q('#wkRole').value, btn = q('#wkGo');
+      busy = true; btn.disabled = true; btn.textContent = '저장 중…'; er.classList.remove('show');
+      try {
+        var r = await CN.api('guestSet', { pw: A.pw, who: A.who.label, op: 'walkin', slot: slot, v: nm, role: role, names: JSON.stringify(names) }, 20000);
+        if (!r || !r.ok) {
+          var em = (r && r.error) || '저장하지 못했어요';
+          if (/알 수 없는/.test(em)) { G.ops = BASE_OPS; em = OLD_SERVER; renderWarn(); }
+          throw new Error(em);
+        }
+        G.items.push(r.item); G.state[r.id] = r.state;
+        G.undo.push({ label: nm + ' 현장 입장', ops: [{ id: r.id, op: 'unwalk', v: 'Y' }] }); if (G.undo.length > 50) G.undo.shift(); renderUndo();
+        var ti = G.slots.indexOf(slot); if (ti >= 0) { G.tab = ti; try { localStorage.setItem(TAB_KEY, ti); } catch (e2) {} }
+        m.close(); renderAll();
+        CN.toast(nm + ' 님' + (names.length ? ' 외 ' + names.length + '명' : '') + ' 현장 입장 · 도착 처리했어요');
+      } catch (e) {
+        // 실패하면 창을 닫지 않음: 적은 이름이 그대로 남아 다시 누르면 됨
+        er.textContent = e.message + ' — 적은 내용은 그대로 있어요. 다시 눌러 주세요.'; er.classList.add('show');
+        busy = false; btn.disabled = false; btn.textContent = '넣고 도착 처리';
+      }
+    };
+    q('#wkGo').onclick = go;
+    m.el.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+      e.preventDefault();
+      var ins = [].slice.call(m.el.querySelectorAll('.nm-list input')), k = ins.indexOf(e.target);
+      if (ins[k + 1]) ins[k + 1].focus(); else go();
+    });
+  }
+
   // ── 우클릭 / 길게 누르기 메뉴 ──
   var menu = null;
   function closeMenu() { if (menu) { menu.remove(); menu = null; } }
@@ -318,7 +390,8 @@
       acts.push(['del', '칸 삭제', 'danger']);
       if (i > 0 && b.name) acts.push(['rename', '이름 고치기', '']);
     }
-    acts.push(['add', '이름 추가 (일행 한 명 더)', '']);
+    acts.push(['add', '이름 추가 (일행 한 명 더)' + (can('add') ? '' : ' — 서버 배포 필요'), '']);
+    if (it.walk) acts.push(['unwalk', '현장 입장 기록 지우기', 'danger']);
     menu = document.createElement('div');
     menu.className = 'gb-menu'; menu.setAttribute('role', 'menu');
     menu.innerHTML = '<div class="mh">' + esc(b.name || (it.label + ' 일행 빈칸')) + '<br>' + (it.phone ? '📞 <a href="tel:' + esc(it.phone.replace(/[^0-9]/g, '')) + '">' + esc(it.phone) + '</a>' : '휴대폰 번호 없음') + '</div>' +
@@ -335,7 +408,8 @@
       if (a.dataset.act === 'del') { record('칸 삭제 (' + nm + ')', function () { send(id, 'del', i, 'Y'); }); CN.toast('칸을 삭제했어요 (Ctrl+Z로 되돌리기)'); }
       if (a.dataset.act === 'restore') record('칸 되살리기 (' + nm + ')', function () { send(id, 'del', i, 'N'); });
       if (a.dataset.act === 'rename') askNames(it, i);
-      if (a.dataset.act === 'add') askAdd(it);
+      if (a.dataset.act === 'add' && !needServer('add')) askAdd(it);
+      if (a.dataset.act === 'unwalk') { record('현장 입장 지우기 (' + it.label + ')', function () { send(id, 'unwalk', null, 'Y'); }); CN.toast(it.label + ' 님 현장 입장 기록을 지웠어요 (Ctrl+Z로 되돌리기)'); }
     };
   }
   document.addEventListener('pointerdown', function (e) { if (menu && !menu.contains(e.target)) closeMenu(); }, true);
@@ -381,6 +455,7 @@
   });
   $('q').addEventListener('input', function (e) { G.q = e.target.value; renderBoard(); });
   $('undoBtn').onclick = undo;
+  $('walkBtn').onclick = askWalkIn;
   document.addEventListener('keydown', function (e) {
     if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || String(e.key).toLowerCase() !== 'z') return;
     var t = e.target;
